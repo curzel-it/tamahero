@@ -128,6 +128,12 @@ def build_server():
     project_root = Path(__file__).parent.resolve()
     gradlew = project_root / ("gradlew.bat" if IS_WINDOWS else "gradlew")
 
+    # Write build timestamp to version.txt resource BEFORE building
+    build_time = datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ')
+    version_file = project_root / "server" / "src" / "main" / "resources" / "version.txt"
+    version_file.write_text(build_time)
+    print(f"Set build timestamp: {build_time}")
+
     run_command(
         f'"{gradlew}" :server:installDist --no-daemon',
         "Building server (this may take a few minutes)",
@@ -138,24 +144,6 @@ def build_server():
     if not server_dist.exists():
         print(f"Error: Server build output not found at {server_dist}")
         sys.exit(1)
-
-    # Write build timestamp to version.txt inside the distribution
-    version_txt = server_dist / "lib" / "version.txt"
-    # Also update the resource in the classes dir if it exists
-    build_time = datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ')
-    for resources_dir in [
-        project_root / "server" / "build" / "resources" / "main",
-        server_dist / "lib",
-    ]:
-        resources_dir.mkdir(parents=True, exist_ok=True)
-        (resources_dir / "version.txt").write_text(build_time)
-
-    # Rebuild to include updated version.txt in the jar
-    run_command(
-        f'"{gradlew}" :server:installDist --no-daemon',
-        "Rebuilding server with version timestamp",
-        cwd=str(project_root)
-    )
 
     print(f"Server built: {server_dist}")
     return server_dist
