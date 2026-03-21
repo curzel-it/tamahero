@@ -1,8 +1,7 @@
 package it.curzel.tamahero.websocket
 
 import it.curzel.tamahero.db.VillageRepository
-import it.curzel.tamahero.models.GameStateUpdateUseCase
-import it.curzel.tamahero.models.ServerMessage
+import it.curzel.tamahero.models.*
 import kotlinx.coroutines.*
 import org.slf4j.LoggerFactory
 
@@ -78,9 +77,49 @@ object TimerMonitor {
             lastResourcePush[userId] = now
         }
 
-        // Save if anything changed
-        if (updated != state) {
-            VillageRepository.saveVillage(userId, updated)
+        // Detect event state changes
+        val oldEvent = state.activeEvent
+        val newEvent = updated.activeEvent
+        if (oldEvent == null && newEvent != null) {
+            ConnectionManager.sendToPlayer(userId, ServerMessage.EventStarted(newEvent.type))
         }
+        if (oldEvent?.completed != true && newEvent?.completed == true) {
+            ConnectionManager.sendToPlayer(userId, ServerMessage.EventEnded(
+                eventType = newEvent.type,
+                success = newEvent.pendingRewards == newEvent.rewards.success,
+                rewards = newEvent.pendingRewards ?: Resources(),
+            ))
+        }
+
+        // Trigger random events
+        var finalState = updated
+        if (finalState.activeEvent == null && shouldTriggerEvent(finalState, now)) {
+            val thLevel = finalState.village.buildings
+                .filter { it.type == BuildingType.TownHall && it.constructionStartedAt == null }
+                .maxOfOrNull { it.level } ?: 1
+            val eligible = PveEventConfig.eligibleEvents(thLevel)
+            if (eligible.isNotEmpty()) {
+                val eventType = eligible[(now % eligible.size).toInt()]
+                finalState = PveEventUpdateUseCase.startEvent(finalState, eventType, now)
+                ConnectionManager.sendToPlayer(userId, ServerMessage.EventStarted(eventType))
+            }
+        }
+
+        // Save if anything changed
+        if (finalState != state) {
+            VillageRepository.saveVillage(userId, finalState)
+        }
+    }
+
+    private fun shouldTriggerEvent(state: GameState, now: Long): Boolean {
+        if (state.troops.isNotEmpty()) return false // already in battle
+        if (state.shieldExpiresAt > now) return false // shield active
+        val timeSinceLastEvent = now - state.lastEventAt
+        if (timeSinceLastEvent < PveEventConfig.MIN_EVENT_INTERVAL_MS) return false
+        // Probability increases over time
+        val probability = (timeSinceLastEvent - PveEventConfig.MIN_EVENT_INTERVAL_MS).toDouble() /
+            (PveEventConfig.MAX_EVENT_INTERVAL_MS - PveEventConfig.MIN_EVENT_INTERVAL_MS)
+        val roll = ((now * 31 + state.playerId * 17) % 1000) / 1000.0
+        return roll < probability.coerceIn(0.0, 1.0)
     }
 }

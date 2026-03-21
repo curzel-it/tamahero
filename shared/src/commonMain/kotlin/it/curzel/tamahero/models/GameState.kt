@@ -13,5 +13,7 @@ data class GameState(
     val shieldExpiresAt: Long = 0,
     val battleShieldHp: Int = 0,
     val preBattleBuildings: List<PlacedBuilding> = emptyList(),
+    val activeEvent: ActiveEvent? = null,
+    val lastEventAt: Long = 0,
     val lastUpdatedAt: Long,
 )

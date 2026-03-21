@@ -86,4 +86,8 @@ sealed class ClientMessage {
     @Serializable
     @SerialName("rearm_all_traps")
     data object RearmAllTraps : ClientMessage()
+
+    @Serializable
+    @SerialName("collect_event_rewards")
+    data object CollectEventRewards : ClientMessage()
 }

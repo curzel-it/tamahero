@@ -76,55 +76,73 @@ Faster than Clash — tighter hooks for retention with a smaller initial player 
 
 ### Phase 1 - Foundation (MVP)
 
-**Target: "Build your island, attack a pirate base."**
-- Place/upgrade 5-6 building types on the grid
-- Resources accumulate in real-time
-- Train 2-3 troop types
-- Attack 3-5 pre-built PvE pirate bases
-- Server-authoritative state
+**Target: "Build your island, defend against random events."**
 
 #### 1.1 Island Grid & Building Placement
 - [x] Canvas rendering with camera/zoom
-- [ ] Tile-based grid system (40x40, ~20x20 usable at TH1)
-- [ ] Building placement with collision detection
-- [ ] Building selection and info panel
-- [ ] Drag to move buildings (edit mode)
+- [x] Building placement with collision detection (server-validated)
+- [x] Building upgrade, move, demolish, cancel construction, speed-up (mana)
+- [ ] Tile-based grid rendering (40x40, ~20x20 usable at TH1)
+- [ ] Building selection and info panel (UI)
+- [ ] Drag to move buildings (edit mode, UI)
 
-#### 1.2 Buildings - Resource Production
-- [ ] **Town Hall** — central building, determines max level of everything, magic circle motif
-- [ ] **Lumber Camp** — produces wood over real time
-- [ ] **Gold Mine** — produces gold over real time
-- [ ] **Forge** — produces metal over real time (unlocks at TH2)
-- [ ] **Wood Storage** — stores wood (capacity limit)
-- [ ] **Gold Storage** — stores gold (capacity limit)
-- [ ] **Metal Storage** — stores metal (capacity limit, unlocks at TH2)
+#### 1.2 Buildings
+- [x] **Town Hall** — central building, gates all other buildings
+- [x] **Lumber Camp** — produces wood over real time
+- [x] **Gold Mine** — produces gold over real time
+- [x] **Forge** — produces metal (unlocks at TH2)
+- [x] **Wood/Gold/Metal Storage** — capacity-limited resource storage
+- [x] **Barracks** — trains troops (queue-based, multiple barracks = parallel training)
+- [x] **Army Camp** — stores trained troops (capacity-limited)
 
-#### 1.3 Real-Time Progression
-- [ ] Buildings produce resources while offline (server-authoritative)
-- [ ] Building construction takes real time (timers)
-- [ ] One builder available initially, second unlocks at TH3 (up to 4 purchasable with mana)
-- [ ] Server calculates accumulated resources on login
+#### 1.3 Defenses (OGame/CoC Blend)
+- [x] **Cannon** — single target, ground only
+- [x] **Archer Tower** — single target, ground + air
+- [x] **Mortar** — splash damage, minimum range, slow fire rate
+- [x] **Wall** — blocks troop pathing (troops must destroy or path around)
+- [x] **Spike Trap** — hidden, burst AOE damage on trigger, one-time use
+- [x] **Spring Trap** — hidden, instant-kills light troops, one-time use
+- [x] **Shield Dome** — absorbs damage across all buildings, breaks when depleted
+- [x] Post-battle auto-rebuild: 70% of destroyed defenses rebuilt at full HP (OGame mechanic)
+- [x] Trap rearming (manual, costs 50% of build price)
 
-#### 1.4 Authentication & Player Data
+#### 1.4 Real-Time Progression
+- [x] Buildings produce resources while offline (server-authoritative)
+- [x] Building construction takes real time (timers)
+- [x] Server calculates accumulated resources on login
+- [x] Troop training queue with real-time timers
+
+#### 1.5 Authentication & Networking
 - [x] Username/password + social login (Google, Apple)
-- [ ] Player profile (name, level, trophies)
-- [ ] Save/load island state to server
-- [ ] Sync island state on app launch
+- [x] WebSocket-only architecture (REST only for auth)
+- [x] Full village CRUD via WebSocket messages
+- [x] Server-side validation of all actions
+- [x] Timer monitoring with push events (building_complete, training_complete, resources_updated)
+- [x] Save/load village state (SQLite, serialized JSON)
 
-#### 1.5 Server - Core API
-- [x] Auth routes
-- [ ] `GET /api/village` — load player's island
-- [ ] `PUT /api/village/build` — place a building
-- [ ] `PUT /api/village/upgrade` — upgrade a building
-- [ ] `PUT /api/village/move` — move a building
-- [ ] `POST /api/village/collect` — collect resources from a building
-- [ ] Server-side validation of all actions (anti-cheat)
+#### 1.6 PvE Events (SimCity-style)
+Random server-driven events that test the player's defenses. Player does NOT deploy troops — defenses fight automatically. Events scale with Town Hall level.
 
-#### 1.6 PvE - Pirate Raids
-- [ ] Pre-built pirate camp bases (3-5 at launch)
-- [ ] Attack pirate bases for loot and mana rewards
-- [ ] Serves as tutorial and onboarding
-- [ ] Solo content while player base grows
+**Natural Disasters (instant damage, no troops):**
+- [ ] **Earthquake** — random buildings take 20-50% HP damage
+- [ ] **Storm** — edge buildings take damage, some resources lost
+
+**Enemy Raids (battle events, troops spawn at edge):**
+- [ ] **Scout Party** (TH1+) — 5-8 weak soldiers
+- [ ] **Raiding Party** (TH2+) — 12-18 mixed troops
+- [ ] **Dragon Raid** (TH2+) — single powerful unit, splash damage, ignores walls
+- [ ] **Full Invasion** (TH3+) — 25-35 troops with captain boss
+- [ ] **Siege** (TH3+) — 3 waves, escalating difficulty, boss in final wave
+
+**Outcomes:**
+- **Success** (<50% destruction) → bonus rewards (gold, wood, metal; mana for hard events)
+- **Failure** (50%+ destruction) → debris recovery (30% of lost value as resources)
+- Post-battle: defenses auto-rebuild 70%, shield granted based on destruction %
+
+#### 1.7 Clients
+- [x] CLI client with full feature coverage (build, upgrade, train, etc.)
+- [x] CLI integration test suite (end-to-end via embedded server)
+- [ ] Compose Multiplatform rendering (Desktop, Android, iOS)
 
 ---
 

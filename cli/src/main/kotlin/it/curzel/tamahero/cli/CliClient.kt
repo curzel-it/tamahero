@@ -144,6 +144,15 @@ class CliClient(private val baseUrl: String) {
             is ServerMessage.ResourcesUpdated -> {
                 println("Resources: gold=${msg.resources.gold} wood=${msg.resources.wood} metal=${msg.resources.metal} mana=${msg.resources.mana}")
             }
+            is ServerMessage.EventStarted -> {
+                println("EVENT: ${msg.eventType} has started!")
+            }
+            is ServerMessage.EventEnded -> {
+                val outcome = if (msg.success) "SUCCESS" else "FAILURE"
+                println("EVENT: ${msg.eventType} ended — $outcome")
+                println("  Rewards: gold=${msg.rewards.gold} wood=${msg.rewards.wood} metal=${msg.rewards.metal} mana=${msg.rewards.mana}")
+                println("  Use 'collectrewards' to claim.")
+            }
             is ServerMessage.Error -> {
                 println("Error: ${msg.reason}")
                 if (msg.details.isNotEmpty()) println("  Details: ${msg.details}")
@@ -171,6 +180,13 @@ class CliClient(private val baseUrl: String) {
             for ((i, e) in state.trainingQueue.entries.withIndex()) {
                 val status = if (e.startedAt != null) " [TRAINING]" else ""
                 println("  [$i] ${e.troopType} lv${e.level}$status")
+            }
+        }
+        state.activeEvent?.let { event ->
+            val status = if (event.completed) "COMPLETED" else "ACTIVE (wave ${event.currentWave + 1}/${event.totalWaves})"
+            println("Event: ${event.type} — $status")
+            if (event.pendingRewards != null) {
+                println("  Pending rewards — use 'collectrewards' to claim")
             }
         }
         if (state.troops.isNotEmpty()) {

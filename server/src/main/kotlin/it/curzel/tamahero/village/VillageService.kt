@@ -126,6 +126,19 @@ object VillageService {
             )
         }
 
+    fun collectEventRewards(userId: Long): GameState =
+        loadAndUpdate(userId) { state ->
+            val event = state.activeEvent
+                ?: throw VillageException("No active event")
+            if (!event.completed) throw VillageException("Event still in progress")
+            val rewards = event.pendingRewards
+                ?: throw VillageException("No rewards to collect")
+            state.copy(
+                resources = state.resources + rewards,
+                activeEvent = null,
+            )
+        }
+
     fun rearmTrap(userId: Long, buildingId: Long): GameState =
         loadAndUpdate(userId) { state ->
             val building = state.village.buildings.find { it.id == buildingId }

@@ -117,6 +117,13 @@ fun main(args: Array<String>) {
                         client.sendAndReceive(ClientMessage.RearmTrap(parts[1].toLong()))
                     }
 
+                    "collectrewards" -> {
+                        if (!connected) { println("Connect first."); continue }
+                        client.sendAndReceive(ClientMessage.CollectEventRewards)
+                    }
+
+                    "event" -> showEvent(client.getLastState())
+
                     "rearmall" -> {
                         if (!connected) { println("Connect first."); continue }
                         client.sendAndReceive(ClientMessage.RearmAllTraps)
@@ -183,6 +190,10 @@ private fun printHelp() {
         |Defense:
         |  rearm <id>              Rearm a triggered trap (50% cost)
         |  rearmall                Rearm all triggered traps
+        |
+        |Events:
+        |  event                   Show active event status
+        |  collectrewards          Collect rewards from completed event
         |
         |Info:
         |  info <id>               Building details
@@ -322,6 +333,26 @@ private fun buildingLabel(type: BuildingType): Char = when (type) {
     BuildingType.SpikeTrap -> 's'
     BuildingType.SpringTrap -> 'p'
     BuildingType.ShieldDome -> 'S'
+}
+
+private fun showEvent(state: GameState?) {
+    if (state == null) { println("No state. Run 'village' first."); return }
+    val event = state.activeEvent
+    if (event == null) {
+        println("No active event.")
+        if (state.shieldExpiresAt > 0) {
+            println("Shield active until ${state.shieldExpiresAt}")
+        }
+        return
+    }
+    println("Event: ${event.type}")
+    println("  Status: ${if (event.completed) "COMPLETED" else "ACTIVE"}")
+    println("  Wave: ${event.currentWave + 1}/${event.totalWaves}")
+    val rewards = event.pendingRewards
+    if (rewards != null) {
+        println("  Rewards ready: ${formatResources(rewards)}")
+        println("  Use 'collectrewards' to claim.")
+    }
 }
 
 private fun parseTroopType(name: String): TroopType? {

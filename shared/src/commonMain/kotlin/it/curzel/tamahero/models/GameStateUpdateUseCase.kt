@@ -24,6 +24,7 @@ object GameStateUpdateUseCase {
         )
 
         current = TrainingUpdateUseCase.update(current, now)
+        current = PveEventUpdateUseCase.update(current, now)
 
         return current
     }

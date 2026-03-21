@@ -41,6 +41,20 @@ sealed class ServerMessage {
     ) : ServerMessage()
 
     @Serializable
+    @SerialName("event_started")
+    data class EventStarted(
+        val eventType: EventType,
+    ) : ServerMessage()
+
+    @Serializable
+    @SerialName("event_ended")
+    data class EventEnded(
+        val eventType: EventType,
+        val success: Boolean,
+        val rewards: Resources,
+    ) : ServerMessage()
+
+    @Serializable
     @SerialName("error")
     data class Error(
         val reason: String,

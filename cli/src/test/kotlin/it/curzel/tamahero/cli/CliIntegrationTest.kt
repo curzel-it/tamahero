@@ -484,4 +484,16 @@ class CliIntegrationTest {
             client.close()
         }
     }
+
+    @Test
+    fun collectEventRewardsFailsWithNoEvent() = runBlocking {
+        val client = createConnectedClient()
+        try {
+            val msg = client.sendAndReceive(ClientMessage.CollectEventRewards)
+            assertTrue(msg is ServerMessage.Error)
+            assertTrue(msg.reason.contains("No active event"))
+        } finally {
+            client.close()
+        }
+    }
 }
