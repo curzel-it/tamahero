@@ -5,13 +5,10 @@ import io.ktor.client.request.*
 import io.ktor.client.statement.*
 import io.ktor.http.*
 import io.ktor.websocket.*
-import kotlinx.serialization.json.Json
 import it.curzel.tamahero.models.*
 import kotlin.test.*
 
 class VillageWebSocketTest {
-
-    private val json = Json { ignoreUnknownKeys = true; encodeDefaults = true }
 
     private var usernameCounter = 0
 
@@ -22,16 +19,16 @@ class VillageWebSocketTest {
             setBody("""{"username":"$username","password":"testpass123"}""")
         }
         val body = response.bodyAsText()
-        val authResponse = json.decodeFromString<AuthResponse>(body)
+        val authResponse = ProtocolJson.decodeFromString<AuthResponse>(body)
         assertNotNull(authResponse.token, "Registration failed: $body")
         return authResponse.token!!
     }
 
     private fun sendMessage(msg: ClientMessage): String =
-        json.encodeToString(ClientMessage.serializer(), msg)
+        ProtocolJson.encodeToString(ClientMessage.serializer(), msg)
 
     private fun parseServerMessage(text: String): ServerMessage =
-        json.decodeFromString(ServerMessage.serializer(), text)
+        ProtocolJson.decodeFromString(ServerMessage.serializer(), text)
 
     private suspend fun DefaultClientWebSocketSession.receiveServerMessage(): ServerMessage {
         val frame = incoming.receive() as Frame.Text

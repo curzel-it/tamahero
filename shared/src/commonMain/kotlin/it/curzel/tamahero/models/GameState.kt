@@ -8,5 +8,10 @@ data class GameState(
     val resources: Resources = Resources(),
     val village: Village,
     val troops: List<Troop> = emptyList(),
+    val trainingQueue: TrainingQueue = TrainingQueue(),
+    val army: Army = Army(),
+    val shieldExpiresAt: Long = 0,
+    val battleShieldHp: Int = 0,
+    val preBattleBuildings: List<PlacedBuilding> = emptyList(),
     val lastUpdatedAt: Long,
 )

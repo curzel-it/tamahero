@@ -18,7 +18,10 @@ object Database {
     @Synchronized
     fun initInMemory() {
         connection?.close()
-        connection = DriverManager.getConnection("jdbc:sqlite::memory:")
+        val tempFile = java.io.File.createTempFile("tamahero_test_", ".db")
+        tempFile.deleteOnExit()
+        connection = DriverManager.getConnection("jdbc:sqlite:${tempFile.absolutePath}")
+        getConnection().createStatement().use { it.executeUpdate("PRAGMA journal_mode=WAL") }
         createTables()
     }
 

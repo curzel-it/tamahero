@@ -15,6 +15,12 @@ data class BuildingLevelConfig(
     val damage: Int = 0,
     val range: Float = 0f,
     val attackSpeedMs: Long = 0,
+    val troopCapacity: Int = 0,
+    val burstDamage: Int = 0,
+    val triggerRadius: Float = 0f,
+    val minRange: Float = 0f,
+    val shieldHp: Int = 0,
+    val splashRadius: Float = 0f,
 )
 
 object BuildingConfig {
@@ -57,7 +63,8 @@ object BuildingConfig {
             BuildingLevelConfig(level = 2, hp = 450, cost = Resources(gold = 300, wood = 300), buildTimeSeconds = 120, requiredTownHallLevel = 2),
         ),
         BuildingType.ArmyCamp to listOf(
-            BuildingLevelConfig(level = 1, hp = 200, cost = Resources(gold = 100, wood = 100), buildTimeSeconds = 30, size = 3, requiredTownHallLevel = 1),
+            BuildingLevelConfig(level = 1, hp = 200, cost = Resources(gold = 100, wood = 100), buildTimeSeconds = 30, size = 3, requiredTownHallLevel = 1, troopCapacity = 20),
+            BuildingLevelConfig(level = 2, hp = 300, cost = Resources(gold = 300, wood = 300), buildTimeSeconds = 120, size = 3, requiredTownHallLevel = 2, troopCapacity = 30),
         ),
         BuildingType.Cannon to listOf(
             BuildingLevelConfig(level = 1, hp = 300, cost = Resources(gold = 200), buildTimeSeconds = 30, damage = 10, range = 3f, attackSpeedMs = 1000),
@@ -70,6 +77,21 @@ object BuildingConfig {
         BuildingType.Wall to listOf(
             BuildingLevelConfig(level = 1, hp = 500, cost = Resources(wood = 20), buildTimeSeconds = 5, size = 1),
             BuildingLevelConfig(level = 2, hp = 1000, cost = Resources(wood = 50, metal = 20), buildTimeSeconds = 15, size = 1),
+        ),
+        BuildingType.Mortar to listOf(
+            BuildingLevelConfig(level = 1, hp = 250, cost = Resources(gold = 300, wood = 100), buildTimeSeconds = 60, damage = 15, range = 5f, minRange = 2f, attackSpeedMs = 2000, splashRadius = 1.5f),
+            BuildingLevelConfig(level = 2, hp = 375, cost = Resources(gold = 600, wood = 200), buildTimeSeconds = 180, damage = 22, range = 5.5f, minRange = 2f, attackSpeedMs = 2000, splashRadius = 1.5f),
+        ),
+        BuildingType.SpikeTrap to listOf(
+            BuildingLevelConfig(level = 1, hp = 1, cost = Resources(wood = 20), buildTimeSeconds = 5, size = 1, burstDamage = 30, triggerRadius = 1f),
+            BuildingLevelConfig(level = 2, hp = 1, cost = Resources(wood = 40, metal = 10), buildTimeSeconds = 10, size = 1, burstDamage = 50, triggerRadius = 1.5f),
+        ),
+        BuildingType.SpringTrap to listOf(
+            BuildingLevelConfig(level = 1, hp = 1, cost = Resources(wood = 30, metal = 10), buildTimeSeconds = 5, size = 1),
+        ),
+        BuildingType.ShieldDome to listOf(
+            BuildingLevelConfig(level = 1, hp = 100, cost = Resources(gold = 500, wood = 500, metal = 200), buildTimeSeconds = 120, size = 2, shieldHp = 500, requiredTownHallLevel = 2),
+            BuildingLevelConfig(level = 2, hp = 150, cost = Resources(gold = 1000, wood = 1000, metal = 500), buildTimeSeconds = 300, size = 2, shieldHp = 1000, requiredTownHallLevel = 3),
         ),
     )
 

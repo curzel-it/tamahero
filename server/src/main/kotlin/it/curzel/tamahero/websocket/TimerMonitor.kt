@@ -60,6 +60,17 @@ object TimerMonitor {
             }
         }
 
+        // Detect troops that just completed training
+        for (armyTroop in updated.army.troops) {
+            val oldCount = state.army.troops.find { it.type == armyTroop.type && it.level == armyTroop.level }?.count ?: 0
+            if (armyTroop.count > oldCount) {
+                ConnectionManager.sendToPlayer(userId, ServerMessage.TrainingComplete(
+                    troopType = armyTroop.type,
+                    level = armyTroop.level,
+                ))
+            }
+        }
+
         // Push resource updates periodically
         val lastPush = lastResourcePush[userId] ?: 0
         if (now - lastPush >= RESOURCE_PUSH_INTERVAL_MS && updated.resources != state.resources) {

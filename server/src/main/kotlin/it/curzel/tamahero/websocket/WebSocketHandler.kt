@@ -3,20 +3,15 @@ package it.curzel.tamahero.websocket
 import io.ktor.websocket.*
 import it.curzel.tamahero.auth.AuthService
 import it.curzel.tamahero.models.ClientMessage
+import it.curzel.tamahero.models.ProtocolJson
 import it.curzel.tamahero.models.ServerMessage
 import it.curzel.tamahero.village.VillageException
 import it.curzel.tamahero.village.VillageService
-import kotlinx.serialization.json.Json
 import org.slf4j.LoggerFactory
 
 object WebSocketHandler {
 
     private val logger = LoggerFactory.getLogger(WebSocketHandler::class.java)
-
-    private val json = Json {
-        ignoreUnknownKeys = true
-        isLenient = true
-    }
 
     suspend fun handleConnection(session: WebSocketSession, token: String?) {
         val userId = AuthService.getUserIdFromToken(token)
@@ -45,58 +40,34 @@ object WebSocketHandler {
 
     private suspend fun handleMessage(userId: Long, text: String) {
         try {
-            val message = json.decodeFromString(ClientMessage.serializer(), text)
+            val message = ProtocolJson.decodeFromString(ClientMessage.serializer(), text)
             when (message) {
                 is ClientMessage.KeepAlive -> ConnectionManager.updateKeepAlive(userId)
-                is ClientMessage.GetVillage -> handleGetVillage(userId)
-                is ClientMessage.Build -> handleBuild(userId, message)
-                is ClientMessage.Upgrade -> handleUpgrade(userId, message)
-                is ClientMessage.Move -> handleMove(userId, message)
-                is ClientMessage.Collect -> handleCollect(userId, message)
+                is ClientMessage.GetVillage -> handleVillageAction(userId) { VillageService.getOrCreateVillage(userId) }
+                is ClientMessage.Build -> handleVillageAction(userId) { VillageService.placeBuild(userId, message.buildingType, message.x, message.y) }
+                is ClientMessage.Upgrade -> handleVillageAction(userId) { VillageService.upgradeBuilding(userId, message.buildingId) }
+                is ClientMessage.Move -> handleVillageAction(userId) { VillageService.moveBuilding(userId, message.buildingId, message.x, message.y) }
+                is ClientMessage.Collect -> handleVillageAction(userId) { VillageService.collectResources(userId, message.buildingId) }
+                is ClientMessage.CollectAll -> handleVillageAction(userId) { VillageService.collectAll(userId) }
+                is ClientMessage.Demolish -> handleVillageAction(userId) { VillageService.demolishBuilding(userId, message.buildingId) }
+                is ClientMessage.CancelConstruction -> handleVillageAction(userId) { VillageService.cancelConstruction(userId, message.buildingId) }
+                is ClientMessage.SpeedUp -> handleVillageAction(userId) { VillageService.speedUpConstruction(userId, message.buildingId) }
+                is ClientMessage.Train -> handleVillageAction(userId) { VillageService.trainTroops(userId, message.troopType, message.count) }
+                is ClientMessage.CancelTraining -> handleVillageAction(userId) { VillageService.cancelTraining(userId, message.index) }
+                is ClientMessage.RearmTrap -> handleVillageAction(userId) { VillageService.rearmTrap(userId, message.buildingId) }
+                is ClientMessage.RearmAllTraps -> handleVillageAction(userId) { VillageService.rearmAllTraps(userId) }
             }
         } catch (e: Exception) {
             logger.warn("Invalid message from player {}: {}", userId, e.message)
         }
     }
 
-    private suspend fun handleGetVillage(userId: Long) {
-        val state = VillageService.getOrCreateVillage(userId)
-        ConnectionManager.sendToPlayer(userId, ServerMessage.GameStateUpdated(state))
-    }
-
-    private suspend fun handleBuild(userId: Long, msg: ClientMessage.Build) {
+    private suspend fun handleVillageAction(userId: Long, action: () -> it.curzel.tamahero.models.GameState) {
         try {
-            val state = VillageService.placeBuild(userId, msg.buildingType, msg.x, msg.y)
+            val state = action()
             ConnectionManager.sendToPlayer(userId, ServerMessage.GameStateUpdated(state))
         } catch (e: VillageException) {
-            ConnectionManager.sendToPlayer(userId, ServerMessage.Error(reason = e.message ?: "Build failed"))
-        }
-    }
-
-    private suspend fun handleUpgrade(userId: Long, msg: ClientMessage.Upgrade) {
-        try {
-            val state = VillageService.upgradeBuilding(userId, msg.buildingId)
-            ConnectionManager.sendToPlayer(userId, ServerMessage.GameStateUpdated(state))
-        } catch (e: VillageException) {
-            ConnectionManager.sendToPlayer(userId, ServerMessage.Error(reason = e.message ?: "Upgrade failed"))
-        }
-    }
-
-    private suspend fun handleMove(userId: Long, msg: ClientMessage.Move) {
-        try {
-            val state = VillageService.moveBuilding(userId, msg.buildingId, msg.x, msg.y)
-            ConnectionManager.sendToPlayer(userId, ServerMessage.GameStateUpdated(state))
-        } catch (e: VillageException) {
-            ConnectionManager.sendToPlayer(userId, ServerMessage.Error(reason = e.message ?: "Move failed"))
-        }
-    }
-
-    private suspend fun handleCollect(userId: Long, msg: ClientMessage.Collect) {
-        try {
-            val state = VillageService.collectResources(userId, msg.buildingId)
-            ConnectionManager.sendToPlayer(userId, ServerMessage.GameStateUpdated(state))
-        } catch (e: VillageException) {
-            ConnectionManager.sendToPlayer(userId, ServerMessage.Error(reason = e.message ?: "Collect failed"))
+            ConnectionManager.sendToPlayer(userId, ServerMessage.Error(reason = e.message ?: "Action failed"))
         }
     }
 }

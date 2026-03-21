@@ -3,19 +3,13 @@ package it.curzel.tamahero.network
 import it.curzel.tamahero.ServerConfig
 import it.curzel.tamahero.models.BuildingType
 import it.curzel.tamahero.models.ClientMessage
+import it.curzel.tamahero.models.ProtocolJson
 import it.curzel.tamahero.models.ServerMessage
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharedFlow
-import kotlinx.serialization.json.Json
 
 object GameSocketClient {
-
-    private val json = Json {
-        ignoreUnknownKeys = true
-        encodeDefaults = true
-        isLenient = true
-    }
 
     private val scope = CoroutineScope(Dispatchers.Default + SupervisorJob())
     private var keepAliveJob: Job? = null
@@ -58,13 +52,13 @@ object GameSocketClient {
     fun collect(buildingId: Long) = send(ClientMessage.Collect(buildingId))
 
     private fun send(message: ClientMessage) {
-        val text = json.encodeToString(ClientMessage.serializer(), message)
+        val text = ProtocolJson.encodeToString(ClientMessage.serializer(), message)
         GameSocketManager.send(text)
     }
 
     private suspend fun handleMessage(text: String) {
         try {
-            val message = json.decodeFromString(ServerMessage.serializer(), text)
+            val message = ProtocolJson.decodeFromString(ServerMessage.serializer(), text)
             if (message is ServerMessage.Connected) {
                 connected = true
                 startKeepAlive()

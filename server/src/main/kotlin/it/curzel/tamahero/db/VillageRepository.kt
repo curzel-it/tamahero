@@ -1,11 +1,9 @@
 package it.curzel.tamahero.db
 
 import it.curzel.tamahero.models.GameState
-import kotlinx.serialization.json.Json
+import it.curzel.tamahero.models.ProtocolJson
 
 object VillageRepository {
-
-    private val json = Json { ignoreUnknownKeys = true }
 
     fun getVillage(userId: Long): GameState? {
         val conn = Database.getConnection()
@@ -13,13 +11,13 @@ object VillageRepository {
             stmt.setLong(1, userId)
             val rs = stmt.executeQuery()
             if (!rs.next()) return null
-            return json.decodeFromString<GameState>(rs.getString("state_json"))
+            return ProtocolJson.decodeFromString<GameState>(rs.getString("state_json"))
         }
     }
 
     fun saveVillage(userId: Long, state: GameState) {
         val conn = Database.getConnection()
-        val stateJson = json.encodeToString(GameState.serializer(), state)
+        val stateJson = ProtocolJson.encodeToString(GameState.serializer(), state)
         val now = System.currentTimeMillis()
         conn.prepareStatement(
             "INSERT INTO villages (user_id, state_json, updated_at) VALUES (?, ?, ?) ON CONFLICT(user_id) DO UPDATE SET state_json = ?, updated_at = ?"

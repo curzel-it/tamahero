@@ -23,6 +23,13 @@ data class Resources(
         mana = mana - other.mana,
     )
 
+    operator fun times(factor: Double) = Resources(
+        gold = (gold * factor).toLong(),
+        wood = (wood * factor).toLong(),
+        metal = (metal * factor).toLong(),
+        mana = (mana * factor).toLong(),
+    )
+
     fun hasEnough(cost: Resources): Boolean =
         gold >= cost.gold && wood >= cost.wood && metal >= cost.metal && mana >= cost.mana
 

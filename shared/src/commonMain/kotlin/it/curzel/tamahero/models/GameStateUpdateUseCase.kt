@@ -23,6 +23,8 @@ object GameStateUpdateUseCase {
             lastUpdatedAt = now,
         )
 
+        current = TrainingUpdateUseCase.update(current, now)
+
         return current
     }
 }

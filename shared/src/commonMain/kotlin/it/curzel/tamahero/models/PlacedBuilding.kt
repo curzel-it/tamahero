@@ -12,6 +12,7 @@ data class PlacedBuilding(
     val constructionStartedAt: Long? = null,
     val lastCollectedAt: Long = 0,
     val hp: Int = 0,
+    val triggered: Boolean = false,
 ) {
     fun isUnderConstruction(now: Long): Boolean {
         val startedAt = constructionStartedAt ?: return false

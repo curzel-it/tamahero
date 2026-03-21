@@ -34,6 +34,13 @@ sealed class ServerMessage {
     ) : ServerMessage()
 
     @Serializable
+    @SerialName("training_complete")
+    data class TrainingComplete(
+        val troopType: TroopType,
+        val level: Int,
+    ) : ServerMessage()
+
+    @Serializable
     @SerialName("error")
     data class Error(
         val reason: String,

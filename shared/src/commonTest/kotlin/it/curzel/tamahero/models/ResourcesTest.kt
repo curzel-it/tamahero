@@ -43,6 +43,15 @@ class ResourcesTest {
     }
 
     @Test
+    fun timesHalf() {
+        val resources = Resources(gold = 100, wood = 50, metal = 30)
+        val result = resources * 0.5
+        assertEquals(50, result.gold)
+        assertEquals(25, result.wood)
+        assertEquals(15, result.metal)
+    }
+
+    @Test
     fun capAt() {
         val resources = Resources(gold = 5000, wood = 3000, metal = 100)
         val cap = Resources(gold = 1000, wood = 2500, metal = 500)

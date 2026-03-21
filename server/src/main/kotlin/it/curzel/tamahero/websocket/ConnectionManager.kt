@@ -1,9 +1,9 @@
 package it.curzel.tamahero.websocket
 
 import io.ktor.websocket.*
+import it.curzel.tamahero.models.ProtocolJson
 import it.curzel.tamahero.models.ServerMessage
 import kotlinx.coroutines.*
-import kotlinx.serialization.json.Json
 import org.slf4j.LoggerFactory
 import java.util.concurrent.ConcurrentHashMap
 
@@ -18,11 +18,6 @@ object ConnectionManager {
     private val logger = LoggerFactory.getLogger(ConnectionManager::class.java)
     private val connections = ConcurrentHashMap<Long, PlayerConnection>()
     private val monitoringJobs = ConcurrentHashMap<Long, Job>()
-
-    private val json = Json {
-        ignoreUnknownKeys = true
-        encodeDefaults = true
-    }
 
     private const val KEEP_ALIVE_CHECK_INTERVAL_MS = 5_000L
     private const val KEEP_ALIVE_TIMEOUT_MS = 30_000L
@@ -52,7 +47,7 @@ object ConnectionManager {
     suspend fun sendToPlayer(userId: Long, message: ServerMessage) {
         val conn = connections[userId] ?: return
         try {
-            val text = json.encodeToString(ServerMessage.serializer(), message)
+            val text = ProtocolJson.encodeToString(ServerMessage.serializer(), message)
             conn.session.send(Frame.Text(text))
         } catch (e: Exception) {
             logger.error("Failed to send message to player {}", userId, e)

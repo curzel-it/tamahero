@@ -10,7 +10,7 @@ object ResourceProductionUpdateUseCase {
         val storageCapacity = totalStorageCapacity(buildings, now)
         var produced = Resources()
         val updatedBuildings = buildings.map { building ->
-            if (!isProducer(building.type)) return@map building
+            if (!building.type.isProducer) return@map building
             if (building.isUnderConstruction(now)) return@map building
             val config = BuildingConfig.configFor(building.type, building.level) ?: return@map building
             val elapsedMs = now - building.lastCollectedAt
@@ -36,10 +36,5 @@ object ResourceProductionUpdateUseCase {
             capacity = capacity + config.storageCapacity
         }
         return capacity
-    }
-
-    private fun isProducer(type: BuildingType): Boolean = when (type) {
-        BuildingType.LumberCamp, BuildingType.GoldMine, BuildingType.Forge -> true
-        else -> false
     }
 }

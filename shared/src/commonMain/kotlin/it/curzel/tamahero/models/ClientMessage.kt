@@ -41,4 +41,49 @@ sealed class ClientMessage {
     data class Collect(
         val buildingId: Long,
     ) : ClientMessage()
+
+    @Serializable
+    @SerialName("collect_all")
+    data object CollectAll : ClientMessage()
+
+    @Serializable
+    @SerialName("demolish")
+    data class Demolish(
+        val buildingId: Long,
+    ) : ClientMessage()
+
+    @Serializable
+    @SerialName("cancel_construction")
+    data class CancelConstruction(
+        val buildingId: Long,
+    ) : ClientMessage()
+
+    @Serializable
+    @SerialName("speed_up")
+    data class SpeedUp(
+        val buildingId: Long,
+    ) : ClientMessage()
+
+    @Serializable
+    @SerialName("train")
+    data class Train(
+        val troopType: TroopType,
+        val count: Int = 1,
+    ) : ClientMessage()
+
+    @Serializable
+    @SerialName("cancel_training")
+    data class CancelTraining(
+        val index: Int,
+    ) : ClientMessage()
+
+    @Serializable
+    @SerialName("rearm_trap")
+    data class RearmTrap(
+        val buildingId: Long,
+    ) : ClientMessage()
+
+    @Serializable
+    @SerialName("rearm_all_traps")
+    data object RearmAllTraps : ClientMessage()
 }
