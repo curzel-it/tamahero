@@ -155,6 +155,7 @@ object UserRepository {
 
     fun deleteUser(userId: Long) {
         val conn = Database.getConnection()
+        conn.prepareStatement("DELETE FROM villages WHERE user_id = ?").use { it.setLong(1, userId); it.executeUpdate() }
         conn.prepareStatement("DELETE FROM auth_tokens WHERE user_id = ?").use { it.setLong(1, userId); it.executeUpdate() }
         conn.prepareStatement("DELETE FROM password_reset_tokens WHERE user_id = ?").use { it.setLong(1, userId); it.executeUpdate() }
         conn.prepareStatement("DELETE FROM social_logins WHERE user_id = ?").use { it.setLong(1, userId); it.executeUpdate() }

@@ -71,6 +71,13 @@ object Database {
                     expires_at INTEGER NOT NULL
                 )
             """)
+            stmt.executeUpdate("""
+                CREATE TABLE IF NOT EXISTS villages (
+                    user_id INTEGER PRIMARY KEY REFERENCES users(id),
+                    state_json TEXT NOT NULL,
+                    updated_at INTEGER NOT NULL
+                )
+            """)
         }
     }
 }

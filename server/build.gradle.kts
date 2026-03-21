@@ -29,7 +29,9 @@ dependencies {
     implementation("com.auth0:java-jwt:4.4.0")
     implementation("com.auth0:jwks-rsa:0.22.1")
     implementation("io.ktor:ktor-client-cio-jvm:3.3.3")
+    implementation("io.ktor:ktor-server-websockets-jvm:3.3.3")
     testImplementation(libs.ktor.serverTestHost)
     testImplementation(libs.ktor.clientContentNegotiation)
+    testImplementation("io.ktor:ktor-client-websockets-jvm:3.3.3")
     testImplementation(libs.kotlin.testJunit)
 }

@@ -12,6 +12,7 @@ object DatabaseMigrations {
         logger.info("Database schema version: {}", currentVersion)
 
         if (currentVersion < 1) migrateV1(conn)
+        if (currentVersion < 2) migrateV2(conn)
     }
 
     private fun ensureVersionTable(conn: Connection) {
@@ -116,5 +117,22 @@ object DatabaseMigrations {
 
         setVersion(conn, 1)
         logger.info("Migration v1 complete")
+    }
+
+    private fun migrateV2(conn: Connection) {
+        logger.info("Running migration v2: villages table")
+
+        conn.createStatement().use { stmt ->
+            stmt.executeUpdate("""
+                CREATE TABLE IF NOT EXISTS villages (
+                    user_id INTEGER PRIMARY KEY REFERENCES users(id),
+                    state_json TEXT NOT NULL,
+                    updated_at INTEGER NOT NULL
+                )
+            """)
+        }
+
+        setVersion(conn, 2)
+        logger.info("Migration v2 complete")
     }
 }
