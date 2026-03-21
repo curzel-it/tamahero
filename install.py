@@ -165,7 +165,7 @@ def create_directories():
 
 
 def create_env_file():
-    """Create or update environment file."""
+    """Create or update environment file, syncing auth keys from source .env."""
     print("\n=== Creating Environment File ===")
     if not ENV_FILE.exists():
         env_content = f"""# TamaHero Server Production Environment Configuration
@@ -178,6 +178,47 @@ LOG_LEVEL=INFO
         print(f"Environment file created: {ENV_FILE}")
     else:
         print(f"Environment file exists (preserved): {ENV_FILE}")
+
+    # Sync keys from source .env to production env file
+    sync_keys = [
+        "SMTP2GO_API_KEY",
+        "GOOGLE_CLIENT_ID_WEB",
+        "GOOGLE_CLIENT_ID_ANDROID",
+        "GOOGLE_CLIENT_ID_IOS",
+        "GOOGLE_CLIENT_ID_DESKTOP",
+        "GOOGLE_CLIENT_SECRET",
+        "GOOGLE_CLIENT_SECRET_DESKTOP",
+        "APPLE_BUNDLE_ID",
+        "APPLE_SERVICE_ID",
+    ]
+    source_env = PROJECT_ROOT / ".env"
+    if source_env.exists():
+        source_values = {}
+        for line in source_env.read_text().splitlines():
+            line = line.strip()
+            if "=" in line and not line.startswith("#"):
+                key, _, value = line.partition("=")
+                source_values[key.strip()] = value.strip()
+
+        existing = ENV_FILE.read_text()
+        updated = False
+        for key in sync_keys:
+            if key in source_values:
+                if key not in existing:
+                    existing += f"\n{key}={source_values[key]}"
+                    updated = True
+                    print(f"  Added {key} to env file")
+                else:
+                    # Update existing value
+                    lines = existing.splitlines()
+                    for i, line in enumerate(lines):
+                        if line.strip().startswith(f"{key}="):
+                            lines[i] = f"{key}={source_values[key]}"
+                            updated = True
+                    existing = "\n".join(lines)
+        if updated:
+            ENV_FILE.write_text(existing.rstrip() + "\n")
+            print("  Environment file updated with synced keys")
 
 
 def create_systemd_service():

@@ -7,6 +7,7 @@ import io.ktor.server.http.content.*
 import io.ktor.server.netty.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
+import it.curzel.tamahero.auth.AuthService
 import it.curzel.tamahero.auth.configureAuth
 import it.curzel.tamahero.db.Database
 import it.curzel.tamahero.routes.*
@@ -20,6 +21,7 @@ fun main() {
 
 fun Application.module() {
     Database.init()
+    AuthService.cleanupExpiredTokens()
     configureModule()
 }
 
@@ -44,9 +46,7 @@ private fun Application.configureModule() {
             }
             call.respondText(json.toString(), ContentType.Application.Json)
         }
-        registerRoutes()
-        heroRoutes()
-        actionRoutes()
+        authRoutes()
         staticResources("/", "static") {
             default("index.html")
         }

@@ -1,69 +1,243 @@
-# TamaHero
+# TamaHero - 1-Bit City Builder
 
-A pixel-art hero life sim. Torn meets Tamagotchi in a fantasy RPG world.
+A Clash of Clans-inspired multiplayer city builder with 1-bit pixel art style.
+Kotlin Multiplatform targeting Desktop, Android, and iOS.
 
-## One-Liner
-
-You don't play the hero — you manage their life. Train them, equip them, send them on quests, and watch them live in a shared persistent world.
-
-## Core Idea
-
-- Heroes live on real-world timers — training takes minutes, traveling takes hours, job shifts take hours. You set it and come back.
-- You observe, not play — open the app and see your pixel hero walking, training, fighting. It's ambient and alive.
-- Decisions, not actions — you pick what the hero does, where they go, what to buy. The hero executes autonomously.
-- Depth comes from systems — stats, skills, equipment, jobs, reputation, aging. Complexity is in understanding and optimizing, not reflexes.
-
-## The Hero
-
-- Stats (strength, agility, intelligence, etc.)
-- Level and experience
-- Skills (combat, crafting, social, etc.)
-- Age (heroes age and eventually retire or die)
-- Sex and body type
-- Equipment (weapons, armor, accessories)
-- Visual design elements (pixel art customization)
-
-## What the Hero Can Do
-
-- Train at a gym or training ground (improve stats over time)
-- Work a job (earn money on a schedule)
-- Go on missions/quests (story-driven, timed activities)
-- Hunt monsters (repeatable, risk/reward)
-- Travel between locations (real-time travel on the map)
-- Join a party with other heroes
-- Shop and trade
-- Talk to NPCs and other players' heroes
-
-## What the Player Can Do
-
-- Manage one or multiple heroes
-- Direct each hero's activities
-- Queue up a sequence of actions
-- Observe heroes in real-time on the world map
-- Shop for equipment and items
-- Decide how to allocate training and progression
-
-## The World
-
-- Classic fantasy RPG setting
-- One massive shared map — all players exist in the same world (MMO-style)
-- Players can engage with others or ignore them entirely (treat as NPCs)
-- Islands, cities, shops, dungeons, wilderness
-- Locations are distributed in clusters — traveling between them takes real time
-- The world is persistent — things happen whether you're watching or not
+---
 
 ## Core Loop
 
-1. Check in on your hero — see what they've been up to
-2. Collect results (loot, money, XP, completed tasks)
-3. Make decisions — what should they do next?
-4. Queue up activities
-5. Come back later
+1. **Build** your village (place/upgrade buildings)
+2. **Collect** resources over real time
+3. **Train** troops
+4. **Attack** other players' villages for loot
+5. **Defend** your village with walls, traps, and defensive buildings
+6. Repeat
 
-## What Makes It Fun
+---
 
-- Attachment — you grow a bond with your little pixel hero over days and weeks
-- Optimization — figuring out the best use of your hero's time
-- Progression — watching stats grow, gear improve, new areas unlock
-- Ambient presence — a living world you can peek into anytime
-- Shared world — seeing other heroes going about their lives alongside yours
+## Features
+
+### Phase 1 - Foundation (MVP)
+
+#### 1.1 Village Grid & Building Placement
+- [x] Canvas rendering with camera/zoom
+- [ ] Tile-based grid system (e.g. 40x40)
+- [ ] Building placement with collision detection
+- [ ] Building selection and info panel
+- [ ] Drag to move buildings (edit mode)
+
+#### 1.2 Buildings - Resource Production
+- [ ] **Town Hall** - central building, determines max level of everything
+- [ ] **Gold Mine** - produces gold over real time
+- [ ] **Elixir Collector** - produces elixir over real time
+- [ ] **Gold Storage** - stores gold (capacity limit)
+- [ ] **Elixir Storage** - stores elixir (capacity limit)
+
+#### 1.3 Real-Time Progression
+- [ ] Buildings produce resources while offline (server-authoritative)
+- [ ] Building construction takes real time (timers)
+- [ ] One builder available (can upgrade to more)
+- [ ] Server calculates accumulated resources on login
+
+#### 1.4 Authentication & Player Data
+- [x] Username/password + social login (Google, Apple)
+- [ ] Player profile (name, level, trophies)
+- [ ] Save/load village state to server
+- [ ] Sync village state on app launch
+
+#### 1.5 Server - Core API
+- [x] Auth routes
+- [ ] `GET /api/village` - load player's village
+- [ ] `PUT /api/village/build` - place a building
+- [ ] `PUT /api/village/upgrade` - upgrade a building
+- [ ] `PUT /api/village/move` - move a building
+- [ ] `POST /api/village/collect` - collect resources from a building
+- [ ] Server-side validation of all actions (anti-cheat)
+
+---
+
+### Phase 2 - Combat
+
+#### 2.1 Troops
+- [ ] **Barracks** building - trains troops
+- [ ] Troop training queue (real-time)
+- [ ] Troop types: Warrior (melee), Archer (ranged), Giant (tank)
+- [ ] Each troop has: HP, DPS, movement speed, training cost, training time
+- [ ] Army camp building (max troop capacity)
+
+#### 2.2 Defenses
+- [ ] **Cannon** - single-target, ground only
+- [ ] **Archer Tower** - single-target, air + ground
+- [ ] **Walls** - block troop pathing
+- [ ] **Traps** - hidden, one-time use, reset after triggered
+- [ ] Defense buildings auto-target nearest enemy during attacks
+
+#### 2.3 Attacking Other Players
+- [ ] Matchmaking: find a base to attack (similar trophy range)
+- [ ] Pre-attack scout view (see their base layout)
+- [ ] Deploy troops by tapping on the map edge
+- [ ] Troops auto-path to nearest building and attack
+- [ ] Battle ends when: all troops dead, all buildings destroyed, or 3-min timer
+- [ ] Stars system: 1 star = 50% destruction, 2 = Town Hall destroyed, 3 = 100%
+- [ ] Loot: steal percentage of opponent's resources
+- [ ] Trophy gain/loss based on stars
+
+#### 2.4 Being Attacked
+- [ ] Shield system: 12h shield after being attacked (scales with destruction %)
+- [ ] Attack replays: watch how your base was attacked
+- [ ] Defense log: list of recent attacks on your base
+
+#### 2.5 Server - Combat API
+- [ ] `POST /api/matchmaking/find` - find opponent
+- [ ] `POST /api/attack/start` - begin attack (locks opponent base)
+- [ ] `POST /api/attack/deploy` - deploy troop at position
+- [ ] `POST /api/attack/end` - submit battle result
+- [ ] Server validates battle results (anti-cheat)
+- [ ] Battle replay storage
+
+---
+
+### Phase 3 - Social & Progression
+
+#### 3.1 Clans
+- [ ] Create/join a clan
+- [ ] Clan chat
+- [ ] Donate troops to clanmates
+- [ ] Clan wars (coordinated attacks against another clan)
+
+#### 3.2 Leagues & Leaderboards
+- [ ] Trophy-based leagues (Bronze, Silver, Gold, Crystal, Champion)
+- [ ] Season resets
+- [ ] Global and local leaderboards
+- [ ] League bonus loot
+
+#### 3.3 Upgrades & Tech Tree
+- [ ] Town Hall levels (1-10) gate all other building levels
+- [ ] Each building has multiple upgrade levels
+- [ ] Upgrade cost and time increase per level
+- [ ] New buildings unlock at specific Town Hall levels
+- [ ] Troop upgrades via Laboratory building
+
+---
+
+### Phase 4 - Monetization
+
+#### 4.1 Premium Currency (Gems)
+- [ ] Gems purchasable with real money (IAP)
+- [ ] Gem packs at various price points
+
+#### 4.2 Gem Sinks
+- [ ] Speed up construction timers (instant finish)
+- [ ] Speed up troop training
+- [ ] Buy additional builders (up to 5)
+- [ ] Buy resources directly (gold/elixir)
+- [ ] Buy shields (prevent attacks)
+
+#### 4.3 Battle Pass (Season Pass)
+- [ ] Free tier with basic rewards
+- [ ] Premium tier with exclusive rewards
+- [ ] Season duration: ~1 month
+- [ ] Rewards: gems, resources, cosmetics, magic items
+
+#### 4.4 Cosmetics
+- [ ] Village skins/themes
+- [ ] Hero skins
+- [ ] Special building skins (seasonal events)
+
+#### 4.5 Other Monetization
+- [ ] Rewarded ads: watch ad for small gem/resource bonus
+- [ ] Starter packs (one-time purchase, high value)
+- [ ] Event-exclusive offers
+
+---
+
+## Data Model (Key Entities)
+
+```
+Player
+  id, username, trophies, level, xp
+  gems, gold, elixir
+  shieldExpiry, lastLogin
+
+Village
+  playerId
+  buildings: List<PlacedBuilding>
+
+PlacedBuilding
+  buildingType, level, x, y
+  constructionEndTime (null if complete)
+  lastCollectedAt (for resource buildings)
+  hitPoints
+
+BuildingType (config/static data)
+  id, name, size (e.g. 3x3)
+  levels: List<BuildingLevel>
+
+BuildingLevel
+  level, hp, cost, buildTime
+  productionRate (resource buildings)
+  storageCapacity (storage buildings)
+  damage, range, attackSpeed (defense buildings)
+
+Troop
+  type, level, hp, dps, speed, trainingCost, trainingTime
+
+BattleLog
+  attackerId, defenderId
+  stars, lootGold, lootElixir
+  trophyChange, timestamp
+  replay: List<BattleEvent>
+
+Clan
+  id, name, description
+  members: List<ClanMember>
+```
+
+---
+
+## Technical Notes
+
+### Client-Server Architecture
+- **Server is authoritative** for all game state (resources, timers, battles)
+- Client sends actions, server validates and applies
+- Client renders optimistically but corrects on server response
+- All timestamps are server-side to prevent clock manipulation
+
+### Real-Time Sync
+- On app launch: fetch full village state from server
+- Periodic sync every ~30s while app is open
+- Push notifications for: attack completed, construction done, shield expiring
+
+### Battle Simulation
+- Battles run client-side for responsiveness
+- Client sends deployment sequence to server
+- Server replays the battle deterministically to validate result
+- Troop AI: find nearest target, move toward it, attack until dead
+
+### Anti-Cheat
+- Server validates: resource amounts, build costs, upgrade prerequisites
+- Server validates: battle results by replaying troop deployment
+- Rate limiting on all endpoints
+- Signed API requests
+
+---
+
+## Art Style
+
+1-bit pixel art (black and white only):
+- Buildings: ~16x16 to 32x32 pixel sprites
+- Troops: ~8x8 to 16x16 pixel sprites
+- Terrain: simple tile patterns
+- UI: pixel art styled panels and buttons
+- Animations: minimal frame count (2-4 frames)
+
+---
+
+## Current Status
+
+- [x] Project setup (KMP + Compose Multiplatform)
+- [x] Canvas rendering with camera/zoom
+- [x] Sprite system
+- [x] Authentication (client + server)
+- [ ] Everything else

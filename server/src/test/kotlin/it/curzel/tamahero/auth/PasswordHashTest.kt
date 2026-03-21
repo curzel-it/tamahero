@@ -5,10 +5,9 @@ import kotlin.test.*
 class PasswordHashTest {
 
     @Test
-    fun testHashIsConsistent() {
-        val hash1 = hashPassword("test123")
-        val hash2 = hashPassword("test123")
-        assertEquals(hash1, hash2)
+    fun testHashAndVerify() {
+        val hash = hashPassword("test123")
+        assertTrue(verifyPassword("test123", hash))
     }
 
     @Test
