@@ -8,12 +8,11 @@ data class UserPrincipal(val userId: Long, val username: String) : @Suppress("DE
 
 fun Application.configureAuth() {
     install(Authentication) {
-        basic("auth-basic") {
-            validate { credentials ->
-                val user = UserRepository.findByUsername(credentials.name)
-                if (user != null && verifyPassword(credentials.password, user.passwordHash)) {
-                    UserPrincipal(user.id, user.username)
-                } else null
+        bearer("auth-bearer") {
+            authenticate { tokenCredential ->
+                val userId = AuthService.validateToken(tokenCredential.token) ?: return@authenticate null
+                val user = UserRepository.findById(userId) ?: return@authenticate null
+                UserPrincipal(user.id, user.username)
             }
         }
     }
