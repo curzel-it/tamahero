@@ -17,6 +17,7 @@ fun GameHudView(
     onBuildClick: () -> Unit,
     onCancelClick: () -> Unit,
     onAccountClick: () -> Unit,
+    onWsLogClick: () -> Unit = {},
     modifier: Modifier = Modifier,
 ) {
     Column(
@@ -43,6 +44,7 @@ fun GameHudView(
                 TamaButton(text = "Build", onClick = onBuildClick, color = TamaColors.Success)
             }
             TamaSecondaryButton(text = "Account", onClick = onAccountClick)
+            TamaSecondaryButton(text = "WS", onClick = onWsLogClick)
         }
     }
 }

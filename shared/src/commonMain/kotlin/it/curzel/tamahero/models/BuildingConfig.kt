@@ -104,9 +104,39 @@ object BuildingConfig {
         ),
     )
 
+    // Max count per building type, keyed by TownHall level
+    // Missing entries or missing TH levels mean unlimited (e.g. Wall)
+    private val maxCounts: Map<BuildingType, Map<Int, Int>> = mapOf(
+        BuildingType.LumberCamp to mapOf(1 to 2, 2 to 4, 3 to 6),
+        BuildingType.GoldMine to mapOf(1 to 2, 2 to 4, 3 to 6),
+        BuildingType.Forge to mapOf(2 to 1, 3 to 2),
+        BuildingType.WoodStorage to mapOf(1 to 1, 2 to 2, 3 to 3),
+        BuildingType.GoldStorage to mapOf(1 to 1, 2 to 2, 3 to 3),
+        BuildingType.MetalStorage to mapOf(2 to 1, 3 to 2),
+        BuildingType.Barracks to mapOf(1 to 1, 2 to 2, 3 to 2),
+        BuildingType.ArmyCamp to mapOf(1 to 1, 2 to 2, 3 to 3),
+        BuildingType.Cannon to mapOf(1 to 2, 2 to 3, 3 to 5),
+        BuildingType.ArcherTower to mapOf(1 to 1, 2 to 3, 3 to 4),
+        BuildingType.Mortar to mapOf(1 to 0, 2 to 1, 3 to 2),
+        BuildingType.WizardTower to mapOf(1 to 0, 2 to 1, 3 to 2),
+        BuildingType.SpikeTrap to mapOf(1 to 4, 2 to 6, 3 to 8),
+        BuildingType.SpringTrap to mapOf(1 to 2, 2 to 4, 3 to 6),
+        BuildingType.GiantBomb to mapOf(1 to 0, 2 to 2, 3 to 4),
+        BuildingType.ShieldDome to mapOf(2 to 1, 3 to 1),
+    )
+
     fun configFor(type: BuildingType, level: Int): BuildingLevelConfig? =
         configs[type]?.find { it.level == level }
 
     fun maxLevel(type: BuildingType): Int =
         configs[type]?.maxOf { it.level } ?: 0
+
+    fun maxCount(type: BuildingType, townHallLevel: Int): Int? {
+        val limits = maxCounts[type] ?: return null
+        // Find the limit for the highest TH level <= townHallLevel
+        return limits.entries
+            .filter { it.key <= townHallLevel }
+            .maxByOrNull { it.key }
+            ?.value
+    }
 }

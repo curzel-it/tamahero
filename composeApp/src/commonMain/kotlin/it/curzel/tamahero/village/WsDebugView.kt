@@ -1,22 +1,18 @@
 package it.curzel.tamahero.village
 
-import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.selection.SelectionContainer
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextField
-import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
-import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.input.pointer.PointerEventType
-import androidx.compose.ui.input.pointer.onPointerEvent
-import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -26,117 +22,71 @@ import it.curzel.tamahero.ui.theme.TamaColors
 import it.curzel.tamahero.ui.theme.TamaRadius
 import it.curzel.tamahero.ui.theme.TamaSpacing
 
-@OptIn(ExperimentalComposeUiApi::class)
 @Composable
-fun WsDebugView(modifier: Modifier = Modifier) {
-    var expanded by remember { mutableStateOf(false) }
-    var logText by remember { mutableStateOf("") }
-    var logCount by remember { mutableIntStateOf(0) }
+fun WsDebugPanel(
+    onClose: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val messages by GameSocketClient.messageLog.collectAsState()
+    val scrollState = rememberScrollState()
+
+    LaunchedEffect(messages.size) {
+        scrollState.animateScrollTo(scrollState.maxValue)
+    }
 
     Column(
-        modifier = modifier,
-        horizontalAlignment = Alignment.End,
+        modifier = modifier
+            .width(400.dp)
+            .background(TamaColors.Background),
     ) {
-        Box(
+        Row(
             modifier = Modifier
-                .size(36.dp)
-                .clip(CircleShape)
-                .background(TamaColors.SurfaceElevated.copy(alpha = 0.8f))
-                .clickable {
-                    if (!expanded) {
-                        val snapshot = GameSocketClient.messageLog.value
-                        logText = buildLogPlainText(snapshot)
-                        logCount = snapshot.size
-                    }
-                    expanded = !expanded
-                },
-            contentAlignment = Alignment.Center,
+                .fillMaxWidth()
+                .background(TamaColors.SurfaceElevated)
+                .padding(horizontal = TamaSpacing.Small, vertical = TamaSpacing.XSmall),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically,
         ) {
-            Text("WS", color = TamaColors.TextMuted, fontSize = 11.sp)
+            Text("WebSocket Log (${messages.size})", color = TamaColors.Text, fontSize = 13.sp)
+            Text(
+                "Close",
+                color = TamaColors.Accent,
+                fontSize = 12.sp,
+                modifier = Modifier
+                    .clip(RoundedCornerShape(TamaRadius.XSmall))
+                    .clickable(onClick = onClose)
+                    .padding(TamaSpacing.XXSmall),
+            )
         }
 
-        AnimatedVisibility(visible = expanded) {
-            Column(
-                modifier = Modifier
-                    .padding(top = TamaSpacing.XXSmall)
-                    .width(420.dp)
-                    .heightIn(max = 500.dp)
-                    .clip(RoundedCornerShape(TamaRadius.Medium))
-                    .background(TamaColors.Background.copy(alpha = 0.95f))
-                    .onPointerEvent(PointerEventType.Scroll) { it.changes.forEach { c -> c.consume() } },
-            ) {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .background(TamaColors.SurfaceElevated)
-                        .padding(horizontal = TamaSpacing.XSmall, vertical = TamaSpacing.XXSmall + 2.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    Text("WebSocket Log ($logCount)", color = TamaColors.Text, fontSize = 12.sp)
-                    Row(horizontalArrangement = Arrangement.spacedBy(TamaSpacing.XSmall)) {
-                        Text(
-                            "Refresh",
-                            color = TamaColors.Accent,
-                            fontSize = 12.sp,
-                            modifier = Modifier
-                                .clip(RoundedCornerShape(TamaRadius.XSmall))
-                                .clickable {
-                                    val snapshot = GameSocketClient.messageLog.value
-                                    logText = buildLogPlainText(snapshot)
-                                    logCount = snapshot.size
-                                }
-                                .padding(TamaSpacing.XXSmall),
-                        )
-                        Text(
-                            "X",
-                            color = TamaColors.TextMuted,
-                            fontSize = 12.sp,
-                            modifier = Modifier
-                                .clip(CircleShape)
-                                .clickable { expanded = false }
-                                .padding(TamaSpacing.XXSmall),
-                        )
-                    }
-                }
+        HorizontalDivider(color = TamaColors.SurfaceElevated, thickness = 1.dp)
 
-                TextField(
-                    value = logText,
-                    onValueChange = {},
-                    readOnly = true,
-                    textStyle = TextStyle(
-                        fontFamily = FontFamily.Monospace,
-                        fontSize = 11.sp,
-                        lineHeight = 15.sp,
-                        color = TamaColors.Text,
-                    ),
-                    colors = TextFieldDefaults.colors(
-                        unfocusedContainerColor = TamaColors.Background.copy(alpha = 0f),
-                        focusedContainerColor = TamaColors.Background.copy(alpha = 0f),
-                        unfocusedIndicatorColor = TamaColors.Background.copy(alpha = 0f),
-                        focusedIndicatorColor = TamaColors.Background.copy(alpha = 0f),
-                        cursorColor = TamaColors.Accent,
-                    ),
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .weight(1f),
-                )
-            }
+        SelectionContainer(modifier = Modifier.weight(1f)) {
+            Text(
+                text = buildLogPlainText(messages),
+                fontFamily = FontFamily.Monospace,
+                fontSize = 11.sp,
+                lineHeight = 16.sp,
+                color = TamaColors.Text,
+                modifier = Modifier
+                    .fillMaxSize()
+                    .verticalScroll(scrollState)
+                    .padding(TamaSpacing.XSmall),
+            )
         }
     }
 }
 
 private fun buildLogPlainText(messages: List<WsLogEntry>): String {
     val sb = StringBuilder()
-    for ((i, entry) in messages.withIndex()) {
-        if (i > 0) sb.append('\n')
+    for (entry in messages) {
         val dir = if (entry.direction == "SENT") ">>>" else "<<<"
         sb.append(formatTime(entry.timestamp))
         sb.append(' ')
         sb.append(dir)
         sb.append(' ')
         sb.append(prettyJson(entry.text))
-        sb.append('\n')
+        sb.append("\n\n")
     }
     return sb.toString()
 }

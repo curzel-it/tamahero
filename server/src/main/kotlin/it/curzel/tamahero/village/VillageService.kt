@@ -17,6 +17,7 @@ object VillageService {
                 ?: throw VillageException("Unknown building type")
 
             requireTownHallLevel(state, now, config.requiredTownHallLevel)
+            requireBuildingLimit(state, now, type)
             requireResources(state, config.cost)
             requireWithinBounds(x, y, config.width, config.height)
             requireNoCollision(state.village.buildings, x, y, config.width, config.height, excludeId = null)
@@ -247,6 +248,17 @@ object VillageService {
             .maxOfOrNull { it.level } ?: 0
         if (required > townHallLevel) {
             throw VillageException("Town Hall level $required required")
+        }
+    }
+
+    private fun requireBuildingLimit(state: GameState, now: Long, type: BuildingType) {
+        val thLevel = state.village.buildings
+            .filter { it.type == BuildingType.TownHall && it.isComplete(now) }
+            .maxOfOrNull { it.level } ?: 0
+        val maxCount = BuildingConfig.maxCount(type, thLevel) ?: return
+        val currentCount = state.village.buildings.count { it.type == type }
+        if (currentCount >= maxCount) {
+            throw VillageException("Maximum $maxCount ${type.name} allowed at TH level $thLevel")
         }
     }
 

@@ -3,17 +3,20 @@ package it.curzel.tamahero.village
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import it.curzel.tamahero.models.BuildingConfig
 import it.curzel.tamahero.models.PlacedBuilding
 import it.curzel.tamahero.models.Resources
 import it.curzel.tamahero.network.GameSocketClient
 import it.curzel.tamahero.ui.theme.*
+import kotlinx.coroutines.delay
 
 @Composable
 fun BuildingInfoView(
@@ -74,9 +77,9 @@ fun BuildingInfoView(
             }
         }
 
-        if (isUnderConstruction) {
+        if (isUnderConstruction && config != null) {
             Spacer(Modifier.height(TamaSpacing.XXSmall))
-            Text("Under construction...", color = TamaColors.Warning, fontSize = 14.sp)
+            ConstructionProgress(building, config.buildTimeSeconds)
         }
 
         Spacer(Modifier.height(TamaSpacing.Small))
@@ -131,6 +134,40 @@ fun BuildingInfoView(
                 )
             }
         }
+    }
+}
+
+@Composable
+private fun ConstructionProgress(building: PlacedBuilding, buildTimeSeconds: Long) {
+    val startedAt = building.constructionStartedAt ?: return
+    val totalMs = buildTimeSeconds * 1000L
+    var now by remember { mutableStateOf(System.currentTimeMillis()) }
+
+    LaunchedEffect(building.id) {
+        while (true) {
+            delay(500)
+            now = System.currentTimeMillis()
+        }
+    }
+
+    val elapsed = (now - startedAt).coerceAtLeast(0)
+    val progress = (elapsed.toFloat() / totalMs).coerceIn(0f, 1f)
+    val remainingSeconds = ((totalMs - elapsed) / 1000).coerceAtLeast(0)
+    val eta = if (remainingSeconds >= 60) {
+        "${remainingSeconds / 60}m ${remainingSeconds % 60}s"
+    } else {
+        "${remainingSeconds}s"
+    }
+
+    Column {
+        Text("Building... $eta remaining", color = TamaColors.Warning, fontSize = 14.sp)
+        Spacer(Modifier.height(4.dp))
+        LinearProgressIndicator(
+            progress = { progress },
+            modifier = Modifier.fillMaxWidth().height(6.dp).clip(RoundedCornerShape(3.dp)),
+            color = TamaColors.Accent,
+            trackColor = TamaColors.SurfaceElevated,
+        )
     }
 }
 

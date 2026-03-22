@@ -29,6 +29,11 @@ class VillageViewModel : ViewModel() {
                     is ServerMessage.ResourcesUpdated -> {
                         _resources.value = message.resources
                     }
+                    is ServerMessage.BuildingComplete,
+                    is ServerMessage.TrainingComplete,
+                    is ServerMessage.EventEnded -> {
+                        GameSocketClient.getVillage()
+                    }
                     else -> {}
                 }
             }
