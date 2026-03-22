@@ -1,8 +1,9 @@
 package it.curzel.tamahero
 
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.darkColorScheme
+import androidx.compose.foundation.layout.*
+import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.unit.dp
 import it.curzel.tamahero.auth.AuthClient
 import it.curzel.tamahero.auth.AuthScreenView
 import it.curzel.tamahero.auth.AuthState
@@ -23,7 +24,11 @@ fun App() {
     MaterialTheme(colorScheme = darkColorScheme()) {
         when (val state = authState) {
             is AuthState.LoggedIn -> {
-                LaunchedEffect(state.token) {
+                var connectionFailed by remember { mutableStateOf(false) }
+                var retryTrigger by remember { mutableIntStateOf(0) }
+
+                LaunchedEffect(state.token, retryTrigger) {
+                    connectionFailed = false
                     GameSocketClient.connect(state.token)
                     val connected = withTimeoutOrNull(10_000) {
                         GameSocketClient.events.filterIsInstance<ServerMessage.Connected>().first()
@@ -32,15 +37,39 @@ fun App() {
                         GameSocketClient.getVillage()
                     } else {
                         GameSocketClient.disconnect()
-                        authViewModel.logout()
+                        connectionFailed = true
                     }
                 }
                 DisposableEffect(state.token) {
                     onDispose { GameSocketClient.disconnect() }
                 }
-                GameView()
+
+                if (connectionFailed) {
+                    ConnectionErrorView(
+                        onRetry = { retryTrigger++ },
+                        onLogout = { authViewModel.logout() },
+                    )
+                } else {
+                    GameView()
+                }
             }
             else -> AuthScreenView(authViewModel)
+        }
+    }
+}
+
+@Composable
+private fun ConnectionErrorView(onRetry: () -> Unit, onLogout: () -> Unit) {
+    Box(
+        modifier = androidx.compose.ui.Modifier.fillMaxSize(),
+        contentAlignment = androidx.compose.ui.Alignment.Center,
+    ) {
+        Column(horizontalAlignment = androidx.compose.ui.Alignment.CenterHorizontally) {
+            Text("Could not connect to server", style = MaterialTheme.typography.titleMedium)
+            Spacer(modifier = androidx.compose.ui.Modifier.height(16.dp))
+            Button(onClick = onRetry) { Text("Retry") }
+            Spacer(modifier = androidx.compose.ui.Modifier.height(8.dp))
+            TextButton(onClick = onLogout) { Text("Logout") }
         }
     }
 }

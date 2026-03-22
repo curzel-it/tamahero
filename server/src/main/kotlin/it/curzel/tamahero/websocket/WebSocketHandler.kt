@@ -20,13 +20,14 @@ object WebSocketHandler {
             return
         }
 
-        ConnectionManager.registerConnection(userId, session)
-        ConnectionManager.sendToPlayer(userId, ServerMessage.Connected(playerId = userId))
+        val connectionId = ConnectionManager.registerConnection(userId, session)
+        val connectedText = ProtocolJson.encodeToString(ServerMessage.serializer(), ServerMessage.Connected(playerId = userId))
+        session.send(Frame.Text(connectedText))
 
         try {
             for (frame in session.incoming) {
                 when (frame) {
-                    is Frame.Text -> handleMessage(userId, frame.readText())
+                    is Frame.Text -> handleMessage(userId, connectionId, frame.readText())
                     is Frame.Close -> break
                     else -> {}
                 }
@@ -34,15 +35,15 @@ object WebSocketHandler {
         } catch (e: Exception) {
             logger.error("WebSocket error for player {}", userId, e)
         } finally {
-            ConnectionManager.removeConnection(userId)
+            ConnectionManager.removeConnection(userId, connectionId)
         }
     }
 
-    private suspend fun handleMessage(userId: Long, text: String) {
+    private suspend fun handleMessage(userId: Long, connectionId: Long, text: String) {
         try {
             val message = ProtocolJson.decodeFromString(ClientMessage.serializer(), text)
             when (message) {
-                is ClientMessage.KeepAlive -> ConnectionManager.updateKeepAlive(userId)
+                is ClientMessage.KeepAlive -> ConnectionManager.updateKeepAlive(userId, connectionId)
                 is ClientMessage.GetVillage -> handleVillageAction(userId) { VillageService.getOrCreateVillage(userId) }
                 is ClientMessage.Build -> handleVillageAction(userId) { VillageService.placeBuild(userId, message.buildingType, message.x, message.y) }
                 is ClientMessage.Upgrade -> handleVillageAction(userId) { VillageService.upgradeBuilding(userId, message.buildingId) }
