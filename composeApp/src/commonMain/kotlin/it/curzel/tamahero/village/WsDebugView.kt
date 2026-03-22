@@ -29,8 +29,9 @@ import it.curzel.tamahero.ui.theme.TamaSpacing
 
 @Composable
 fun WsDebugView(modifier: Modifier = Modifier) {
-    val messages by GameSocketClient.messageLog.collectAsState()
     var expanded by remember { mutableStateOf(false) }
+    var snapshot by remember { mutableStateOf<List<WsLogEntry>>(emptyList()) }
+    var snapshotText by remember { mutableStateOf(AnnotatedString("")) }
 
     Column(
         modifier = modifier,
@@ -41,7 +42,13 @@ fun WsDebugView(modifier: Modifier = Modifier) {
                 .size(36.dp)
                 .clip(CircleShape)
                 .background(TamaColors.SurfaceElevated.copy(alpha = 0.8f))
-                .clickable { expanded = !expanded },
+                .clickable {
+                    if (!expanded) {
+                        snapshot = GameSocketClient.messageLog.value
+                        snapshotText = buildLogText(snapshot)
+                    }
+                    expanded = !expanded
+                },
             contentAlignment = Alignment.Center,
         ) {
             Text("WS", color = TamaColors.TextMuted, fontSize = 11.sp)
@@ -49,10 +56,6 @@ fun WsDebugView(modifier: Modifier = Modifier) {
 
         AnimatedVisibility(visible = expanded) {
             val scrollState = rememberScrollState()
-
-            LaunchedEffect(messages.size) {
-                scrollState.animateScrollTo(scrollState.maxValue)
-            }
 
             Column(
                 modifier = Modifier
@@ -70,21 +73,35 @@ fun WsDebugView(modifier: Modifier = Modifier) {
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
-                    Text("WebSocket Log (${messages.size})", color = TamaColors.Text, fontSize = 12.sp)
-                    Text(
-                        "X",
-                        color = TamaColors.TextMuted,
-                        fontSize = 12.sp,
-                        modifier = Modifier
-                            .clip(CircleShape)
-                            .clickable { expanded = false }
-                            .padding(TamaSpacing.XXSmall),
-                    )
+                    Text("WebSocket Log (${snapshot.size})", color = TamaColors.Text, fontSize = 12.sp)
+                    Row(horizontalArrangement = Arrangement.spacedBy(TamaSpacing.XSmall)) {
+                        Text(
+                            "Refresh",
+                            color = TamaColors.Accent,
+                            fontSize = 12.sp,
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(TamaRadius.XSmall))
+                                .clickable {
+                                    snapshot = GameSocketClient.messageLog.value
+                                    snapshotText = buildLogText(snapshot)
+                                }
+                                .padding(TamaSpacing.XXSmall),
+                        )
+                        Text(
+                            "X",
+                            color = TamaColors.TextMuted,
+                            fontSize = 12.sp,
+                            modifier = Modifier
+                                .clip(CircleShape)
+                                .clickable { expanded = false }
+                                .padding(TamaSpacing.XXSmall),
+                        )
+                    }
                 }
 
                 SelectionContainer {
                     Text(
-                        text = buildLogText(messages),
+                        text = snapshotText,
                         fontFamily = FontFamily.Monospace,
                         fontSize = 11.sp,
                         lineHeight = 15.sp,

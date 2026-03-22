@@ -362,6 +362,8 @@ private fun buildingLabel(type: BuildingType): Char = when (type) {
     BuildingType.Mortar -> 'M'
     BuildingType.SpikeTrap -> 's'
     BuildingType.SpringTrap -> 'p'
+    BuildingType.GiantBomb -> 'b'
+    BuildingType.WizardTower -> 'Z'
     BuildingType.ShieldDome -> 'S'
 }
 
