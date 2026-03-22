@@ -83,12 +83,20 @@ object BuildingConfig {
             BuildingLevelConfig(level = 1, hp = 250, cost = Resources(gold = 300, wood = 100), buildTimeSeconds = 60, damage = 15, range = 5f, minRange = 2f, attackSpeedMs = 2000, splashRadius = 1.5f),
             BuildingLevelConfig(level = 2, hp = 375, cost = Resources(gold = 600, wood = 200), buildTimeSeconds = 180, damage = 22, range = 5.5f, minRange = 2f, attackSpeedMs = 2000, splashRadius = 1.5f),
         ),
+        BuildingType.WizardTower to listOf(
+            BuildingLevelConfig(level = 1, hp = 350, cost = Resources(gold = 400, wood = 200), buildTimeSeconds = 60, damage = 11, range = 3.5f, attackSpeedMs = 1500, splashRadius = 1f),
+            BuildingLevelConfig(level = 2, hp = 500, cost = Resources(gold = 800, wood = 400), buildTimeSeconds = 180, damage = 16, range = 3.5f, attackSpeedMs = 1500, splashRadius = 1f),
+        ),
         BuildingType.SpikeTrap to listOf(
             BuildingLevelConfig(level = 1, hp = 1, cost = Resources(wood = 20), buildTimeSeconds = 5, width = 1, height = 1, burstDamage = 30, triggerRadius = 1f),
             BuildingLevelConfig(level = 2, hp = 1, cost = Resources(wood = 40, metal = 10), buildTimeSeconds = 10, width = 1, height = 1, burstDamage = 50, triggerRadius = 1.5f),
         ),
         BuildingType.SpringTrap to listOf(
             BuildingLevelConfig(level = 1, hp = 1, cost = Resources(wood = 30, metal = 10), buildTimeSeconds = 5, width = 1, height = 1),
+        ),
+        BuildingType.GiantBomb to listOf(
+            BuildingLevelConfig(level = 1, hp = 1, cost = Resources(gold = 100, metal = 20), buildTimeSeconds = 10, width = 1, height = 1, burstDamage = 100, triggerRadius = 2f),
+            BuildingLevelConfig(level = 2, hp = 1, cost = Resources(gold = 200, metal = 40), buildTimeSeconds = 15, width = 1, height = 1, burstDamage = 150, triggerRadius = 2.5f),
         ),
         BuildingType.ShieldDome to listOf(
             BuildingLevelConfig(level = 1, hp = 100, cost = Resources(gold = 500, wood = 500, metal = 200), buildTimeSeconds = 120, shieldHp = 500, requiredTownHallLevel = 2),

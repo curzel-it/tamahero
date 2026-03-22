@@ -28,6 +28,13 @@ object BattleUpdateUseCase {
         while (time < now && current.troops.isNotEmpty()) {
             current = tick(current, TICK_MS)
             time += TICK_MS
+
+            // End battle if no targetable buildings remain (attackers win)
+            val hasTargets = current.village.buildings.any { !it.type.isTrap && it.type != BuildingType.ShieldDome }
+            if (!hasTargets) {
+                current = current.copy(troops = emptyList())
+                break
+            }
         }
 
         // Battle ended — post-battle processing
@@ -52,17 +59,23 @@ object BattleUpdateUseCase {
             val dist = distanceTo(troop, target)
 
             if (dist <= config.range) {
-                val damage = (config.dps * deltaSeconds).toInt()
+                var damage = (config.dps * deltaSeconds).toInt().coerceAtLeast(1)
+                if (target.type == BuildingType.Wall && config.wallDamageMultiplier > 1f) {
+                    damage = (damage * config.wallDamageMultiplier).toInt()
+                }
+                if (config.splashRadius > 0f) {
+                    // Splash damage to nearby buildings
+                    for (b in buildings.indices) {
+                        if (buildings[b].id == target.id) continue
+                        if (distanceBetweenBuildings(target, buildings[b]) <= config.splashRadius) {
+                            shieldHp = applyDamageToBuilding(buildings, buildings[b].id, damage / 2, shieldHp)
+                        }
+                    }
+                }
                 shieldHp = applyDamageToBuilding(buildings, target.id, damage, shieldHp)
+                troops[i] = troop.copy(targetId = target.id, path = emptyList(), pathTargetId = null)
             } else {
-                val moveAmount = (config.speed * deltaSeconds).toFloat()
-                val dx = target.x + 0.5f - troop.x
-                val dy = target.y + 0.5f - troop.y
-                troops[i] = troop.copy(
-                    x = troop.x + (dx / dist) * moveAmount,
-                    y = troop.y + (dy / dist) * moveAmount,
-                    targetId = target.id,
-                )
+                troops[i] = moveAlongPath(troop, target, buildings, config, deltaSeconds)
             }
         }
 
@@ -79,52 +92,85 @@ object BattleUpdateUseCase {
         )
     }
 
+    private fun moveAlongPath(
+        troop: Troop,
+        target: PlacedBuilding,
+        buildings: List<PlacedBuilding>,
+        config: TroopLevelConfig,
+        deltaSeconds: Double,
+    ): Troop {
+        val needsRepath = troop.pathTargetId != target.id || troop.path.isEmpty()
+        val path = if (needsRepath) {
+            Pathfinding.findPath(troop.x, troop.y, target, buildings)
+        } else {
+            troop.path
+        }
+
+        if (path != null && path.isNotEmpty()) {
+            val waypoint = path.first()
+            val wpX = waypoint.x + 0.5f
+            val wpY = waypoint.y + 0.5f
+            val dx = wpX - troop.x
+            val dy = wpY - troop.y
+            val wpDist = sqrt((dx * dx + dy * dy).toDouble()).toFloat()
+            val moveAmount = (config.speed * deltaSeconds).toFloat()
+
+            return if (wpDist <= moveAmount) {
+                troop.copy(
+                    x = wpX, y = wpY,
+                    targetId = target.id,
+                    path = path.drop(1),
+                    pathTargetId = target.id,
+                )
+            } else {
+                troop.copy(
+                    x = troop.x + (dx / wpDist) * moveAmount,
+                    y = troop.y + (dy / wpDist) * moveAmount,
+                    targetId = target.id,
+                    path = path,
+                    pathTargetId = target.id,
+                )
+            }
+        }
+
+        // No path found — fall back to straight-line toward nearest point of building
+        val moveAmount = (config.speed * deltaSeconds).toFloat()
+        val bConfig = BuildingConfig.configFor(target.type, target.level)
+        val bw = bConfig?.width ?: 2
+        val bh = bConfig?.height ?: 2
+        val nearX = troop.x.coerceIn(target.x.toFloat(), (target.x + bw).toFloat())
+        val nearY = troop.y.coerceIn(target.y.toFloat(), (target.y + bh).toFloat())
+        val dx = nearX - troop.x
+        val dy = nearY - troop.y
+        val dist = sqrt((dx * dx + dy * dy).toDouble()).toFloat()
+        if (dist < 0.01f) return troop.copy(targetId = target.id, path = emptyList(), pathTargetId = null)
+        return troop.copy(
+            x = troop.x + (dx / dist) * moveAmount,
+            y = troop.y + (dy / dist) * moveAmount,
+            targetId = target.id,
+            path = emptyList(),
+            pathTargetId = null,
+        )
+    }
+
     private fun findTarget(troop: Troop, buildings: List<PlacedBuilding>): PlacedBuilding? {
         val available = buildings.filter { !it.type.isTrap && it.type != BuildingType.ShieldDome }
         if (available.isEmpty()) return null
 
-        val preferred = when (troop.type) {
-            TroopType.OrcBerserker -> available.maxByOrNull { it.hp }
-            TroopType.DwarfSapper -> available.filter { it.type.isDefense }.minByOrNull { distanceTo(troop, it) }
-                ?: available.minByOrNull { distanceTo(troop, it) }
-            else -> available.minByOrNull { distanceTo(troop, it) }
-        } ?: return null
-
-        // Check if a wall blocks the path to the preferred target
-        val blockingWall = buildings
-            .filter { it.type == BuildingType.Wall }
-            .filter { isWallBlocking(troop, preferred, it) }
-            .minByOrNull { distanceTo(troop, it) }
-
-        return blockingWall ?: preferred
-    }
-
-    private fun isWallBlocking(troop: Troop, target: PlacedBuilding, wall: PlacedBuilding): Boolean {
-        val wx = wall.x + 0.5f
-        val wy = wall.y + 0.5f
-        val tx = target.x + 0.5f
-        val ty = target.y + 0.5f
-
-        // Wall must be between troop and target (closer to troop than target)
-        val distToWall = distanceTo(troop, wall)
-        val distToTarget = distanceTo(troop, target)
-        if (distToWall >= distToTarget) return false
-
-        // Check if the wall is roughly on the line from troop to target
-        val dx = tx - troop.x
-        val dy = ty - troop.y
-        val len = sqrt((dx * dx + dy * dy).toDouble()).toFloat()
-        if (len < 0.01f) return false
-
-        // Project wall position onto the troop→target line
-        val t = ((wx - troop.x) * dx + (wy - troop.y) * dy) / (len * len)
-        if (t < 0 || t > 1) return false
-
-        val projX = troop.x + t * dx
-        val projY = troop.y + t * dy
-        val perpDist = sqrt(((wx - projX) * (wx - projX) + (wy - projY) * (wy - projY)).toDouble()).toFloat()
-
-        return perpDist < 1.0f
+        return when (troop.type.targetPreference) {
+            TargetPreference.Defenses ->
+                available.filter { it.type.isDefense }.minByOrNull { distanceTo(troop, it) }
+                    ?: available.minByOrNull { distanceTo(troop, it) }
+            TargetPreference.Walls ->
+                available.filter { it.type == BuildingType.Wall }.minByOrNull { distanceTo(troop, it) }
+                    ?: available.filter { it.type.isDefense }.minByOrNull { distanceTo(troop, it) }
+                    ?: available.minByOrNull { distanceTo(troop, it) }
+            TargetPreference.Resources ->
+                available.filter { it.type.isResource }.minByOrNull { distanceTo(troop, it) }
+                    ?: available.minByOrNull { distanceTo(troop, it) }
+            TargetPreference.Nearest ->
+                available.minByOrNull { distanceTo(troop, it) }
+        }
     }
 
     private fun triggerTraps(troops: MutableList<Troop>, buildings: MutableList<PlacedBuilding>): List<Troop> {
@@ -138,7 +184,7 @@ object BattleUpdateUseCase {
             if (troopsOnTrap.isEmpty()) continue
 
             when (trap.type) {
-                BuildingType.SpikeTrap -> {
+                BuildingType.SpikeTrap, BuildingType.GiantBomb -> {
                     val affected = result.filter { distanceTo(it, trap) <= config.triggerRadius }
                     for (troop in affected) {
                         val idx = result.indexOfFirst { it.id == troop.id }
@@ -152,7 +198,7 @@ object BattleUpdateUseCase {
                 }
                 BuildingType.SpringTrap -> {
                     val victim = troopsOnTrap.firstOrNull {
-                        it.type == TroopType.HumanSoldier || it.type == TroopType.ElfArcher
+                        it.type == TroopType.HumanSoldier || it.type == TroopType.ElfArcher || it.type == TroopType.Goblin
                     }
                     if (victim != null) {
                         result.removeAll { it.id == victim.id }
@@ -191,7 +237,7 @@ object BattleUpdateUseCase {
                 val target = inRange.minByOrNull { distanceTo(it, defense) } ?: continue
                 val splashCenter = target
                 val splashed = result.filter { distanceTo(it, splashCenter) <= config.splashRadius }
-                val damage = (config.damage * deltaSeconds).toInt()
+                val damage = (config.damage * deltaSeconds).toInt().coerceAtLeast(1)
                 for (troop in splashed) {
                     val idx = result.indexOfFirst { it.id == troop.id }
                     if (idx >= 0) {
@@ -205,7 +251,7 @@ object BattleUpdateUseCase {
                 val target = result.minByOrNull { distanceTo(it, defense) } ?: continue
                 val dist = distanceTo(target, defense)
                 if (dist > config.range) continue
-                val damage = (config.damage * deltaSeconds).toInt()
+                val damage = (config.damage * deltaSeconds).toInt().coerceAtLeast(1)
                 val idx = result.indexOfFirst { it.id == target.id }
                 if (idx >= 0) {
                     val newHp = result[idx].hp - damage
@@ -287,14 +333,31 @@ object BattleUpdateUseCase {
     }
 
     private fun distanceTo(troop: Troop, building: PlacedBuilding): Float {
-        val dx = building.x + 0.5f - troop.x
-        val dy = building.y + 0.5f - troop.y
+        val config = BuildingConfig.configFor(building.type, building.level)
+        val bw = config?.width ?: 2
+        val bh = config?.height ?: 2
+        val nearestX = troop.x.coerceIn(building.x.toFloat(), (building.x + bw).toFloat())
+        val nearestY = troop.y.coerceIn(building.y.toFloat(), (building.y + bh).toFloat())
+        val dx = nearestX - troop.x
+        val dy = nearestY - troop.y
         return sqrt((dx * dx + dy * dy).toDouble()).toFloat()
     }
 
     private fun distanceTo(a: Troop, b: Troop): Float {
         val dx = b.x - a.x
         val dy = b.y - a.y
+        return sqrt((dx * dx + dy * dy).toDouble()).toFloat()
+    }
+
+    private fun distanceBetweenBuildings(a: PlacedBuilding, b: PlacedBuilding): Float {
+        val ac = BuildingConfig.configFor(a.type, a.level)
+        val bc = BuildingConfig.configFor(b.type, b.level)
+        val aCx = a.x + (ac?.width ?: 2) / 2f
+        val aCy = a.y + (ac?.height ?: 2) / 2f
+        val bCx = b.x + (bc?.width ?: 2) / 2f
+        val bCy = b.y + (bc?.height ?: 2) / 2f
+        val dx = aCx - bCx
+        val dy = aCy - bCy
         return sqrt((dx * dx + dy * dy).toDouble()).toFloat()
     }
 }

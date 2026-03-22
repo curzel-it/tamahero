@@ -233,8 +233,9 @@ object VillageService {
         }
 
     private fun loadAndUpdate(userId: Long, action: (GameState) -> GameState): GameState {
-        val now = System.currentTimeMillis()
-        val state = VillageRepository.getVillage(userId) ?: createDefaultVillage(userId, now)
+        val realNow = System.currentTimeMillis()
+        val state = VillageRepository.getVillage(userId) ?: createDefaultVillage(userId, realNow)
+        val now = maxOf(realNow, state.lastUpdatedAt)
         val updated = action(GameStateUpdateUseCase.update(state, now))
         VillageRepository.saveVillage(userId, updated.copy(lastUpdatedAt = now))
         return updated
@@ -270,6 +271,45 @@ object VillageService {
                 throw VillageException("Position overlaps with existing building")
             }
         }
+    }
+
+    fun triggerEvent(userId: Long, eventType: EventType, customWave: EventWave? = null): GameState =
+        loadAndUpdate(userId) { state ->
+            if (state.activeEvent != null) throw VillageException("Event already active")
+            PveEventUpdateUseCase.startEvent(state, eventType, state.lastUpdatedAt, customWave)
+        }
+
+    fun adminPlaceBuilding(userId: Long, type: BuildingType, x: Int, y: Int, level: Int): GameState =
+        loadAndUpdate(userId) { state ->
+            val config = BuildingConfig.configFor(type, level)
+                ?: throw VillageException("Unknown building config for $type level $level")
+            val newId = (state.village.buildings.maxOfOrNull { it.id } ?: 0) + 1
+            val building = PlacedBuilding(
+                id = newId, type = type, level = level,
+                x = x, y = y,
+                hp = config.hp,
+                lastCollectedAt = state.lastUpdatedAt,
+            )
+            state.copy(village = state.village.copy(buildings = state.village.buildings + building))
+        }
+
+    fun advanceTime(userId: Long, deltaMs: Long): GameState {
+        val state = VillageRepository.getVillage(userId)
+            ?: throw VillageException("Village not found")
+        val futureTime = state.lastUpdatedAt + deltaMs
+        val updated = GameStateUpdateUseCase.update(state, futureTime)
+        VillageRepository.saveVillage(userId, updated.copy(lastUpdatedAt = futureTime))
+        return updated
+    }
+
+    fun grantResources(userId: Long, resources: Resources): GameState =
+        loadAndUpdate(userId) { state ->
+            state.copy(resources = state.resources + resources)
+        }
+
+    fun resetVillage(userId: Long): GameState {
+        VillageRepository.deleteVillage(userId)
+        return loadAndUpdate(userId) { it }
     }
 
     private fun createDefaultVillage(userId: Long, now: Long): GameState {

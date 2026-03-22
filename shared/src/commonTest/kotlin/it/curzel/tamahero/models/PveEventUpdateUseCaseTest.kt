@@ -75,23 +75,12 @@ class PveEventUpdateUseCaseTest {
     }
 
     @Test
-    fun dragonRaidSpawnsBoss() {
+    fun battleSpawnsTroops() {
         val state = baseState()
-        val result = PveEventUpdateUseCase.startEvent(state, EventType.DragonRaid, now = 1000)
-
-        assertTrue(result.troops.isNotEmpty())
-        assertEquals(1, result.troops.size) // single dragon
-        assertTrue(result.troops.first().hp >= 500) // boss HP
-    }
-
-    @Test
-    fun siegeHasMultipleWaves() {
-        val state = baseState()
-        val result = PveEventUpdateUseCase.startEvent(state, EventType.Siege, now = 1000)
+        val result = PveEventUpdateUseCase.startEvent(state, EventType.Battle, now = 1000)
 
         assertNotNull(result.activeEvent)
-        assertEquals(3, result.activeEvent!!.totalWaves)
-        assertEquals(0, result.activeEvent!!.currentWave)
+        assertFalse(result.activeEvent!!.completed)
         assertTrue(result.troops.isNotEmpty())
     }
 
@@ -128,15 +117,12 @@ class PveEventUpdateUseCaseTest {
     }
 
     @Test
-    fun eligibleEventsScaleWithTownHall() {
-        val th1Events = PveEventConfig.eligibleEvents(1)
-        val th3Events = PveEventConfig.eligibleEvents(3)
-
-        assertTrue(th1Events.size < th3Events.size)
-        assertTrue(EventType.ScoutParty in th1Events)
-        assertFalse(EventType.FullInvasion in th1Events)
-        assertTrue(EventType.FullInvasion in th3Events)
-        assertTrue(EventType.Siege in th3Events)
+    fun eligibleEventsIncludeAllTypes() {
+        val events = PveEventConfig.eligibleEvents(1)
+        assertTrue(EventType.ScoutParty in events)
+        assertTrue(EventType.Battle in events)
+        assertTrue(EventType.Earthquake in events)
+        assertTrue(EventType.Storm in events)
     }
 
     @Test

@@ -56,8 +56,9 @@ class BattleUpdateUseCaseTest {
 
     @Test
     fun buildingDestroyedWhenHpReachesZero() {
+        // Use GoldStorage (non-defense) so it won't be auto-rebuilt in post-battle
         val building = PlacedBuilding(
-            id = 1, type = BuildingType.Wall, level = 1,
+            id = 1, type = BuildingType.GoldStorage, level = 1,
             x = 5, y = 5, constructionStartedAt = null, hp = 10,
         )
         val troop = Troop(id = 100, type = TroopType.HumanSoldier, hp = 50, x = 5f, y = 5f)
@@ -120,5 +121,52 @@ class BattleUpdateUseCaseTest {
         val movedTroop = result.troops.first()
         // Should target cannon at x=10 even though storage at x=3 is closer
         assertTrue(movedTroop.x > 0f)
+    }
+
+    @Test
+    fun troopNavigatesAroundObstacle() {
+        // Place a large obstacle (4x4) between troop and target
+        // Troop at (5, 10), obstacle at (10, 8) occupying 10-13 x 8-11, target at (18, 10)
+        val target = PlacedBuilding(id = 1, type = BuildingType.GoldStorage, level = 1, x = 18, y = 10, hp = 200)
+        val obstacle = PlacedBuilding(id = 2, type = BuildingType.TownHall, level = 1, x = 10, y = 8, hp = 1000)
+        val troop = Troop(id = 100, type = TroopType.HumanSoldier, hp = 50, x = 5f, y = 10.5f)
+        val state = GameState(
+            playerId = 1, resources = Resources(),
+            village = Village(playerId = 1, buildings = listOf(target, obstacle)),
+            troops = listOf(troop), lastUpdatedAt = 0,
+        )
+
+        // Verify pathfinding finds a path that avoids the obstacle
+        val path = Pathfinding.findPath(5f, 10.5f, target, listOf(target, obstacle))
+        assertNotNull(path, "Pathfinding should find a path around obstacle")
+        for (pos in path) {
+            val inObstacle = pos.x in 10..13 && pos.y in 8..11
+            assertFalse(inObstacle, "Path should not go through obstacle at ${pos.x},${pos.y}")
+        }
+
+        // Run a few seconds — troop should be moving (not stuck)
+        val result = BattleUpdateUseCase.update(state, now = 3_000)
+        val movedTroop = result.troops.firstOrNull()
+        assertNotNull(movedTroop, "Troop should still be alive")
+        assertTrue(movedTroop.x > 5f, "Troop should have moved from starting position")
+    }
+
+    @Test
+    fun troopWalksOverTrapAndTriggersIt() {
+        // Target beyond a spike trap
+        val target = PlacedBuilding(id = 1, type = BuildingType.GoldStorage, level = 1, x = 10, y = 5, hp = 200)
+        val trap = PlacedBuilding(id = 2, type = BuildingType.SpikeTrap, level = 1, x = 7, y = 5, hp = 1)
+        val troop = Troop(id = 100, type = TroopType.HumanSoldier, hp = 50, x = 5f, y = 5.5f)
+        val state = GameState(
+            playerId = 1, resources = Resources(),
+            village = Village(playerId = 1, buildings = listOf(target, trap)),
+            troops = listOf(troop), lastUpdatedAt = 0,
+        )
+        // Run for 5 seconds — troop should walk over trap
+        val result = BattleUpdateUseCase.update(state, now = 5_000)
+        val triggeredTrap = result.village.buildings.find { it.id == 2L }
+        if (triggeredTrap != null) {
+            assertTrue(triggeredTrap.triggered, "Trap should be triggered after troop walks over it")
+        }
     }
 }

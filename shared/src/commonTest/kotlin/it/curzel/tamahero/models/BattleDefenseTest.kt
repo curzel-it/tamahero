@@ -4,13 +4,13 @@ import kotlin.test.*
 
 class BattleDefenseTest {
 
-    private fun soldier(id: Long = 100, x: Float = 0f, y: Float = 0f, hp: Int = 50) =
+    private fun soldier(id: Long = 100, x: Float = 0f, y: Float = 0f, hp: Int = 45) =
         Troop(id = id, type = TroopType.HumanSoldier, hp = hp, x = x, y = y)
 
-    private fun archer(id: Long = 200, x: Float = 0f, y: Float = 0f, hp: Int = 25) =
+    private fun archer(id: Long = 200, x: Float = 0f, y: Float = 0f, hp: Int = 20) =
         Troop(id = id, type = TroopType.ElfArcher, hp = hp, x = x, y = y)
 
-    private fun orc(id: Long = 300, x: Float = 0f, y: Float = 0f, hp: Int = 60) =
+    private fun orc(id: Long = 300, x: Float = 0f, y: Float = 0f, hp: Int = 300) =
         Troop(id = id, type = TroopType.OrcBerserker, hp = hp, x = x, y = y)
 
     private fun gameState(
@@ -183,7 +183,7 @@ class BattleDefenseTest {
         val result = BattleUpdateUseCase.update(state, now = 1000)
         // Troop should NOT take mortar damage (too close)
         if (result.troops.isNotEmpty()) {
-            assertEquals(50, result.troops.first().hp)
+            assertEquals(45, result.troops.first().hp)
         }
     }
 

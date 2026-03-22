@@ -172,6 +172,12 @@ object AuthService {
         return validateToken(token)
     }
 
+    fun getAdminUserId(token: String?): Long? {
+        val userId = getUserIdFromToken(token) ?: return null
+        val user = UserRepository.findById(userId) ?: return null
+        return if (user.isAdmin) userId else null
+    }
+
     fun renewToken(oldToken: String): AuthResult {
         val userId = validateToken(oldToken) ?: return AuthResult.Error("Invalid or expired token")
         val user = UserRepository.findById(userId) ?: return AuthResult.Error("User not found")

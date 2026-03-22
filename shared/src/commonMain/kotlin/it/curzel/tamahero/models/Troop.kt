@@ -11,4 +11,6 @@ data class Troop(
     val x: Float,
     val y: Float,
     val targetId: Long? = null,
+    val path: List<GridPos> = emptyList(),
+    val pathTargetId: Long? = null,
 )

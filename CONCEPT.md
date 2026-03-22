@@ -124,15 +124,12 @@ Faster than Clash — tighter hooks for retention with a smaller initial player 
 Random server-driven events that test the player's defenses. Player does NOT deploy troops — defenses fight automatically. Events scale with Town Hall level.
 
 **Natural Disasters (instant damage, no troops):**
-- [ ] **Earthquake** — random buildings take 20-50% HP damage
-- [ ] **Storm** — edge buildings take damage, some resources lost
+- [x] **Earthquake** — random buildings take 20-50% HP damage
+- [x] **Storm** — edge buildings take damage, some resources lost
 
 **Enemy Raids (battle events, troops spawn at edge):**
-- [ ] **Scout Party** (TH1+) — 5-8 weak soldiers
-- [ ] **Raiding Party** (TH2+) — 12-18 mixed troops
-- [ ] **Dragon Raid** (TH2+) — single powerful unit, splash damage, ignores walls
-- [ ] **Full Invasion** (TH3+) — 25-35 troops with captain boss
-- [ ] **Siege** (TH3+) — 3 waves, escalating difficulty, boss in final wave
+- [x] **Scout Party** — small group of weak soldiers
+- [x] **Battle** — mixed troops, waves/difficulty can be modulated via config
 
 **Outcomes:**
 - **Success** (<50% destruction) → bonus rewards (gold, wood, metal; mana for hard events)
@@ -223,10 +220,10 @@ Random server-driven events that test the player's defenses. Player does NOT dep
 - [ ] New buildings unlock at specific TH levels
 - [ ] Troop upgrades via Laboratory building
 
-#### 3.4 Dragon Raids (PvE Events)
-- [ ] Periodic server events where a dragon attacks your island
-- [ ] Survive = big rewards (mana, resources, cosmetics)
-- [ ] Unique Galdria content with no Clash equivalent
+#### 3.4 PvE Events
+- [x] Periodic server-driven events (Earthquake, Storm, ScoutParty, Battle)
+- [x] Survive = bonus rewards; failure = debris recovery
+- [x] Admin API to trigger events for testing/demos
 
 #### 3.5 Battle Pass (Season Pass)
 - [ ] Free tier with basic rewards

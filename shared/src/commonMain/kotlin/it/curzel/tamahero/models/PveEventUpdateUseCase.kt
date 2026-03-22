@@ -13,8 +13,8 @@ object PveEventUpdateUseCase {
         }
     }
 
-    fun startEvent(state: GameState, type: EventType, now: Long): GameState {
-        val waves = PveEventConfig.wavesFor(type)
+    fun startEvent(state: GameState, type: EventType, now: Long, customWave: EventWave? = null): GameState {
+        val waves = if (customWave != null) listOf(customWave) else PveEventConfig.wavesFor(type)
         val rewards = PveEventConfig.rewardsFor(type)
         val event = ActiveEvent(
             type = type,

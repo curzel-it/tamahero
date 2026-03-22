@@ -58,6 +58,7 @@ private fun Application.configureModule() {
             call.respondText(json.toString(), ContentType.Application.Json)
         }
         authRoutes()
+        adminRoutes()
         webSocket("/ws") {
             val token = call.request.queryParameters["token"]
             WebSocketHandler.handleConnection(this, token)
