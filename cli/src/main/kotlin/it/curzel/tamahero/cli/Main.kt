@@ -14,6 +14,18 @@ fun main(args: Array<String>) {
     runBlocking {
         var connected = false
 
+        // Auto-connect if we have a saved token
+        if (client.loadSavedToken()) {
+            try {
+                client.connectInBackground()
+                connected = true
+                println("Auto-connected. Use 'village' to load your state.")
+            } catch (e: Exception) {
+                println("Saved token expired. Use 'login' or 'register'.")
+                client.clearSavedToken()
+            }
+        }
+
         while (true) {
             print("> ")
             val line = readlnOrNull()?.trim() ?: break
@@ -33,6 +45,11 @@ fun main(args: Array<String>) {
                     "login" -> {
                         if (parts.size < 3) { println("Usage: login <username> <password>"); continue }
                         client.login(parts[1], parts[2])
+                    }
+
+                    "logout" -> {
+                        client.clearSavedToken()
+                        connected = false
                     }
 
                     "connect" -> {
@@ -165,6 +182,7 @@ private fun printHelp() {
         |Connection:
         |  register <user> <pass>   Register a new account
         |  login <user> <pass>      Login to existing account
+        |  logout                   Clear saved session
         |  connect                  Connect WebSocket
         |
         |Village:

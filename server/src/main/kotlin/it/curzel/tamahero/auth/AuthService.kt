@@ -172,6 +172,13 @@ object AuthService {
         return validateToken(token)
     }
 
+    fun renewToken(oldToken: String): AuthResult {
+        val userId = validateToken(oldToken) ?: return AuthResult.Error("Invalid or expired token")
+        val user = UserRepository.findById(userId) ?: return AuthResult.Error("User not found")
+        AuthTokenRepository.deleteToken(oldToken)
+        return storeTokenForUser(userId, user.username)
+    }
+
     private fun storeTokenForUser(userId: Long, username: String): AuthResult {
         val token = generateToken()
         val now = System.currentTimeMillis()

@@ -20,6 +20,10 @@ class CliClient(private val baseUrl: String) {
         install(WebSockets)
     }
 
+    private val credentialsFile = java.io.File(
+        System.getProperty("user.home"), ".tamahero/token.json"
+    )
+
     private var session: WebSocketSession? = null
     private var token: String? = null
     private var playerId: Long? = null
@@ -42,16 +46,42 @@ class CliClient(private val baseUrl: String) {
         return handleAuthResponse(response)
     }
 
+    fun loadSavedToken(): Boolean {
+        if (!credentialsFile.exists()) return false
+        try {
+            val saved = ProtocolJson.decodeFromString<SavedCredentials>(credentialsFile.readText())
+            if (saved.baseUrl != baseUrl) return false
+            token = saved.token
+            println("Loaded saved session for ${saved.username}")
+            return true
+        } catch (_: Exception) {
+            return false
+        }
+    }
+
+    fun clearSavedToken() {
+        credentialsFile.delete()
+        token = null
+        println("Logged out.")
+    }
+
     private suspend fun handleAuthResponse(response: HttpResponse): Boolean {
         val body = response.bodyAsText()
         val auth = ProtocolJson.decodeFromString<AuthResponse>(body)
         if (auth.success && auth.token != null) {
             token = auth.token
+            saveToken(auth.token, auth.username ?: "", auth.userId ?: 0)
             println("Authenticated as ${auth.username} (id: ${auth.userId})")
             return true
         }
         println("Auth failed: ${auth.error}")
         return false
+    }
+
+    private fun saveToken(token: String, username: String, userId: Long) {
+        credentialsFile.parentFile.mkdirs()
+        val creds = SavedCredentials(baseUrl = baseUrl, token = token, username = username, userId = userId)
+        credentialsFile.writeText(ProtocolJson.encodeToString(SavedCredentials.serializer(), creds))
     }
 
     suspend fun connect() {
@@ -210,4 +240,12 @@ private data class AuthResponse(
     val token: String? = null,
     val username: String? = null,
     val error: String? = null,
+)
+
+@kotlinx.serialization.Serializable
+private data class SavedCredentials(
+    val baseUrl: String,
+    val token: String,
+    val username: String,
+    val userId: Long,
 )

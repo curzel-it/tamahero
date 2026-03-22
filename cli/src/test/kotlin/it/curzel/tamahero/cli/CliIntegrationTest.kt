@@ -45,14 +45,15 @@ class CliIntegrationTest {
             val msg = client.sendAndReceive(ClientMessage.GetVillage) as ServerMessage.GameStateUpdated
             val state = msg.state
 
-            assertEquals(3, state.village.buildings.size)
+            assertEquals(4, state.village.buildings.size)
             assertTrue(state.village.buildings.any { it.type == BuildingType.TownHall && it.level == 1 })
-            assertTrue(state.village.buildings.any { it.type == BuildingType.GoldStorage && it.level == 1 })
-            assertTrue(state.village.buildings.any { it.type == BuildingType.WoodStorage && it.level == 1 })
+            assertTrue(state.village.buildings.any { it.type == BuildingType.GoldStorage && it.level == 2 })
+            assertTrue(state.village.buildings.any { it.type == BuildingType.WoodStorage && it.level == 2 })
+            assertTrue(state.village.buildings.any { it.type == BuildingType.MetalStorage && it.level == 1 })
 
-            assertEquals(500, state.resources.gold)
-            assertEquals(500, state.resources.wood)
-            assertEquals(0, state.resources.metal)
+            assertEquals(1000, state.resources.gold)
+            assertEquals(1000, state.resources.wood)
+            assertEquals(500, state.resources.metal)
             assertEquals(0, state.resources.mana)
         } finally {
             client.close()
@@ -75,8 +76,8 @@ class CliIntegrationTest {
             assertNotNull(lumberCamp.constructionStartedAt)
 
             // LumberCamp costs 50 gold
-            assertEquals(450, state.resources.gold)
-            assertEquals(500, state.resources.wood)
+            assertEquals(950, state.resources.gold)
+            assertEquals(1000, state.resources.wood)
         } finally {
             client.close()
         }
@@ -90,8 +91,8 @@ class CliIntegrationTest {
             assertTrue(msg is ServerMessage.GameStateUpdated)
 
             // GoldMine costs 50 wood
-            assertEquals(500, msg.state.resources.gold)
-            assertEquals(450, msg.state.resources.wood)
+            assertEquals(1000, msg.state.resources.gold)
+            assertEquals(950, msg.state.resources.wood)
         } finally {
             client.close()
         }
@@ -107,13 +108,13 @@ class CliIntegrationTest {
             assertTrue(msg is ServerMessage.GameStateUpdated)
 
             val state = msg.state
-            assertEquals(6, state.village.buildings.size) // 3 default + 3 new
+            assertEquals(7, state.village.buildings.size) // 4 default + 3 new
             assertEquals(2, state.village.buildings.count { it.type == BuildingType.LumberCamp })
             assertEquals(1, state.village.buildings.count { it.type == BuildingType.GoldMine })
 
             // 2 lumber camps * 50 gold + 1 gold mine * 50 wood
-            assertEquals(400, state.resources.gold)
-            assertEquals(450, state.resources.wood)
+            assertEquals(900, state.resources.gold)
+            assertEquals(950, state.resources.wood)
         } finally {
             client.close()
         }
@@ -123,9 +124,9 @@ class CliIntegrationTest {
     fun buildFailsWithInsufficientResources() = runBlocking {
         val client = createConnectedClient()
         try {
-            // Drain gold: build 10 lumber camps at 50 gold each = 500 gold
-            for (i in 0..9) {
-                client.sendAndReceive(ClientMessage.Build(BuildingType.LumberCamp, i * 2, 0))
+            // Drain gold: build 20 lumber camps at 50 gold each = 1000 gold
+            for (i in 0..19) {
+                client.sendAndReceive(ClientMessage.Build(BuildingType.LumberCamp, (i % 20) * 2, (i / 20) * 2))
             }
             // Should be out of gold now
             val msg = client.sendAndReceive(ClientMessage.Build(BuildingType.LumberCamp, 0, 10))
@@ -236,7 +237,7 @@ class CliIntegrationTest {
             // Fetch village again — the lumber camp should still be there
             val msg = client.sendAndReceive(ClientMessage.GetVillage)
             assertTrue(msg is ServerMessage.GameStateUpdated)
-            assertEquals(4, msg.state.village.buildings.size)
+            assertEquals(5, msg.state.village.buildings.size)
             assertTrue(msg.state.village.buildings.any { it.type == BuildingType.LumberCamp })
         } finally {
             client.close()
@@ -275,23 +276,23 @@ class CliIntegrationTest {
     fun resourcesDeductedCumulatively() = runBlocking {
         val client = createConnectedClient()
         try {
-            // Start: 500 gold, 500 wood
-            // Build LumberCamp: -50 gold → 450 gold
+            // Start: 1000 gold, 1000 wood
+            // Build LumberCamp: -50 gold → 950 gold
             val msg1 = client.sendAndReceive(ClientMessage.Build(BuildingType.LumberCamp, 0, 0))
             assertTrue(msg1 is ServerMessage.GameStateUpdated)
-            assertEquals(450, msg1.state.resources.gold)
+            assertEquals(950, msg1.state.resources.gold)
 
-            // Build GoldMine: -50 wood → 450 wood
+            // Build GoldMine: -50 wood → 950 wood
             val msg2 = client.sendAndReceive(ClientMessage.Build(BuildingType.GoldMine, 3, 0))
             assertTrue(msg2 is ServerMessage.GameStateUpdated)
-            assertEquals(450, msg2.state.resources.gold)
-            assertEquals(450, msg2.state.resources.wood)
+            assertEquals(950, msg2.state.resources.gold)
+            assertEquals(950, msg2.state.resources.wood)
 
-            // Build another LumberCamp: -50 gold → 400 gold
+            // Build another LumberCamp: -50 gold → 900 gold
             val msg3 = client.sendAndReceive(ClientMessage.Build(BuildingType.LumberCamp, 6, 0))
             assertTrue(msg3 is ServerMessage.GameStateUpdated)
-            assertEquals(400, msg3.state.resources.gold)
-            assertEquals(450, msg3.state.resources.wood)
+            assertEquals(900, msg3.state.resources.gold)
+            assertEquals(950, msg3.state.resources.wood)
         } finally {
             client.close()
         }
@@ -331,16 +332,16 @@ class CliIntegrationTest {
     fun demolishBuildingRemovesItAndRefunds() = runBlocking {
         val client = createConnectedClient()
         try {
-            // Build a lumber camp (costs 50 gold) → 450 gold
+            // Build a lumber camp (costs 50 gold) → 950 gold
             val buildMsg = client.sendAndReceive(ClientMessage.Build(BuildingType.LumberCamp, 5, 5))
             assertTrue(buildMsg is ServerMessage.GameStateUpdated)
             val lumberCamp = buildMsg.state.village.buildings.first { it.type == BuildingType.LumberCamp }
 
-            // Demolish it → refund 25 gold (50% of 50) → 475 gold
+            // Demolish it → refund 25 gold (50% of 50) → 975 gold
             val msg = client.sendAndReceive(ClientMessage.Demolish(lumberCamp.id))
             assertTrue(msg is ServerMessage.GameStateUpdated)
             assertNull(msg.state.village.buildings.find { it.id == lumberCamp.id })
-            assertEquals(475, msg.state.resources.gold)
+            assertEquals(975, msg.state.resources.gold)
         } finally {
             client.close()
         }
@@ -365,18 +366,18 @@ class CliIntegrationTest {
     fun cancelConstructionRefundsFull() = runBlocking {
         val client = createConnectedClient()
         try {
-            // Build a lumber camp (costs 50 gold) → 450 gold
+            // Build a lumber camp (costs 50 gold) → 950 gold
             val buildMsg = client.sendAndReceive(ClientMessage.Build(BuildingType.LumberCamp, 5, 5))
             assertTrue(buildMsg is ServerMessage.GameStateUpdated)
             val lumberCamp = buildMsg.state.village.buildings.first { it.type == BuildingType.LumberCamp }
             // It should be under construction
             assertNotNull(lumberCamp.constructionStartedAt)
 
-            // Cancel construction → full refund → 500 gold
+            // Cancel construction → full refund → 1000 gold
             val msg = client.sendAndReceive(ClientMessage.CancelConstruction(lumberCamp.id))
             assertTrue(msg is ServerMessage.GameStateUpdated)
             assertNull(msg.state.village.buildings.find { it.id == lumberCamp.id })
-            assertEquals(500, msg.state.resources.gold)
+            assertEquals(1000, msg.state.resources.gold)
         } finally {
             client.close()
         }

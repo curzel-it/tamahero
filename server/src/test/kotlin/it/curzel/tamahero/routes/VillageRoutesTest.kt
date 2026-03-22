@@ -51,12 +51,13 @@ class VillageWebSocketTest {
             val msg = receiveServerMessage()
             assertTrue(msg is ServerMessage.GameStateUpdated)
             val state = msg.state
-            assertEquals(3, state.village.buildings.size)
+            assertEquals(4, state.village.buildings.size)
             assertTrue(state.village.buildings.any { it.type == BuildingType.TownHall })
             assertTrue(state.village.buildings.any { it.type == BuildingType.GoldStorage })
             assertTrue(state.village.buildings.any { it.type == BuildingType.WoodStorage })
-            assertEquals(500, state.resources.gold)
-            assertEquals(500, state.resources.wood)
+            assertTrue(state.village.buildings.any { it.type == BuildingType.MetalStorage })
+            assertEquals(1000, state.resources.gold)
+            assertEquals(1000, state.resources.wood)
         }
     }
 
@@ -80,7 +81,7 @@ class VillageWebSocketTest {
             assertTrue(msg is ServerMessage.GameStateUpdated)
             val state = msg.state
             assertTrue(state.village.buildings.any { it.type == BuildingType.LumberCamp })
-            assertEquals(450, state.resources.gold)
+            assertEquals(950, state.resources.gold)
         }
     }
 
@@ -91,8 +92,8 @@ class VillageWebSocketTest {
         wsClient.webSocket("/ws?token=$token") {
             skipConnected()
             // Drain resources by building many gold mines (50 wood each)
-            for (i in 0..9) {
-                send(Frame.Text(sendMessage(ClientMessage.Build(BuildingType.GoldMine, i * 2, 0))))
+            for (i in 0..19) {
+                send(Frame.Text(sendMessage(ClientMessage.Build(BuildingType.GoldMine, (i % 20) * 2, (i / 20) * 2))))
                 receiveServerMessage()
             }
             send(Frame.Text(sendMessage(ClientMessage.Build(BuildingType.GoldMine, 0, 10))))

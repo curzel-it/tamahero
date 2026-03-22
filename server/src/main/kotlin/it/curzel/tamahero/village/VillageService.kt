@@ -276,13 +276,14 @@ object VillageService {
     private fun createDefaultVillage(userId: Long, now: Long): GameState {
         val state = GameState(
             playerId = userId,
-            resources = Resources(gold = 500, wood = 500),
+            resources = Resources(gold = 1000, wood = 1000, metal = 500),
             village = Village(
                 playerId = userId,
                 buildings = listOf(
                     PlacedBuilding(id = 1, type = BuildingType.TownHall, level = 1, x = 19, y = 19, hp = 1000, lastCollectedAt = now),
-                    PlacedBuilding(id = 2, type = BuildingType.GoldStorage, level = 1, x = 16, y = 19, hp = 200, lastCollectedAt = now),
-                    PlacedBuilding(id = 3, type = BuildingType.WoodStorage, level = 1, x = 22, y = 19, hp = 200, lastCollectedAt = now),
+                    PlacedBuilding(id = 2, type = BuildingType.GoldStorage, level = 2, x = 16, y = 19, hp = 300, lastCollectedAt = now),
+                    PlacedBuilding(id = 3, type = BuildingType.WoodStorage, level = 2, x = 22, y = 19, hp = 300, lastCollectedAt = now),
+                    PlacedBuilding(id = 4, type = BuildingType.MetalStorage, level = 1, x = 16, y = 17, hp = 200, lastCollectedAt = now),
                 ),
             ),
             lastUpdatedAt = now,

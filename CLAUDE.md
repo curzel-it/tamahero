@@ -106,7 +106,25 @@ Or use Android Studio:
 
 Or open `iosApp/iosApp.xcodeproj` in Xcode and run from there.
 
+### Server
+```bash
+./gradlew :server:run
+```
+
+### CLI Client
+```bash
+./gradlew :cli:run --console=plain
+```
+
+Or with a custom server URL:
+```bash
+./gradlew :cli:run --console=plain --args="https://tama.curzel.it"
+```
+
 ### Testing
+```bash
+./gradlew :shared:jvmTest :server:test :cli:test
+```
 - All code should be unit-testable
 - Test frequently to catch compilation errors
 - Build after every significant change
@@ -115,8 +133,11 @@ Or open `iosApp/iosApp.xcodeproj` in Xcode and run from there.
 
 ```
 tamahero/
-├── composeApp/        # Shared KMP code
-│   ├── commonMain     # Shared game logic
+├── shared/            # Models, use cases, protocol (used by all modules)
+├── server/            # Ktor server (WebSocket + REST auth)
+├── cli/               # CLI client (for testing & development)
+├── composeApp/        # Compose Multiplatform UI
+│   ├── commonMain     # Shared game rendering
 │   ├── androidMain    # Android implementation
 │   ├── iosMain        # iOS implementation
 │   └── jvmMain        # Desktop implementation
@@ -142,6 +163,71 @@ tamahero/
 3. **Test**: Run on target platform (desktop is fastest for iteration)
 4. **Review**: Clean up and remove unnecessary code/comments
 5. **Commit**: Commit frequently with clear messages
+
+## CLI Client Reference
+
+The CLI is the primary tool for testing game features end-to-end. It connects to the server via WebSocket and supports all game actions. Token is saved to `~/.tamahero/token.json` — subsequent runs auto-connect.
+
+### First-time setup
+```
+> register myuser mypass123
+> connect
+> village
+```
+
+### Subsequent runs (auto-connects with saved token)
+```
+> village                          # Load/refresh village state
+```
+
+### Commands
+
+**Connection:**
+- `register <user> <pass>` — create account (saves token)
+- `login <user> <pass>` — login (saves token)
+- `logout` — clear saved token
+- `connect` — manually connect WebSocket
+
+**Village management:**
+- `village` / `get` — load full village state
+- `build <Type> <x> <y>` — place building (e.g. `build LumberCamp 5 5`)
+- `upgrade <id>` — upgrade building by ID
+- `move <id> <x> <y>` — relocate building
+- `demolish <id>` — remove building (50% refund)
+- `cancel <id>` — cancel construction (full refund)
+- `speedup <id>` — instant finish with mana
+
+**Resources:**
+- `collect <id>` — collect from a producer
+- `collectall` — collect from all producers
+- `storage` — show current vs max capacity
+
+**Troops:**
+- `train <Type> [count]` — queue training (e.g. `train HumanSoldier 5`)
+- `canceltraining <index>` — cancel queued entry
+- `army` — show army + training queue
+- `troops` — list troop types with stats
+
+**Defense:**
+- `rearm <id>` — rearm triggered trap (50% cost)
+- `rearmall` — rearm all traps
+
+**Events:**
+- `event` — show active PvE event status
+- `collectrewards` — claim completed event rewards
+
+**Info:**
+- `info <id>` — building details + upgrade cost
+- `buildings` — list all building types
+- `map` — ASCII village map
+- `help` — full command list
+
+### Building types
+TownHall, LumberCamp, GoldMine, Forge, WoodStorage, GoldStorage, MetalStorage,
+Barracks, ArmyCamp, Cannon, ArcherTower, Mortar, Wall, SpikeTrap, SpringTrap, ShieldDome
+
+### Troop types
+HumanSoldier, ElfArcher, DwarfSapper, OrcBerserker
 
 ## Rendering
 

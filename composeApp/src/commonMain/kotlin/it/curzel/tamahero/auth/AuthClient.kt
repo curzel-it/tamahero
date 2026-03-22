@@ -5,9 +5,13 @@ import io.ktor.client.request.*
 import io.ktor.client.statement.*
 import io.ktor.http.*
 import it.curzel.tamahero.ServerConfig
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.launch
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
@@ -48,30 +52,66 @@ class AuthClient(
     private val httpClient = HttpClient()
     private val rateLimitMessage = "Too many requests. Please wait a moment and try again."
     private val tokenValidityMs = 90L * 24 * 60 * 60 * 1000
+    private val tokenRenewalThresholdMs = 30L * 24 * 60 * 60 * 1000
 
     private val _state = MutableStateFlow<AuthState>(AuthState.LoggedOut)
     val state: StateFlow<AuthState> = _state.asStateFlow()
+
+    private val scope = CoroutineScope(Dispatchers.Default + SupervisorJob())
 
     init {
         loadSavedCredentials()
     }
 
     private fun loadSavedCredentials() {
-        if (TokenStorageProvider.isInitialized()) {
-            val credentials = TokenStorageProvider.instance.loadCredentials()
-            if (credentials != null) {
-                val now = kotlin.time.Clock.System.now().toEpochMilliseconds()
-                if (now - credentials.savedAt > tokenValidityMs) {
-                    TokenStorageProvider.instance.clearCredentials()
-                    return
-                }
-                _state.value = AuthState.LoggedIn(
-                    userId = credentials.userId,
-                    username = credentials.username,
-                    token = credentials.token,
-                )
-            }
+        if (!TokenStorageProvider.isInitialized()) return
+        val credentials = TokenStorageProvider.instance.loadCredentials() ?: return
+        val now = kotlin.time.Clock.System.now().toEpochMilliseconds()
+        if (now - credentials.savedAt > tokenValidityMs) {
+            TokenStorageProvider.instance.clearCredentials()
+            return
         }
+        _state.value = AuthState.LoggedIn(
+            userId = credentials.userId,
+            username = credentials.username,
+            token = credentials.token,
+        )
+        scope.launch { validateAndRenewIfNeeded(credentials) }
+    }
+
+    private suspend fun validateAndRenewIfNeeded(credentials: AuthCredentials) {
+        try {
+            val response = httpClient.get("$baseUrl/api/auth/validate") {
+                header("Authorization", "Bearer ${credentials.token}")
+            }
+            if (response.status == HttpStatusCode.Unauthorized) {
+                handleUnauthorized()
+                return
+            }
+            if (response.status != HttpStatusCode.OK) return
+            val now = kotlin.time.Clock.System.now().toEpochMilliseconds()
+            val tokenAge = now - credentials.savedAt
+            if (tokenAge > tokenValidityMs - tokenRenewalThresholdMs) {
+                renewToken(credentials)
+            }
+        } catch (_: Exception) {
+            // Network error — keep using saved token
+        }
+    }
+
+    private suspend fun renewToken(credentials: AuthCredentials) {
+        try {
+            val response = httpClient.post("$baseUrl/api/auth/renew") {
+                header("Authorization", "Bearer ${credentials.token}")
+            }
+            if (response.status != HttpStatusCode.OK) return
+            val authResponse = json.decodeFromString<AuthResponse>(response.bodyAsText())
+            if (authResponse.success && authResponse.userId != null && authResponse.token != null) {
+                val username = authResponse.username ?: credentials.username
+                TokenStorageProvider.instance.saveCredentials(authResponse.userId, username, authResponse.token)
+                _state.value = AuthState.LoggedIn(userId = authResponse.userId, username = username, token = authResponse.token)
+            }
+        } catch (_: Exception) {}
     }
 
     private fun handleUnauthorized() {

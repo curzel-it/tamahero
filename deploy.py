@@ -275,6 +275,26 @@ def trigger_remote_deploy(host, password):
     sys.exit(1)
 
 
+def clean_database(host, password):
+    """Stop the server, delete the database, and restart."""
+    print(f"\n{'='*60}")
+    print("Cleaning database (fresh start)")
+    print(f"{'='*60}")
+
+    cmd = (
+        "systemctl stop tamahero-server && "
+        "rm -rf /opt/tamahero-server/data && "
+        "systemctl start tamahero-server && "
+        "echo clean-ok"
+    )
+    exit_code, output = ssh_exec(host, password, cmd)
+    if exit_code != 0 or "clean-ok" not in output:
+        print(f"Error: Failed to clean database: {output}")
+        sys.exit(1)
+
+    print("Database deleted, server restarted with clean state")
+
+
 def main():
     parser = argparse.ArgumentParser(description="Deploy TamaHero server via SSH")
     parser.add_argument(
@@ -282,6 +302,12 @@ def main():
         type=str,
         default="Deployment",
         help="Commit message (default: 'Deployment')"
+    )
+    parser.add_argument(
+        "--clean-db",
+        action="store_true",
+        default=False,
+        help="Drop the database on the server after deploying (fresh start)"
     )
     args = parser.parse_args()
 
@@ -353,6 +379,10 @@ def main():
 
     # Step 5: SSH to server — trigger deploy detached
     trigger_remote_deploy(ssh_host, ssh_password)
+
+    # Step 6: Optionally drop the database for a clean start
+    if args.clean_db:
+        clean_database(ssh_host, ssh_password)
 
     print(f"\n{'='*60}")
     print("Deployment completed successfully!")

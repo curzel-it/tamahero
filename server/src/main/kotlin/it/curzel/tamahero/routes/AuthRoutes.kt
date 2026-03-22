@@ -143,6 +143,17 @@ fun Route.authRoutes() {
             }
         }
 
+        post("/renew") {
+            val token = call.request.header("Authorization")?.removePrefix("Bearer ")
+            if (token.isNullOrBlank()) {
+                call.respond(HttpStatusCode.Unauthorized, AuthResponse(success = false, error = "Missing token")); return@post
+            }
+            when (val result = AuthService.renewToken(token)) {
+                is AuthResult.Success -> call.respond(AuthResponse(success = true, userId = result.userId, token = result.token, username = result.username))
+                is AuthResult.Error -> call.respond(HttpStatusCode.Unauthorized, AuthResponse(success = false, error = result.message))
+            }
+        }
+
         delete("/account") {
             val token = call.request.header("Authorization")?.removePrefix("Bearer ")
             val userId = AuthService.getUserIdFromToken(token)

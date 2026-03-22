@@ -66,6 +66,15 @@ kotlin {
             implementation(libs.kotlinx.coroutinesSwing)
             implementation("io.ktor:ktor-client-cio:3.3.3")
         }
+        val jvmTest by getting {
+            dependencies {
+                implementation(libs.kotlin.testJunit)
+                implementation(projects.server)
+                implementation(libs.ktor.serverCore)
+                implementation(libs.ktor.serverNetty)
+                implementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.10.2")
+            }
+        }
     }
 }
 
