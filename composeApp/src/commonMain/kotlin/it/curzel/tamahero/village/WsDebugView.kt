@@ -4,26 +4,33 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.selection.SelectionContainer
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import it.curzel.tamahero.network.GameSocketClient
 import it.curzel.tamahero.network.WsLogEntry
-import it.curzel.tamahero.ui.theme.*
+import it.curzel.tamahero.ui.theme.TamaColors
+import it.curzel.tamahero.ui.theme.TamaRadius
+import it.curzel.tamahero.ui.theme.TamaSpacing
 
 @Composable
 fun WsDebugView(modifier: Modifier = Modifier) {
     val messages by GameSocketClient.messageLog.collectAsState()
     var expanded by remember { mutableStateOf(false) }
-    var selectedIndex by remember { mutableStateOf(-1) }
 
     Column(
         modifier = modifier,
@@ -41,19 +48,17 @@ fun WsDebugView(modifier: Modifier = Modifier) {
         }
 
         AnimatedVisibility(visible = expanded) {
-            val listState = rememberLazyListState()
+            val scrollState = rememberScrollState()
 
             LaunchedEffect(messages.size) {
-                if (messages.isNotEmpty()) {
-                    listState.animateScrollToItem(messages.lastIndex)
-                }
+                scrollState.animateScrollTo(scrollState.maxValue)
             }
 
             Column(
                 modifier = Modifier
                     .padding(top = TamaSpacing.XXSmall)
-                    .width(360.dp)
-                    .heightIn(max = 400.dp)
+                    .width(420.dp)
+                    .heightIn(max = 500.dp)
                     .clip(RoundedCornerShape(TamaRadius.Medium))
                     .background(TamaColors.Background.copy(alpha = 0.95f)),
             ) {
@@ -77,63 +82,95 @@ fun WsDebugView(modifier: Modifier = Modifier) {
                     )
                 }
 
-                LazyColumn(
-                    state = listState,
-                    modifier = Modifier.fillMaxWidth(),
-                ) {
-                    items(messages.size) { index ->
-                        val entry = messages[index]
-                        val isSelected = index == selectedIndex
-                        WsLogItem(
-                            entry = entry,
-                            isExpanded = isSelected,
-                            onClick = { selectedIndex = if (isSelected) -1 else index },
-                        )
-                    }
+                SelectionContainer {
+                    Text(
+                        text = buildLogText(messages),
+                        fontFamily = FontFamily.Monospace,
+                        fontSize = 11.sp,
+                        lineHeight = 15.sp,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .verticalScroll(scrollState)
+                            .padding(TamaSpacing.XSmall),
+                    )
                 }
             }
         }
     }
 }
 
-@Composable
-private fun WsLogItem(
-    entry: WsLogEntry,
-    isExpanded: Boolean,
-    onClick: () -> Unit,
-) {
-    val isSent = entry.direction == "SENT"
-    val dirColor = if (isSent) TamaColors.Success else TamaColors.Info
-    val timeStr = formatTime(entry.timestamp)
-    val preview = entry.text.take(80).replace("\n", " ")
+private fun buildLogText(messages: List<WsLogEntry>): AnnotatedString {
+    return buildAnnotatedString {
+        for ((i, entry) in messages.withIndex()) {
+            if (i > 0) append("\n")
+            val isSent = entry.direction == "SENT"
+            val dirColor = if (isSent) TamaColors.Success else TamaColors.Info
 
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable(onClick = onClick)
-            .padding(horizontal = TamaSpacing.XSmall, vertical = TamaSpacing.XXSmall),
-    ) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Text(if (isSent) ">>>" else "<<<", color = dirColor, fontSize = 10.sp)
-            Spacer(Modifier.width(TamaSpacing.XXSmall))
-            Text(timeStr, color = TamaColors.TextMuted, fontSize = 10.sp)
-            Spacer(Modifier.width(TamaSpacing.XXSmall))
-            Text(preview, color = TamaColors.TextMuted, fontSize = 11.sp, maxLines = 1)
-        }
-        if (isExpanded) {
-            Text(
-                entry.text,
-                color = TamaColors.Text,
-                fontSize = 11.sp,
-                modifier = Modifier
-                    .padding(top = TamaSpacing.XXSmall, start = TamaSpacing.Large)
-                    .fillMaxWidth()
-                    .clip(RoundedCornerShape(TamaRadius.XSmall))
-                    .background(TamaColors.SurfaceElevated)
-                    .padding(TamaSpacing.XSmall),
-            )
+            withStyle(SpanStyle(color = TamaColors.TextMuted)) {
+                append(formatTime(entry.timestamp))
+                append(" ")
+            }
+            withStyle(SpanStyle(color = dirColor)) {
+                append(if (isSent) ">>> " else "<<< ")
+            }
+            withStyle(SpanStyle(color = TamaColors.Text)) {
+                append(prettyJson(entry.text))
+            }
+            append("\n")
         }
     }
+}
+
+private fun prettyJson(raw: String): String {
+    val trimmed = raw.trim()
+    if (!trimmed.startsWith("{") && !trimmed.startsWith("[")) return trimmed
+    val sb = StringBuilder()
+    var indent = 0
+    var inString = false
+    var escape = false
+    for (c in trimmed) {
+        if (escape) {
+            sb.append(c)
+            escape = false
+            continue
+        }
+        if (c == '\\' && inString) {
+            sb.append(c)
+            escape = true
+            continue
+        }
+        if (c == '"') {
+            inString = !inString
+            sb.append(c)
+            continue
+        }
+        if (inString) {
+            sb.append(c)
+            continue
+        }
+        when (c) {
+            '{', '[' -> {
+                sb.append(c)
+                indent++
+                sb.append('\n')
+                repeat(indent) { sb.append("  ") }
+            }
+            '}', ']' -> {
+                indent--
+                sb.append('\n')
+                repeat(indent) { sb.append("  ") }
+                sb.append(c)
+            }
+            ',' -> {
+                sb.append(",\n")
+                repeat(indent) { sb.append("  ") }
+            }
+            ':' -> sb.append(": ")
+            ' ', '\n', '\r', '\t' -> {}
+            else -> sb.append(c)
+        }
+    }
+    return sb.toString()
 }
 
 private fun formatTime(epochMs: Long): String {
