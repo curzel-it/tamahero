@@ -27,8 +27,10 @@ object GameSocketManager {
 
         connectionJob = CoroutineScope(Dispatchers.Default).launch {
             try {
+                println("[GameSocketManager] Opening WebSocket to $url")
                 client!!.webSocket(url) {
                     session = this
+                    println("[GameSocketManager] WebSocket session established")
 
                     launch {
                         for (message in sendChannel!!) {
@@ -40,14 +42,18 @@ object GameSocketManager {
                         when (frame) {
                             is Frame.Text -> onMessage(frame.readText())
                             is Frame.Close -> {
+                                println("[GameSocketManager] Received Close frame")
                                 onClose()
                                 break
                             }
                             else -> {}
                         }
                     }
+                    println("[GameSocketManager] Incoming loop ended")
                 }
             } catch (e: Exception) {
+                println("[GameSocketManager] Exception: ${e.message}")
+                e.printStackTrace()
                 onError(e.message ?: "WebSocket error")
             } finally {
                 session = null

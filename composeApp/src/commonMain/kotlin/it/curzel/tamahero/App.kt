@@ -11,6 +11,7 @@ import it.curzel.tamahero.auth.AuthViewModel
 import it.curzel.tamahero.models.ServerMessage
 import it.curzel.tamahero.network.GameSocketClient
 import it.curzel.tamahero.rendering.GameView
+import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.withTimeoutOrNull
@@ -29,13 +30,19 @@ fun App() {
 
                 LaunchedEffect(state.token, retryTrigger) {
                     connectionFailed = false
-                    GameSocketClient.connect(state.token)
-                    val connected = withTimeoutOrNull(10_000) {
+                    println("[App] Disconnecting previous connection...")
+                    GameSocketClient.disconnect()
+                    println("[App] Starting connection attempt (retry=$retryTrigger)")
+                    val connectedDeferred = async {
                         GameSocketClient.events.filterIsInstance<ServerMessage.Connected>().first()
                     }
+                    GameSocketClient.connect(state.token)
+                    val connected = withTimeoutOrNull(10_000) { connectedDeferred.await() }
                     if (connected != null) {
+                        println("[App] Connected! Requesting village...")
                         GameSocketClient.getVillage()
                     } else {
+                        println("[App] Connection timed out after 10s")
                         GameSocketClient.disconnect()
                         connectionFailed = true
                     }
@@ -60,6 +67,7 @@ fun App() {
 
 @Composable
 private fun ConnectionErrorView(onRetry: () -> Unit, onLogout: () -> Unit) {
+    Surface(modifier = androidx.compose.ui.Modifier.fillMaxSize()) {
     Box(
         modifier = androidx.compose.ui.Modifier.fillMaxSize(),
         contentAlignment = androidx.compose.ui.Alignment.Center,
@@ -71,5 +79,6 @@ private fun ConnectionErrorView(onRetry: () -> Unit, onLogout: () -> Unit) {
             Spacer(modifier = androidx.compose.ui.Modifier.height(8.dp))
             TextButton(onClick = onLogout) { Text("Logout") }
         }
+    }
     }
 }

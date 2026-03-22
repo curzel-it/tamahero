@@ -24,11 +24,19 @@ object GameSocketClient {
             .replace("https://", "wss://")
             .replace("http://", "ws://") + "/ws?token=$token"
 
+        println("[GameSocketClient] Connecting to $wsUrl")
         GameSocketManager.connect(
             url = wsUrl,
-            onMessage = { text -> scope.launch { handleMessage(text) } },
-            onError = { connected = false },
+            onMessage = { text ->
+                println("[GameSocketClient] Received: ${text.take(100)}")
+                scope.launch { handleMessage(text) }
+            },
+            onError = {
+                println("[GameSocketClient] Error: $it")
+                connected = false
+            },
             onClose = {
+                println("[GameSocketClient] Connection closed")
                 connected = false
                 keepAliveJob?.cancel()
             },

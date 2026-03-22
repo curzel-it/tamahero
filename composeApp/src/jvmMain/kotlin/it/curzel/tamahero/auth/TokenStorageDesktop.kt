@@ -18,6 +18,7 @@ class TokenStorageDesktop : TokenStorage {
         prefs.put(KEY_TOKEN, token)
         prefs.putLong(KEY_SAVED_AT, System.currentTimeMillis())
         prefs.flush()
+        println("[AUTH] Token for $username (id=$userId): $token")
     }
 
     override fun loadCredentials(): AuthCredentials? {
@@ -26,6 +27,7 @@ class TokenStorageDesktop : TokenStorage {
         val username = prefs.get(KEY_USERNAME, null) ?: return null
         val token = prefs.get(KEY_TOKEN, null) ?: return null
         val savedAt = prefs.getLong(KEY_SAVED_AT, 0L)
+        println("[AUTH] Loaded token for $username (id=$userId): $token")
         return AuthCredentials(userId = userId, username = username, token = token, savedAt = savedAt)
     }
 
