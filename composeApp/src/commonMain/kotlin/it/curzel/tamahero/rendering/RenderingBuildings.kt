@@ -39,6 +39,7 @@ fun DrawScope.drawBuildings(
         val h = tileSize * bSize
 
         val region = SpriteSheetConfig.regionFor(building.type)
+        val isUnderConstruction = building.constructionStartedAt != null
         if (region != null) {
             drawImage(
                 image = spriteSheet,
@@ -47,11 +48,8 @@ fun DrawScope.drawBuildings(
                 dstOffset = IntOffset(screenX.roundToInt(), screenY.roundToInt()),
                 dstSize = IntSize(w.roundToInt(), h.roundToInt()),
                 filterQuality = FilterQuality.None,
+                alpha = if (isUnderConstruction) 0.4f else 1.0f,
             )
-        }
-
-        if (building.constructionStartedAt != null) {
-            drawRect(color = Color.Black.copy(alpha = 0.4f), topLeft = Offset(screenX, screenY), size = Size(w, h))
         }
     }
 }
