@@ -11,6 +11,7 @@ import it.curzel.tamahero.auth.AuthViewModel
 import it.curzel.tamahero.models.ServerMessage
 import it.curzel.tamahero.network.GameSocketClient
 import it.curzel.tamahero.rendering.GameView
+import it.curzel.tamahero.rendering.initBuildingSprites
 import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.coroutines.flow.first
@@ -18,6 +19,7 @@ import kotlinx.coroutines.withTimeoutOrNull
 
 @Composable
 fun App() {
+    LaunchedEffect(Unit) { initBuildingSprites() }
     val authClient = remember { AuthClient() }
     val authViewModel = remember { AuthViewModel(authClient) }
     val authState by authViewModel.authState.collectAsState()

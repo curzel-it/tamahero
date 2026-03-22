@@ -47,10 +47,10 @@ fun RenderingView(
             drawGrid(camera = camera, renderingScale = renderingScale)
         }
 
-        drawBuildings(buildings, camera, renderingScale, textMeasurer)
+        drawBuildings(buildings, camera, renderingScale)
 
         if (ghost != null) {
-            drawBuildingGhost(ghost.type, ghost.gridX, ghost.gridY, ghost.isValid, camera, renderingScale, textMeasurer)
+            drawBuildingGhost(ghost.type, ghost.gridX, ghost.gridY, ghost.isValid, camera, renderingScale)
         }
 
         if (showFps) {
