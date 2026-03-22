@@ -112,11 +112,17 @@ object TimerMonitor {
     }
 
     private fun shouldTriggerEvent(state: GameState, now: Long): Boolean {
-        if (state.troops.isNotEmpty()) return false // already in battle
-        if (state.shieldExpiresAt > now) return false // shield active
-        val timeSinceLastEvent = now - state.lastEventAt
+        if (state.troops.isNotEmpty()) return false
+        if (state.shieldExpiresAt > now) return false
+        // Villages without defenses are immune to PvE events
+        val hasDefenses = state.village.buildings.any {
+            it.type.isDefense && it.constructionStartedAt == null
+        }
+        if (!hasDefenses) return false
+        // Treat lastEventAt=0 (never had an event) as "just now" to avoid instant trigger
+        val lastEvent = if (state.lastEventAt == 0L) state.lastUpdatedAt else state.lastEventAt
+        val timeSinceLastEvent = now - lastEvent
         if (timeSinceLastEvent < PveEventConfig.MIN_EVENT_INTERVAL_MS) return false
-        // Probability increases over time
         val probability = (timeSinceLastEvent - PveEventConfig.MIN_EVENT_INTERVAL_MS).toDouble() /
             (PveEventConfig.MAX_EVENT_INTERVAL_MS - PveEventConfig.MIN_EVENT_INTERVAL_MS)
         val roll = ((now * 31 + state.playerId * 17) % 1000) / 1000.0
