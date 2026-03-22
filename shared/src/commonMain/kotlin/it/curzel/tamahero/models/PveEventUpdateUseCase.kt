@@ -172,9 +172,10 @@ object PveEventUpdateUseCase {
 
     private fun isEdgeBuilding(building: PlacedBuilding): Boolean {
         val config = BuildingConfig.configFor(building.type, building.level)
-        val size = config?.size ?: 2
+        val w = config?.width ?: 2
+        val h = config?.height ?: 2
         return building.x <= 2 || building.y <= 2 ||
-            building.x + size >= 38 || building.y + size >= 38
+            building.x + w >= 38 || building.y + h >= 38
     }
 
     private fun pseudoRandom(id: Long, seed: Long, salt: Int): Double {

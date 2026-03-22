@@ -13,12 +13,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import it.curzel.tamahero.models.BuildingConfig
 import it.curzel.tamahero.models.BuildingType
 import it.curzel.tamahero.models.Resources
+import it.curzel.tamahero.ui.theme.*
 
 @Composable
 fun BuildMenuView(
@@ -32,25 +32,25 @@ fun BuildMenuView(
     Box(
         modifier = modifier
             .fillMaxSize()
-            .background(Color.Black.copy(alpha = 0.4f))
+            .background(TamaColors.Background.copy(alpha = 0.5f))
             .clickable(onClick = onDismiss),
     ) {
         Column(
             modifier = Modifier
                 .align(Alignment.BottomCenter)
                 .fillMaxWidth()
-                .clip(RoundedCornerShape(topStart = 12.dp, topEnd = 12.dp))
-                .background(Color(0xFF1A1A2E))
+                .clip(RoundedCornerShape(topStart = TamaRadius.Large, topEnd = TamaRadius.Large))
+                .background(TamaColors.Surface)
                 .clickable(enabled = false, onClick = {})
-                .padding(16.dp),
+                .padding(TamaSpacing.Medium),
         ) {
-            Text("Build", color = Color.White, fontSize = 18.sp)
-            Spacer(Modifier.height(12.dp))
+            Text("Build", color = TamaColors.Text, fontSize = 18.sp)
+            Spacer(Modifier.height(TamaSpacing.Small))
             LazyVerticalGrid(
-                columns = GridCells.Adaptive(minSize = 120.dp),
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp),
-                modifier = Modifier.heightIn(max = 300.dp),
+                columns = GridCells.Adaptive(minSize = 130.dp),
+                horizontalArrangement = Arrangement.spacedBy(TamaSpacing.XSmall),
+                verticalArrangement = Arrangement.spacedBy(TamaSpacing.XSmall),
+                modifier = Modifier.heightIn(max = 400.dp),
             ) {
                 items(buildableTypes) { type ->
                     val config = BuildingConfig.configFor(type, 1)
@@ -82,16 +82,18 @@ private fun BuildMenuItem(
 
     Column(
         modifier = Modifier
-            .clip(RoundedCornerShape(8.dp))
-            .background(Color(0xFF16213E))
+            .clip(RoundedCornerShape(TamaRadius.Medium))
+            .background(TamaColors.SurfaceElevated)
             .alpha(if (canAfford) 1f else 0.4f)
             .clickable(enabled = canAfford, onClick = onClick)
-            .padding(8.dp),
+            .padding(TamaSpacing.Small)
+            .heightIn(min = 48.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center,
     ) {
-        Text(type.name, color = Color.White, fontSize = 13.sp)
+        Text(type.name, color = TamaColors.Text, fontSize = 14.sp)
         if (costText.isNotEmpty()) {
-            Text(costText, color = Color(0xFFCCCCCC), fontSize = 11.sp)
+            Text(costText, color = TamaColors.TextMuted, fontSize = 12.sp)
         }
     }
 }

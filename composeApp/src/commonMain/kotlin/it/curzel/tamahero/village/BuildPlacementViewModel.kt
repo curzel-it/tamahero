@@ -80,18 +80,20 @@ class BuildPlacementViewModel : ViewModel() {
         }
         val gx = _ghostGridX.value
         val gy = _ghostGridY.value
-        val size = config.size
+        val w = config.width
+        val h = config.height
 
-        if (gx < 0 || gy < 0 || gx + size > GRID_SIZE || gy + size > GRID_SIZE) {
+        if (gx < 0 || gy < 0 || gx + w > GRID_SIZE || gy + h > GRID_SIZE) {
             _isValidPlacement.value = false
             return
         }
 
         for (building in currentBuildings) {
             val bConfig = BuildingConfig.configFor(building.type, building.level)
-            val bSize = bConfig?.size ?: 2
-            if (gx < building.x + bSize && gx + size > building.x &&
-                gy < building.y + bSize && gy + size > building.y
+            val bw = bConfig?.width ?: 2
+            val bh = bConfig?.height ?: 2
+            if (gx < building.x + bw && gx + w > building.x &&
+                gy < building.y + bh && gy + h > building.y
             ) {
                 _isValidPlacement.value = false
                 return

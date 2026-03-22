@@ -283,6 +283,7 @@ def clean_database(host, password):
 
     cmd = (
         "systemctl stop tamahero-server && "
+        "rm -f /opt/tamahero-server/tamahero.db && "
         "rm -rf /opt/tamahero-server/data && "
         "systemctl start tamahero-server && "
         "echo clean-ok"

@@ -45,11 +45,8 @@ class CliIntegrationTest {
             val msg = client.sendAndReceive(ClientMessage.GetVillage) as ServerMessage.GameStateUpdated
             val state = msg.state
 
-            assertEquals(4, state.village.buildings.size)
+            assertEquals(1, state.village.buildings.size)
             assertTrue(state.village.buildings.any { it.type == BuildingType.TownHall && it.level == 1 })
-            assertTrue(state.village.buildings.any { it.type == BuildingType.GoldStorage && it.level == 2 })
-            assertTrue(state.village.buildings.any { it.type == BuildingType.WoodStorage && it.level == 2 })
-            assertTrue(state.village.buildings.any { it.type == BuildingType.MetalStorage && it.level == 1 })
 
             assertEquals(1000, state.resources.gold)
             assertEquals(1000, state.resources.wood)
@@ -108,7 +105,7 @@ class CliIntegrationTest {
             assertTrue(msg is ServerMessage.GameStateUpdated)
 
             val state = msg.state
-            assertEquals(7, state.village.buildings.size) // 4 default + 3 new
+            assertEquals(4, state.village.buildings.size) // 1 default + 3 new
             assertEquals(2, state.village.buildings.count { it.type == BuildingType.LumberCamp })
             assertEquals(1, state.village.buildings.count { it.type == BuildingType.GoldMine })
 
@@ -167,11 +164,11 @@ class CliIntegrationTest {
         val client = createConnectedClient()
         try {
             val getMsg = client.sendAndReceive(ClientMessage.GetVillage) as ServerMessage.GameStateUpdated
-            val woodStorage = getMsg.state.village.buildings.first { it.type == BuildingType.WoodStorage }
+            val townHall = getMsg.state.village.buildings.first { it.type == BuildingType.TownHall }
 
-            val msg = client.sendAndReceive(ClientMessage.Move(woodStorage.id, 0, 0))
+            val msg = client.sendAndReceive(ClientMessage.Move(townHall.id, 0, 0))
             assertTrue(msg is ServerMessage.GameStateUpdated)
-            val moved = msg.state.village.buildings.first { it.id == woodStorage.id }
+            val moved = msg.state.village.buildings.first { it.id == townHall.id }
             assertEquals(0, moved.x)
             assertEquals(0, moved.y)
         } finally {
@@ -186,7 +183,7 @@ class CliIntegrationTest {
             val getMsg = client.sendAndReceive(ClientMessage.GetVillage) as ServerMessage.GameStateUpdated
             val townHall = getMsg.state.village.buildings.first { it.type == BuildingType.TownHall }
 
-            // TownHall is 3x3, so placing at 38 would go out of bounds
+            // TownHall is 4x4, so placing at 38 would go out of bounds
             val msg = client.sendAndReceive(ClientMessage.Move(townHall.id, 38, 38))
             assertTrue(msg is ServerMessage.Error)
         } finally {
@@ -198,12 +195,14 @@ class CliIntegrationTest {
     fun moveFailsOnOverlap() = runBlocking {
         val client = createConnectedClient()
         try {
-            val getMsg = client.sendAndReceive(ClientMessage.GetVillage) as ServerMessage.GameStateUpdated
-            val woodStorage = getMsg.state.village.buildings.first { it.type == BuildingType.WoodStorage }
-            val goldStorage = getMsg.state.village.buildings.first { it.type == BuildingType.GoldStorage }
+            // Build a LumberCamp at (0,0)
+            client.sendAndReceive(ClientMessage.Build(BuildingType.LumberCamp, 0, 0))
 
-            // Move wood storage on top of gold storage
-            val msg = client.sendAndReceive(ClientMessage.Move(woodStorage.id, goldStorage.x, goldStorage.y))
+            // Get TownHall (at 18,18) and try to move it on top of the LumberCamp
+            val getMsg = client.sendAndReceive(ClientMessage.GetVillage) as ServerMessage.GameStateUpdated
+            val townHall = getMsg.state.village.buildings.first { it.type == BuildingType.TownHall }
+
+            val msg = client.sendAndReceive(ClientMessage.Move(townHall.id, 0, 0))
             assertTrue(msg is ServerMessage.Error)
             assertTrue(msg.reason.contains("overlap", ignoreCase = true))
         } finally {
@@ -237,7 +236,7 @@ class CliIntegrationTest {
             // Fetch village again — the lumber camp should still be there
             val msg = client.sendAndReceive(ClientMessage.GetVillage)
             assertTrue(msg is ServerMessage.GameStateUpdated)
-            assertEquals(5, msg.state.village.buildings.size)
+            assertEquals(2, msg.state.village.buildings.size)
             assertTrue(msg.state.village.buildings.any { it.type == BuildingType.LumberCamp })
         } finally {
             client.close()
@@ -446,7 +445,7 @@ class CliIntegrationTest {
         try {
             // Build Barracks (100g + 100w) and ArmyCamp (100g + 100w)
             client.sendAndReceive(ClientMessage.Build(BuildingType.Barracks, 0, 0))
-            client.sendAndReceive(ClientMessage.Build(BuildingType.ArmyCamp, 3, 0))
+            client.sendAndReceive(ClientMessage.Build(BuildingType.ArmyCamp, 5, 0))
 
             // Train a soldier (25g) — Barracks is under construction so should fail
             val msg = client.sendAndReceive(ClientMessage.Train(TroopType.HumanSoldier, 1))
@@ -463,7 +462,7 @@ class CliIntegrationTest {
         try {
             // Build Barracks + ArmyCamp
             client.sendAndReceive(ClientMessage.Build(BuildingType.Barracks, 0, 0))
-            client.sendAndReceive(ClientMessage.Build(BuildingType.ArmyCamp, 3, 0))
+            client.sendAndReceive(ClientMessage.Build(BuildingType.ArmyCamp, 5, 0))
 
             // Can't train without completed barracks, so test cancel on invalid index
             val msg = client.sendAndReceive(ClientMessage.CancelTraining(0))

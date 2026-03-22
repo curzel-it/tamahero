@@ -167,8 +167,8 @@ object BattleUpdateUseCase {
 
     private fun isOnTile(troop: Troop, building: PlacedBuilding): Boolean {
         val config = BuildingConfig.configFor(building.type, building.level) ?: return false
-        return troop.x >= building.x && troop.x < building.x + config.size &&
-               troop.y >= building.y && troop.y < building.y + config.size
+        return troop.x >= building.x && troop.x < building.x + config.width &&
+               troop.y >= building.y && troop.y < building.y + config.height
     }
 
     private fun applyDefenseDamage(

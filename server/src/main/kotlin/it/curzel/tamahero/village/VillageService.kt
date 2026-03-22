@@ -18,8 +18,8 @@ object VillageService {
 
             requireTownHallLevel(state, now, config.requiredTownHallLevel)
             requireResources(state, config.cost)
-            requireWithinBounds(x, y, config.size)
-            requireNoCollision(state.village.buildings, x, y, config.size, excludeId = null)
+            requireWithinBounds(x, y, config.width, config.height)
+            requireNoCollision(state.village.buildings, x, y, config.width, config.height, excludeId = null)
 
             val newId = (state.village.buildings.maxOfOrNull { it.id } ?: 0) + 1
             val newBuilding = PlacedBuilding(
@@ -72,8 +72,8 @@ object VillageService {
 
             val config = BuildingConfig.configFor(building.type, building.level)
                 ?: throw VillageException("Unknown building config")
-            requireWithinBounds(x, y, config.size)
-            requireNoCollision(state.village.buildings, x, y, config.size, excludeId = buildingId)
+            requireWithinBounds(x, y, config.width, config.height)
+            requireNoCollision(state.village.buildings, x, y, config.width, config.height, excludeId = buildingId)
 
             val updatedBuildings = state.village.buildings.map {
                 if (it.id == buildingId) it.copy(x = x, y = y)
@@ -255,19 +255,18 @@ object VillageService {
         }
     }
 
-    private fun requireWithinBounds(x: Int, y: Int, size: Int) {
-        if (x < 0 || y < 0 || x + size > GRID_SIZE || y + size > GRID_SIZE) {
+    private fun requireWithinBounds(x: Int, y: Int, width: Int, height: Int) {
+        if (x < 0 || y < 0 || x + width > GRID_SIZE || y + height > GRID_SIZE) {
             throw VillageException("Position out of bounds")
         }
     }
 
-    private fun requireNoCollision(buildings: List<PlacedBuilding>, x: Int, y: Int, size: Int, excludeId: Long?) {
+    private fun requireNoCollision(buildings: List<PlacedBuilding>, x: Int, y: Int, width: Int, height: Int, excludeId: Long?) {
         for (building in buildings) {
             if (building.id == excludeId) continue
             val bConfig = BuildingConfig.configFor(building.type, building.level) ?: continue
-            val bSize = bConfig.size
-            if (x < building.x + bSize && x + size > building.x &&
-                y < building.y + bSize && y + size > building.y) {
+            if (x < building.x + bConfig.width && x + width > building.x &&
+                y < building.y + bConfig.height && y + height > building.y) {
                 throw VillageException("Position overlaps with existing building")
             }
         }
@@ -280,10 +279,7 @@ object VillageService {
             village = Village(
                 playerId = userId,
                 buildings = listOf(
-                    PlacedBuilding(id = 1, type = BuildingType.TownHall, level = 1, x = 19, y = 19, hp = 1000, lastCollectedAt = now),
-                    PlacedBuilding(id = 2, type = BuildingType.GoldStorage, level = 2, x = 16, y = 19, hp = 300, lastCollectedAt = now),
-                    PlacedBuilding(id = 3, type = BuildingType.WoodStorage, level = 2, x = 22, y = 19, hp = 300, lastCollectedAt = now),
-                    PlacedBuilding(id = 4, type = BuildingType.MetalStorage, level = 1, x = 16, y = 17, hp = 200, lastCollectedAt = now),
+                    PlacedBuilding(id = 1, type = BuildingType.TownHall, level = 1, x = 18, y = 18, hp = 1000, lastCollectedAt = now),
                 ),
             ),
             lastUpdatedAt = now,

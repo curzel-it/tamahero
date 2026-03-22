@@ -17,7 +17,7 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         super.onCreate(savedInstanceState)
 
-        RenderingScaleProviderHolder.setProvider(RenderingScaleAndroid())
+        RenderingScaleProviderHolder.setProvider(RenderingScaleAndroid(this))
         TokenStorageProvider.setProvider(TokenStorageAndroid(this))
         SocialAuthProviderHolder.setProvider(SocialAuthAndroid(this))
 

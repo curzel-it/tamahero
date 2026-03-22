@@ -4,12 +4,11 @@ import it.curzel.tamahero.models.*
 import kotlinx.coroutines.runBlocking
 
 fun main(args: Array<String>) {
-    val url = args.firstOrNull() ?: "http://localhost:8081"
+    val autoplay = args.contains("--autoplay")
+    val url = args.firstOrNull { !it.startsWith("--") } ?: "http://localhost:8081"
     val client = CliClient(url)
 
     println("TamaHero CLI — server: $url")
-    println("Type 'help' for commands.")
-    println()
 
     runBlocking {
         var connected = false
@@ -19,12 +18,25 @@ fun main(args: Array<String>) {
             try {
                 client.connectInBackground()
                 connected = true
-                println("Auto-connected. Use 'village' to load your state.")
+                println("Auto-connected.")
             } catch (e: Exception) {
                 println("Saved token expired. Use 'login' or 'register'.")
                 client.clearSavedToken()
             }
         }
+
+        if (autoplay) {
+            if (!connected) {
+                println("Error: --autoplay requires a saved token. Login first.")
+                client.close()
+                return@runBlocking
+            }
+            AutoPlay(client).run()
+            return@runBlocking
+        }
+
+        println("Type 'help' for commands.")
+        println()
 
         while (true) {
             print("> ")
@@ -275,7 +287,7 @@ private fun showBuildingTypes() {
         if (config.damage > 0) extras.add("dmg=${config.damage}")
         if (config.requiredTownHallLevel > 1) extras.add("requires TH${config.requiredTownHallLevel}")
         val extra = if (extras.isNotEmpty()) " — ${extras.joinToString()}" else ""
-        println("  $type: cost=${formatResources(config.cost)}, build=${config.buildTimeSeconds}s, ${config.size}x${config.size}$extra")
+        println("  $type: cost=${formatResources(config.cost)}, build=${config.buildTimeSeconds}s, ${config.width}x${config.height}$extra")
     }
 }
 
@@ -301,11 +313,11 @@ private fun showMap(state: GameState?) {
     val minY = state.village.buildings.minOf { it.y } - 1
     val maxX = state.village.buildings.maxOf { b ->
         val config = BuildingConfig.configFor(b.type, b.level)
-        b.x + (config?.size ?: 2)
+        b.x + (config?.width ?: 2)
     } + 1
     val maxY = state.village.buildings.maxOf { b ->
         val config = BuildingConfig.configFor(b.type, b.level)
-        b.y + (config?.size ?: 2)
+        b.y + (config?.height ?: 2)
     } + 1
 
     val grid = Array(maxY - minY) { CharArray(maxX - minX) { '.' } }
@@ -313,8 +325,8 @@ private fun showMap(state: GameState?) {
     for (building in state.village.buildings) {
         val config = BuildingConfig.configFor(building.type, building.level) ?: continue
         val label = buildingLabel(building.type)
-        for (dy in 0 until config.size) {
-            for (dx in 0 until config.size) {
+        for (dy in 0 until config.height) {
+            for (dx in 0 until config.width) {
                 val gx = building.x - minX + dx
                 val gy = building.y - minY + dy
                 if (gy in grid.indices && gx in grid[0].indices) {

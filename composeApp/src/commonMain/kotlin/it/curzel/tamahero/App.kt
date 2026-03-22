@@ -3,11 +3,13 @@ package it.curzel.tamahero
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
-import androidx.compose.ui.unit.dp
+import androidx.compose.ui.graphics.Color
 import it.curzel.tamahero.auth.AuthClient
 import it.curzel.tamahero.auth.AuthScreenView
 import it.curzel.tamahero.auth.AuthState
 import it.curzel.tamahero.auth.AuthViewModel
+import it.curzel.tamahero.ui.theme.TamaColors
+import it.curzel.tamahero.ui.theme.TamaSpacing
 import it.curzel.tamahero.models.ServerMessage
 import it.curzel.tamahero.network.GameSocketClient
 import it.curzel.tamahero.rendering.GameView
@@ -24,7 +26,19 @@ fun App() {
     val authViewModel = remember { AuthViewModel(authClient) }
     val authState by authViewModel.authState.collectAsState()
 
-    MaterialTheme(colorScheme = darkColorScheme()) {
+    val colorScheme = darkColorScheme(
+        primary = TamaColors.Accent,
+        secondary = TamaColors.AccentHover,
+        background = TamaColors.Background,
+        surface = TamaColors.Surface,
+        surfaceVariant = TamaColors.SurfaceElevated,
+        onPrimary = Color.White,
+        onSecondary = Color.White,
+        onBackground = TamaColors.Text,
+        onSurface = TamaColors.Text,
+        error = TamaColors.Error,
+    )
+    MaterialTheme(colorScheme = colorScheme) {
         when (val state = authState) {
             is AuthState.LoggedIn -> {
                 var connectionFailed by remember { mutableStateOf(false) }
@@ -59,7 +73,11 @@ fun App() {
                         onLogout = { authViewModel.logout() },
                     )
                 } else {
-                    GameView()
+                    GameView(
+                        username = state.username,
+                        onLogout = { authViewModel.logout() },
+                        onDeleteAccount = { authViewModel.deleteAccount() },
+                    )
                 }
             }
             else -> AuthScreenView(authViewModel)
@@ -70,17 +88,17 @@ fun App() {
 @Composable
 private fun ConnectionErrorView(onRetry: () -> Unit, onLogout: () -> Unit) {
     Surface(modifier = androidx.compose.ui.Modifier.fillMaxSize()) {
-    Box(
-        modifier = androidx.compose.ui.Modifier.fillMaxSize(),
-        contentAlignment = androidx.compose.ui.Alignment.Center,
-    ) {
-        Column(horizontalAlignment = androidx.compose.ui.Alignment.CenterHorizontally) {
-            Text("Could not connect to server", style = MaterialTheme.typography.titleMedium)
-            Spacer(modifier = androidx.compose.ui.Modifier.height(16.dp))
-            Button(onClick = onRetry) { Text("Retry") }
-            Spacer(modifier = androidx.compose.ui.Modifier.height(8.dp))
-            TextButton(onClick = onLogout) { Text("Logout") }
+        Box(
+            modifier = androidx.compose.ui.Modifier.fillMaxSize(),
+            contentAlignment = androidx.compose.ui.Alignment.Center,
+        ) {
+            Column(horizontalAlignment = androidx.compose.ui.Alignment.CenterHorizontally) {
+                Text("Could not connect to server", style = MaterialTheme.typography.titleMedium)
+                Spacer(modifier = androidx.compose.ui.Modifier.height(TamaSpacing.Medium))
+                Button(onClick = onRetry) { Text("Retry") }
+                Spacer(modifier = androidx.compose.ui.Modifier.height(TamaSpacing.XSmall))
+                TextButton(onClick = onLogout) { Text("Logout") }
+            }
         }
-    }
     }
 }

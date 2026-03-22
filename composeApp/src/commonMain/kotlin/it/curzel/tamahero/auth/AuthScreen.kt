@@ -12,6 +12,7 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
+import it.curzel.tamahero.ui.theme.TamaSpacing
 
 @Composable
 fun AuthScreenView(viewModel: AuthViewModel) {
@@ -22,22 +23,22 @@ fun AuthScreenView(viewModel: AuthViewModel) {
         modifier = Modifier
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background)
-            .padding(32.dp),
+            .padding(TamaSpacing.XLarge),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center,
     ) {
         Text("TamaHero", style = MaterialTheme.typography.headlineLarge, color = MaterialTheme.colorScheme.primary)
-        Spacer(Modifier.height(32.dp))
+        Spacer(Modifier.height(TamaSpacing.XLarge))
 
         when (authState) {
             is AuthState.Loading -> {
                 CircularProgressIndicator()
-                Spacer(Modifier.height(8.dp))
+                Spacer(Modifier.height(TamaSpacing.XSmall))
                 Text((authState as AuthState.Loading).message)
             }
             is AuthState.Error -> {
                 Text((authState as AuthState.Error).message, color = MaterialTheme.colorScheme.error)
-                Spacer(Modifier.height(16.dp))
+                Spacer(Modifier.height(TamaSpacing.Medium))
                 TextButton(onClick = { viewModel.clearError() }) { Text("Try again") }
             }
             else -> {
@@ -65,7 +66,7 @@ private fun LoginForm(viewModel: AuthViewModel) {
             modifier = Modifier.fillMaxWidth(),
             keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
         )
-        Spacer(Modifier.height(8.dp))
+        Spacer(Modifier.height(TamaSpacing.XSmall))
         OutlinedTextField(
             value = password,
             onValueChange = { password = it },
@@ -76,19 +77,21 @@ private fun LoginForm(viewModel: AuthViewModel) {
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password, imeAction = ImeAction.Done),
             keyboardActions = KeyboardActions(onDone = { if (username.isNotBlank() && password.isNotBlank()) viewModel.login(username, password) }),
         )
-        Spacer(Modifier.height(16.dp))
+        Spacer(Modifier.height(TamaSpacing.Medium))
         Button(
             onClick = { viewModel.login(username, password) },
             enabled = username.isNotBlank() && password.isNotBlank(),
             modifier = Modifier.fillMaxWidth(),
         ) { Text("Log in") }
 
-        Spacer(Modifier.height(8.dp))
+        Spacer(Modifier.height(TamaSpacing.XSmall))
         SocialLoginButtons(viewModel)
 
-        Spacer(Modifier.height(16.dp))
+        Spacer(Modifier.height(TamaSpacing.Medium))
         TextButton(onClick = { showForgotPassword = true }) { Text("Forgot password?") }
         TextButton(onClick = { viewModel.showSignup() }) { Text("Don't have an account? Sign up") }
+        Spacer(Modifier.height(TamaSpacing.XSmall))
+        LegalLinks()
     }
 
     if (showForgotPassword) {
@@ -111,7 +114,7 @@ private fun SignupForm(viewModel: AuthViewModel) {
             modifier = Modifier.fillMaxWidth(),
             keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
         )
-        Spacer(Modifier.height(8.dp))
+        Spacer(Modifier.height(TamaSpacing.XSmall))
         OutlinedTextField(
             value = email,
             onValueChange = { email = it },
@@ -120,7 +123,7 @@ private fun SignupForm(viewModel: AuthViewModel) {
             modifier = Modifier.fillMaxWidth(),
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email, imeAction = ImeAction.Next),
         )
-        Spacer(Modifier.height(8.dp))
+        Spacer(Modifier.height(TamaSpacing.XSmall))
         OutlinedTextField(
             value = password,
             onValueChange = { password = it },
@@ -131,18 +134,20 @@ private fun SignupForm(viewModel: AuthViewModel) {
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password, imeAction = ImeAction.Done),
             keyboardActions = KeyboardActions(onDone = { if (username.isNotBlank() && password.isNotBlank()) viewModel.register(username, password, email.ifBlank { null }) }),
         )
-        Spacer(Modifier.height(16.dp))
+        Spacer(Modifier.height(TamaSpacing.Medium))
         Button(
             onClick = { viewModel.register(username, password, email.ifBlank { null }) },
             enabled = username.isNotBlank() && password.isNotBlank(),
             modifier = Modifier.fillMaxWidth(),
         ) { Text("Sign up") }
 
-        Spacer(Modifier.height(8.dp))
+        Spacer(Modifier.height(TamaSpacing.XSmall))
         SocialLoginButtons(viewModel)
 
-        Spacer(Modifier.height(16.dp))
+        Spacer(Modifier.height(TamaSpacing.Medium))
         TextButton(onClick = { viewModel.showLogin() }) { Text("Already have an account? Log in") }
+        Spacer(Modifier.height(TamaSpacing.XSmall))
+        LegalLinks()
     }
 }
 
@@ -156,9 +161,9 @@ private fun SocialLoginButtons(viewModel: AuthViewModel) {
     }
 
     if (googleAvailable || appleAvailable) {
-        Spacer(Modifier.height(8.dp))
+        Spacer(Modifier.height(TamaSpacing.XSmall))
         Text("or", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-        Spacer(Modifier.height(8.dp))
+        Spacer(Modifier.height(TamaSpacing.XSmall))
     }
     if (googleAvailable) {
         OutlinedButton(onClick = { viewModel.socialLogin("google") }, modifier = Modifier.fillMaxWidth()) {
@@ -166,7 +171,7 @@ private fun SocialLoginButtons(viewModel: AuthViewModel) {
         }
     }
     if (appleAvailable) {
-        Spacer(Modifier.height(4.dp))
+        Spacer(Modifier.height(TamaSpacing.XXSmall))
         OutlinedButton(onClick = { viewModel.socialLogin("apple") }, modifier = Modifier.fillMaxWidth()) {
             Text("Continue with Apple")
         }

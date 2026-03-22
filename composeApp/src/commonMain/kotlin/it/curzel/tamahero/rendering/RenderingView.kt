@@ -24,7 +24,9 @@ fun RenderingView(
     viewModel: GameViewModel,
     buildings: List<PlacedBuilding>,
     ghost: GhostBuilding? = null,
+    selectedBuildingId: Long? = null,
 ) {
+    val camera by viewModel.camera.collectAsState()
     val renderingScale by viewModel.renderingScale.collectAsState()
     val fps by viewModel.fps.collectAsState()
     val showFps by viewModel.showFps.collectAsState()
@@ -39,15 +41,13 @@ fun RenderingView(
                 viewModel.onViewSizeChanged(size.width.toFloat(), size.height.toFloat())
             }
     ) {
-        drawRect(Color(0xFF111111), size = size)
-
-        val camera = viewModel.camera
+        drawRect(Color(0xFF0F0F0F), size = size)
 
         if (showGrid) {
             drawGrid(camera = camera, renderingScale = renderingScale)
         }
 
-        drawBuildings(buildings, camera, renderingScale)
+        drawBuildings(buildings, camera, renderingScale, selectedBuildingId)
 
         if (ghost != null) {
             drawBuildingGhost(ghost.type, ghost.gridX, ghost.gridY, ghost.isValid, camera, renderingScale)

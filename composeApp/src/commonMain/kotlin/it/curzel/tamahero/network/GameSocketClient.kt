@@ -5,9 +5,15 @@ import it.curzel.tamahero.models.BuildingType
 import it.curzel.tamahero.models.ClientMessage
 import it.curzel.tamahero.models.ProtocolJson
 import it.curzel.tamahero.models.ServerMessage
+import kotlin.time.Clock
+import kotlin.time.ExperimentalTime
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
+import kotlinx.coroutines.flow.asStateFlow
+
+data class WsLogEntry(val timestamp: Long, val direction: String, val text: String)
 
 object GameSocketClient {
 
@@ -16,6 +22,9 @@ object GameSocketClient {
 
     private val _events = MutableSharedFlow<ServerMessage>(extraBufferCapacity = 64)
     val events: SharedFlow<ServerMessage> = _events
+
+    private val _messageLog = MutableStateFlow<List<WsLogEntry>>(emptyList())
+    val messageLog = _messageLog.asStateFlow()
 
     private var connected = false
 
@@ -59,13 +68,23 @@ object GameSocketClient {
 
     fun collect(buildingId: Long) = send(ClientMessage.Collect(buildingId))
 
+    fun collectAll() = send(ClientMessage.CollectAll)
+
+    fun demolish(buildingId: Long) = send(ClientMessage.Demolish(buildingId))
+
+    fun cancelConstruction(buildingId: Long) = send(ClientMessage.CancelConstruction(buildingId))
+
+    fun speedUp(buildingId: Long) = send(ClientMessage.SpeedUp(buildingId))
+
     private fun send(message: ClientMessage) {
         val text = ProtocolJson.encodeToString(ClientMessage.serializer(), message)
+        addLog("SENT", text)
         GameSocketManager.send(text)
     }
 
     private suspend fun handleMessage(text: String) {
         try {
+            addLog("RECV", text)
             val message = ProtocolJson.decodeFromString(ServerMessage.serializer(), text)
             if (message is ServerMessage.Connected) {
                 connected = true
@@ -73,6 +92,16 @@ object GameSocketClient {
             }
             _events.emit(message)
         } catch (_: Exception) {}
+    }
+
+    @OptIn(ExperimentalTime::class)
+    private fun addLog(direction: String, text: String) {
+        val entry = WsLogEntry(
+            timestamp = Clock.System.now().toEpochMilliseconds(),
+            direction = direction,
+            text = text,
+        )
+        _messageLog.value = (_messageLog.value + entry).takeLast(200)
     }
 
     private fun startKeepAlive() {

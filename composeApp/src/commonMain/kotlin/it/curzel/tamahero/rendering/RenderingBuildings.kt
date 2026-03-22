@@ -26,17 +26,19 @@ fun DrawScope.drawBuildings(
     buildings: List<PlacedBuilding>,
     camera: Vector2d,
     renderingScale: Float,
+    selectedBuildingId: Long? = null,
 ) {
     val tileSize = TILE_SIZE * renderingScale
     val spriteSheet = SpritesRepository.imageBitmap(SPRITES_SHEET_ID)
 
     for (building in buildings) {
         val config = BuildingConfig.configFor(building.type, building.level)
-        val bSize = config?.size ?: 2
+        val bw = config?.width ?: 2
+        val bh = config?.height ?: 2
         val screenX = (building.x.toFloat() - camera.x) * tileSize
         val screenY = (building.y.toFloat() - camera.y) * tileSize
-        val w = tileSize * bSize
-        val h = tileSize * bSize
+        val w = tileSize * bw
+        val h = tileSize * bh
 
         val region = SpriteSheetConfig.regionFor(building.type)
         val isUnderConstruction = building.constructionStartedAt != null
@@ -49,6 +51,15 @@ fun DrawScope.drawBuildings(
                 dstSize = IntSize(w.roundToInt(), h.roundToInt()),
                 filterQuality = FilterQuality.None,
                 alpha = if (isUnderConstruction) 0.4f else 1.0f,
+            )
+        }
+
+        if (building.id == selectedBuildingId) {
+            drawRect(
+                color = Color(0xFFE8E8F0),
+                topLeft = Offset(screenX, screenY),
+                size = Size(w, h),
+                style = Stroke(width = 2f * renderingScale),
             )
         }
     }
@@ -64,11 +75,10 @@ fun DrawScope.drawBuildingGhost(
 ) {
     val tileSize = TILE_SIZE * renderingScale
     val config = BuildingConfig.configFor(buildingType, 1) ?: return
-    val bSize = config.size
     val screenX = (gridX.toFloat() - camera.x) * tileSize
     val screenY = (gridY.toFloat() - camera.y) * tileSize
-    val w = tileSize * bSize
-    val h = tileSize * bSize
+    val w = tileSize * config.width
+    val h = tileSize * config.height
 
     val region = SpriteSheetConfig.regionFor(buildingType)
     if (region != null) {
@@ -84,6 +94,6 @@ fun DrawScope.drawBuildingGhost(
         )
     }
 
-    val borderColor = if (isValid) Color(0xFF4CAF50) else Color(0xFFF44336)
+    val borderColor = if (isValid) Color(0xFF22C55E) else Color(0xFFEF4444)
     drawRect(color = borderColor, topLeft = Offset(screenX, screenY), size = Size(w, h), style = Stroke(width = 2f))
 }

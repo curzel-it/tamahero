@@ -51,11 +51,8 @@ class VillageWebSocketTest {
             val msg = receiveServerMessage()
             assertTrue(msg is ServerMessage.GameStateUpdated)
             val state = msg.state
-            assertEquals(4, state.village.buildings.size)
+            assertEquals(1, state.village.buildings.size)
             assertTrue(state.village.buildings.any { it.type == BuildingType.TownHall })
-            assertTrue(state.village.buildings.any { it.type == BuildingType.GoldStorage })
-            assertTrue(state.village.buildings.any { it.type == BuildingType.WoodStorage })
-            assertTrue(state.village.buildings.any { it.type == BuildingType.MetalStorage })
             assertEquals(1000, state.resources.gold)
             assertEquals(1000, state.resources.wood)
         }
@@ -139,12 +136,12 @@ class VillageWebSocketTest {
             skipConnected()
             send(Frame.Text(sendMessage(ClientMessage.GetVillage)))
             val getMsg = receiveServerMessage() as ServerMessage.GameStateUpdated
-            val woodStorage = getMsg.state.village.buildings.first { it.type == BuildingType.WoodStorage }
+            val townHall = getMsg.state.village.buildings.first { it.type == BuildingType.TownHall }
 
-            send(Frame.Text(sendMessage(ClientMessage.Move(woodStorage.id, 0, 0))))
+            send(Frame.Text(sendMessage(ClientMessage.Move(townHall.id, 0, 0))))
             val msg = receiveServerMessage()
             assertTrue(msg is ServerMessage.GameStateUpdated)
-            val moved = msg.state.village.buildings.first { it.id == woodStorage.id }
+            val moved = msg.state.village.buildings.first { it.id == townHall.id }
             assertEquals(0, moved.x)
             assertEquals(0, moved.y)
         }

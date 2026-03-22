@@ -12,8 +12,8 @@ import kotlin.time.ExperimentalTime
 
 @OptIn(ExperimentalTime::class)
 class GameViewModel : ViewModel(), GameTimerItem {
-    var camera: Vector2d = Vector2d.zero()
-        private set
+    private val _camera = MutableStateFlow(Vector2d.zero())
+    val camera = _camera.asStateFlow()
 
     private var frameCount: Int = 0
     private var fpsLastTime: Long = 0
@@ -69,19 +69,19 @@ class GameViewModel : ViewModel(), GameTimerItem {
             KeyEventType.KeyDown -> {
                 return when (event.key) {
                     Key.DirectionUp, Key.W -> {
-                        camera = camera.offset(0f, -0.5f)
+                        _camera.value = _camera.value.offset(0f, -0.5f)
                         true
                     }
                     Key.DirectionDown, Key.S -> {
-                        camera = camera.offset(0f, 0.5f)
+                        _camera.value = _camera.value.offset(0f, 0.5f)
                         true
                     }
                     Key.DirectionLeft, Key.A -> {
-                        camera = camera.offset(-0.5f, 0f)
+                        _camera.value = _camera.value.offset(-0.5f, 0f)
                         true
                     }
                     Key.DirectionRight, Key.D -> {
-                        camera = camera.offset(0.5f, 0f)
+                        _camera.value = _camera.value.offset(0.5f, 0f)
                         true
                     }
                     Key.G -> {
@@ -112,7 +112,7 @@ class GameViewModel : ViewModel(), GameTimerItem {
         val tileSize = TILE_SIZE * zoom
         val tileDragX = -dragX / tileSize
         val tileDragY = -dragY / tileSize
-        camera = camera.offset(tileDragX, tileDragY)
+        _camera.value = _camera.value.offset(tileDragX, tileDragY)
     }
 
     fun onZoom(zoomFactor: Float) {

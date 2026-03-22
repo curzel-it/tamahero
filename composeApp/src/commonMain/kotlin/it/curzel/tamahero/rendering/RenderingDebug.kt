@@ -12,11 +12,13 @@ import it.curzel.tamahero.game.TILE_SIZE
 import it.curzel.tamahero.utils.Vector2d
 import kotlin.math.roundToInt
 
+private val GridColor = Color(0xFFE8E8F0).copy(alpha = 0.08f)
+private val FpsTextColor = Color(0xFFE8E8F0)
+
 fun DrawScope.drawGrid(
     camera: Vector2d,
     renderingScale: Float
 ) {
-    val gridColor = Color.White.copy(alpha = 0.08f)
     val tileSize = TILE_SIZE * renderingScale
     val strokeWidth = 1f
 
@@ -29,7 +31,7 @@ fun DrawScope.drawGrid(
     var x = startX
     while (x <= size.width) {
         drawLine(
-            color = gridColor,
+            color = GridColor,
             start = Offset(x, 0f),
             end = Offset(x, size.height),
             strokeWidth = strokeWidth
@@ -40,7 +42,7 @@ fun DrawScope.drawGrid(
     var y = startY
     while (y <= size.height) {
         drawLine(
-            color = gridColor,
+            color = GridColor,
             start = Offset(0f, y),
             end = Offset(size.width, y),
             strokeWidth = strokeWidth
@@ -58,7 +60,7 @@ fun DrawScope.drawFpsText(
     val textResult = textMeasurer.measure(
         text = fpsText,
         style = TextStyle(
-            color = Color.White,
+            color = FpsTextColor,
             fontSize = 14.sp
         )
     )
