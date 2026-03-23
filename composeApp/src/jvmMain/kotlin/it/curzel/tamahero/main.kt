@@ -11,18 +11,47 @@ import it.curzel.tamahero.auth.TokenStorageProvider
 import it.curzel.tamahero.network.GameSocketManager
 import it.curzel.tamahero.rendering.RenderingScaleProviderHolder
 
-fun main() {
+fun main(args: Array<String>) {
+    val parsedArgs = parseArgs(args)
+
     RenderingScaleProviderHolder.setProvider(RenderingScaleDesktop())
-    TokenStorageProvider.setProvider(TokenStorageDesktop())
+    TokenStorageProvider.setProvider(TokenStorageDesktop(parsedArgs.user ?: "default"))
     SocialAuthProviderHolder.setProvider(SocialAuthDesktop())
     GameSocketManager.initialize(HttpClient { install(WebSockets) })
+
+    if (parsedArgs.server != null) {
+        ServerConfig.overrideBaseUrl(parsedArgs.server)
+    }
 
     application {
         Window(
             onCloseRequest = ::exitApplication,
-            title = "TamaHero",
+            title = if (parsedArgs.user != null) "TamaHero — ${parsedArgs.user}" else "TamaHero",
         ) {
-            App()
+            App(autoLoginUser = parsedArgs.user, autoLoginPass = parsedArgs.pass)
         }
     }
+}
+
+private data class ParsedArgs(
+    val user: String? = null,
+    val pass: String? = null,
+    val server: String? = null,
+)
+
+private fun parseArgs(args: Array<String>): ParsedArgs {
+    var user: String? = null
+    var pass: String? = null
+    var server: String? = null
+
+    var i = 0
+    while (i < args.size) {
+        when (args[i]) {
+            "--user" -> { user = args.getOrNull(i + 1); i += 2 }
+            "--pass" -> { pass = args.getOrNull(i + 1); i += 2 }
+            "--server" -> { server = args.getOrNull(i + 1); i += 2 }
+            else -> i++
+        }
+    }
+    return ParsedArgs(user, pass, server)
 }

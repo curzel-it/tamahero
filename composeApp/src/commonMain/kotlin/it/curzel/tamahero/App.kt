@@ -20,11 +20,17 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.withTimeoutOrNull
 
 @Composable
-fun App() {
+fun App(autoLoginUser: String? = null, autoLoginPass: String? = null) {
     LaunchedEffect(Unit) { initBuildingSprites() }
     val authClient = remember { AuthClient() }
     val authViewModel = remember { AuthViewModel(authClient) }
     val authState by authViewModel.authState.collectAsState()
+
+    LaunchedEffect(autoLoginUser, autoLoginPass) {
+        if (autoLoginUser != null && autoLoginPass != null && !authClient.isLoggedIn()) {
+            authClient.login(autoLoginUser, autoLoginPass)
+        }
+    }
 
     val colorScheme = darkColorScheme(
         primary = TamaColors.Accent,

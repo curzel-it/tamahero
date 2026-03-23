@@ -98,4 +98,47 @@ sealed class ClientMessage {
     @Serializable
     @SerialName("train_hero")
     data object TrainHero : ClientMessage()
+
+    @Serializable
+    @SerialName("find_opponent")
+    data object FindOpponent : ClientMessage()
+
+    @Serializable
+    @SerialName("next_opponent")
+    data object NextOpponent : ClientMessage()
+
+    @Serializable
+    @SerialName("start_pvp")
+    data class StartPvp(
+        val targetId: Long,
+    ) : ClientMessage()
+
+    @Serializable
+    @SerialName("deploy_troop")
+    data class DeployTroop(
+        val troopType: TroopType,
+        val x: Float,
+        val y: Float,
+    ) : ClientMessage()
+
+    @Serializable
+    @SerialName("end_battle")
+    data object EndBattle : ClientMessage()
+
+    @Serializable
+    @SerialName("get_leaderboard")
+    data object GetLeaderboard : ClientMessage()
+
+    @Serializable
+    @SerialName("register_device")
+    data class RegisterDevice(
+        val token: String,
+        val platform: String,
+    ) : ClientMessage()
+
+    @Serializable
+    @SerialName("unregister_device")
+    data class UnregisterDevice(
+        val token: String,
+    ) : ClientMessage()
 }

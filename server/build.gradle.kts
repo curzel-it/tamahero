@@ -28,6 +28,7 @@ dependencies {
     implementation("org.mindrot:jbcrypt:0.4")
     implementation("com.auth0:java-jwt:4.4.0")
     implementation("com.auth0:jwks-rsa:0.22.1")
+    implementation("com.google.firebase:firebase-admin:9.4.3")
     implementation("io.ktor:ktor-client-cio-jvm:3.3.3")
     implementation("io.ktor:ktor-server-websockets-jvm:3.3.3")
     testImplementation(libs.ktor.serverTestHost)

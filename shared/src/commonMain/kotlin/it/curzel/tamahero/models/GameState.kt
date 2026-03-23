@@ -16,5 +16,7 @@ data class GameState(
     val activeEvent: ActiveEvent? = null,
     val lastEventAt: Long = 0,
     val hero: Hero = Hero(),
+    val trophies: Int = 0,
+    val defenseLog: List<DefenseLogEntry> = emptyList(),
     val lastUpdatedAt: Long,
 )

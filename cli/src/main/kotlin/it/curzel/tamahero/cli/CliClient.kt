@@ -28,6 +28,7 @@ class CliClient(private val baseUrl: String) {
     private var token: String? = null
     private var playerId: Long? = null
     private var lastState: GameState? = null
+    private var lastMatchTarget: Long? = null
     private val responseChannel = Channel<ServerMessage>(Channel.BUFFERED)
 
     suspend fun register(username: String, password: String): Boolean {
@@ -154,6 +155,7 @@ class CliClient(private val baseUrl: String) {
     }
 
     fun getLastState(): GameState? = lastState
+    fun getLastMatchTarget(): Long? = lastMatchTarget
 
     private fun handleServerMessage(msg: ServerMessage) {
         when (msg) {
@@ -186,6 +188,61 @@ class CliClient(private val baseUrl: String) {
             is ServerMessage.HeroLevelUp -> {
                 println("HERO LEVEL UP! Now level ${msg.level}")
             }
+            is ServerMessage.OpponentFound -> {
+                val m = msg.match
+                println()
+                println("=== Opponent Found ===")
+                println("  ${m.targetName} (trophies: ${m.targetTrophies}, TH${m.targetTownHallLevel})")
+                println("  Buildings: ${m.targetBase.buildings.size}")
+                println("  Loot available: gold=${m.lootAvailable.gold} wood=${m.lootAvailable.wood} metal=${m.lootAvailable.metal} mana=${m.lootAvailable.mana}")
+                println("  Use 'go' to attack or 'next' for another opponent")
+                lastMatchTarget = m.targetId
+            }
+            is ServerMessage.NoOpponentFound -> {
+                println("No opponent found: ${msg.reason}")
+            }
+            is ServerMessage.PvpBattleStarted -> {
+                println()
+                println("=== PvP Battle Started ===")
+                println("  vs ${msg.battle.defenderName} (${msg.battle.defenderTrophies} trophies)")
+                println("  Time limit: ${msg.battle.timeLimitMs / 1000}s")
+                println("  Available troops:")
+                for (t in msg.battle.availableTroops.troops) {
+                    println("    ${t.type} lv${t.level} x${t.count}")
+                }
+                println("  Deploy troops with: deploy <type> <x> <y>")
+                println("  Troops must be placed on map edges (x/y near 0 or 39)")
+            }
+            is ServerMessage.Leaderboard -> {
+                println()
+                println("=== Leaderboard ===")
+                for (e in msg.entries) {
+                    println("  #${e.rank} ${e.playerName} — ${e.trophies} trophies (TH${e.townHallLevel})")
+                }
+                if (msg.yourRank > 0) {
+                    println("  Your rank: #${msg.yourRank}")
+                }
+            }
+            is ServerMessage.PvpBattleTick -> {
+                // Don't spam — just update silently, show on request
+            }
+            is ServerMessage.PvpBattleEnded -> {
+                val r = msg.result
+                println()
+                println("=== Battle Ended ===")
+                println("  Stars: ${"*".repeat(r.stars)}${"_".repeat(3 - r.stars)} (${r.destructionPercent}% destruction)")
+                println("  Loot: gold=${r.loot.gold} wood=${r.loot.wood} metal=${r.loot.metal} mana=${r.loot.mana}")
+                println("  Trophies: ${if (r.attackerTrophyDelta >= 0) "+" else ""}${r.attackerTrophyDelta}")
+            }
+            is ServerMessage.DefenseResult -> {
+                val e = msg.entry
+                println()
+                println("=== You Were Attacked! ===")
+                println("  Attacker: ${e.attackerName}")
+                println("  Stars: ${"*".repeat(e.stars)}${"_".repeat(3 - e.stars)}")
+                println("  Lost: gold=${e.lootLost.gold} wood=${e.lootLost.wood} metal=${e.lootLost.metal}")
+                println("  Trophies: ${e.trophyDelta}")
+            }
             is ServerMessage.Error -> {
                 println("Error: ${msg.reason}")
                 if (msg.details.isNotEmpty()) println("  Details: ${msg.details}")
@@ -196,6 +253,7 @@ class CliClient(private val baseUrl: String) {
     private fun printGameState(state: GameState) {
         println()
         println("=== Village (player ${state.playerId}) ===")
+        println("Trophies: ${state.trophies}")
         println("Resources: gold=${state.resources.gold} wood=${state.resources.wood} metal=${state.resources.metal} mana=${state.resources.mana}")
         println("Buildings (${state.village.buildings.size}):")
         for (b in state.village.buildings) {

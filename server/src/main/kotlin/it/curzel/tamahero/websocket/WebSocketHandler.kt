@@ -5,6 +5,9 @@ import it.curzel.tamahero.auth.AuthService
 import it.curzel.tamahero.models.ClientMessage
 import it.curzel.tamahero.models.ProtocolJson
 import it.curzel.tamahero.models.ServerMessage
+import it.curzel.tamahero.db.DeviceTokenRepository
+import it.curzel.tamahero.village.LeaderboardService
+import it.curzel.tamahero.village.PvpService
 import it.curzel.tamahero.village.VillageException
 import it.curzel.tamahero.village.VillageService
 import org.slf4j.LoggerFactory
@@ -60,9 +63,31 @@ object WebSocketHandler {
                 is ClientMessage.CollectEventRewards -> handleVillageAction(userId) { VillageService.collectEventRewards(userId) }
                 is ClientMessage.FeedHero -> handleVillageAction(userId) { VillageService.feedHero(userId) }
                 is ClientMessage.TrainHero -> handleVillageAction(userId) { VillageService.trainHero(userId) }
+                is ClientMessage.FindOpponent -> handlePvpAction(userId) { PvpService.findOpponent(userId) }
+                is ClientMessage.NextOpponent -> handlePvpAction(userId) { PvpService.findOpponent(userId) }
+                is ClientMessage.StartPvp -> handlePvpAction(userId) { PvpService.startBattle(userId, message.targetId) }
+                is ClientMessage.DeployTroop -> handlePvpAction(userId) { PvpService.deployTroop(userId, message.troopType, message.x, message.y) }
+                is ClientMessage.EndBattle -> handlePvpAction(userId) { PvpService.endBattle(userId) }
+                is ClientMessage.GetLeaderboard -> handlePvpAction(userId) { LeaderboardService.getLeaderboard(userId) }
+                is ClientMessage.RegisterDevice -> {
+                    DeviceTokenRepository.saveToken(userId, message.token, message.platform)
+                    ConnectionManager.sendToPlayer(userId, ServerMessage.GameStateUpdated(VillageService.getOrCreateVillage(userId)))
+                }
+                is ClientMessage.UnregisterDevice -> {
+                    DeviceTokenRepository.removeToken(message.token)
+                }
             }
         } catch (e: Exception) {
             logger.warn("Invalid message from player {}: {}", userId, e.message)
+        }
+    }
+
+    private suspend fun handlePvpAction(userId: Long, action: () -> ServerMessage) {
+        try {
+            val message = action()
+            ConnectionManager.sendToPlayer(userId, message)
+        } catch (e: Exception) {
+            ConnectionManager.sendToPlayer(userId, ServerMessage.Error(reason = e.message ?: "PvP action failed"))
         }
     }
 

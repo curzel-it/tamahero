@@ -335,6 +335,13 @@ object VillageService {
             state.copy(village = state.village.copy(buildings = state.village.buildings + building))
         }
 
+    fun grantArmy(userId: Long, troopType: TroopType, count: Int, level: Int = 1): GameState =
+        loadAndUpdate(userId) { state ->
+            var army = state.army
+            repeat(count) { army = army.add(troopType, level) }
+            state.copy(army = army)
+        }
+
     fun advanceTime(userId: Long, deltaMs: Long): GameState {
         val state = VillageRepository.getVillage(userId)
             ?: throw VillageException("Village not found")

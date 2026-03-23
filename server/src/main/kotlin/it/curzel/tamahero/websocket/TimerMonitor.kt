@@ -2,6 +2,7 @@ package it.curzel.tamahero.websocket
 
 import it.curzel.tamahero.db.VillageRepository
 import it.curzel.tamahero.models.*
+import it.curzel.tamahero.notifications.PushNotificationServiceProvider
 import kotlinx.coroutines.*
 import org.slf4j.LoggerFactory
 
@@ -56,6 +57,7 @@ object TimerMonitor {
                     buildingType = building.type,
                     level = building.level,
                 ))
+                PushNotificationServiceProvider.instance.notifyBuildingComplete(userId, building.type.name, building.level)
             }
         }
 
@@ -67,6 +69,7 @@ object TimerMonitor {
                     troopType = armyTroop.type,
                     level = armyTroop.level,
                 ))
+                PushNotificationServiceProvider.instance.notifyTrainingComplete(userId, armyTroop.type.name, armyTroop.level)
             }
         }
 
@@ -84,11 +87,13 @@ object TimerMonitor {
             ConnectionManager.sendToPlayer(userId, ServerMessage.EventStarted(newEvent.type))
         }
         if (oldEvent?.completed != true && newEvent?.completed == true) {
+            val success = newEvent.pendingRewards == newEvent.rewards.success
             ConnectionManager.sendToPlayer(userId, ServerMessage.EventEnded(
                 eventType = newEvent.type,
-                success = newEvent.pendingRewards == newEvent.rewards.success,
+                success = success,
                 rewards = newEvent.pendingRewards ?: Resources(),
             ))
+            PushNotificationServiceProvider.instance.notifyEventEnded(userId, newEvent.type.name, success)
         }
 
         // Trigger random events
@@ -102,6 +107,7 @@ object TimerMonitor {
                 val eventType = eligible[(now % eligible.size).toInt()]
                 finalState = PveEventUpdateUseCase.startEvent(finalState, eventType, now)
                 ConnectionManager.sendToPlayer(userId, ServerMessage.EventStarted(eventType))
+                PushNotificationServiceProvider.instance.notifyEventStarted(userId, eventType.name)
             }
         }
 

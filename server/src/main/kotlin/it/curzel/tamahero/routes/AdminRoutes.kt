@@ -49,6 +49,14 @@ data class AdvanceTimeRequest(
 )
 
 @Serializable
+data class GrantArmyRequest(
+    val userId: Long,
+    val troopType: String,
+    val count: Int = 1,
+    val level: Int = 1,
+)
+
+@Serializable
 data class GetVillageRequest(val userId: Long)
 
 @Serializable
@@ -136,6 +144,23 @@ fun Route.adminRoutes() {
             val request = call.receive<AdvanceTimeRequest>()
             try {
                 val state = VillageService.advanceTime(request.userId, request.deltaMs)
+                call.respond(AdminResponse(true))
+            } catch (e: Exception) {
+                call.respond(HttpStatusCode.BadRequest, AdminResponse(false, e.message))
+            }
+        }
+
+        post("/grant-army") {
+            val adminId = requireAdmin(call) ?: return@post
+            val request = call.receive<GrantArmyRequest>()
+            val troopType = try {
+                TroopType.valueOf(request.troopType)
+            } catch (_: Exception) {
+                call.respond(HttpStatusCode.BadRequest, AdminResponse(false, "Unknown troop type: ${request.troopType}"))
+                return@post
+            }
+            try {
+                VillageService.grantArmy(request.userId, troopType, request.count, request.level)
                 call.respond(AdminResponse(true))
             } catch (e: Exception) {
                 call.respond(HttpStatusCode.BadRequest, AdminResponse(false, e.message))

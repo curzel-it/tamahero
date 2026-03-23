@@ -61,6 +61,49 @@ sealed class ServerMessage {
     ) : ServerMessage()
 
     @Serializable
+    @SerialName("opponent_found")
+    data class OpponentFound(
+        val match: MatchmakingResult,
+    ) : ServerMessage()
+
+    @Serializable
+    @SerialName("no_opponent")
+    data class NoOpponentFound(
+        val reason: String = "",
+    ) : ServerMessage()
+
+    @Serializable
+    @SerialName("pvp_battle_started")
+    data class PvpBattleStarted(
+        val battle: PvpBattle,
+    ) : ServerMessage()
+
+    @Serializable
+    @SerialName("pvp_battle_tick")
+    data class PvpBattleTick(
+        val battle: PvpBattle,
+    ) : ServerMessage()
+
+    @Serializable
+    @SerialName("pvp_battle_ended")
+    data class PvpBattleEnded(
+        val result: PvpResult,
+    ) : ServerMessage()
+
+    @Serializable
+    @SerialName("defense_result")
+    data class DefenseResult(
+        val entry: DefenseLogEntry,
+    ) : ServerMessage()
+
+    @Serializable
+    @SerialName("leaderboard")
+    data class Leaderboard(
+        val entries: List<LeaderboardEntry>,
+        val yourRank: Int,
+    ) : ServerMessage()
+
+    @Serializable
     @SerialName("error")
     data class Error(
         val reason: String,

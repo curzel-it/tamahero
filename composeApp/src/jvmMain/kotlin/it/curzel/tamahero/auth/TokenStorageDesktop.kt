@@ -2,8 +2,9 @@ package it.curzel.tamahero.auth
 
 import java.util.prefs.Preferences
 
-class TokenStorageDesktop : TokenStorage {
+class TokenStorageDesktop(private val profileName: String = "default") : TokenStorage {
     private val prefs = Preferences.userNodeForPackage(TokenStorageDesktop::class.java)
+        .node("profile_$profileName")
 
     companion object {
         private const val KEY_USER_ID = "auth_user_id"

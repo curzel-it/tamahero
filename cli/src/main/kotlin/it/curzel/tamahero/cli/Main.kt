@@ -187,6 +187,42 @@ fun main(args: Array<String>) {
 
                     "hero" -> showHero(client.getLastState())
 
+                    "attack" -> {
+                        if (!connected) { println("Connect first."); continue }
+                        client.sendAndReceive(ClientMessage.FindOpponent)
+                    }
+
+                    "next" -> {
+                        if (!connected) { println("Connect first."); continue }
+                        client.sendAndReceive(ClientMessage.NextOpponent)
+                    }
+
+                    "go" -> {
+                        if (!connected) { println("Connect first."); continue }
+                        val targetId = client.getLastMatchTarget()
+                        if (targetId == null) { println("No opponent found. Use 'attack' first."); continue }
+                        client.sendAndReceive(ClientMessage.StartPvp(targetId))
+                    }
+
+                    "deploy" -> {
+                        if (!connected) { println("Connect first."); continue }
+                        if (parts.size < 4) { println("Usage: deploy <troopType> <x> <y>"); continue }
+                        val type = parseTroopType(parts[1]) ?: continue
+                        client.sendAndReceive(ClientMessage.DeployTroop(type, parts[2].toFloat(), parts[3].toFloat()))
+                    }
+
+                    "surrender" -> {
+                        if (!connected) { println("Connect first."); continue }
+                        client.sendAndReceive(ClientMessage.EndBattle)
+                    }
+
+                    "defenselog" -> showDefenseLog(client.getLastState())
+
+                    "leaderboard", "lb" -> {
+                        if (!connected) { println("Connect first."); continue }
+                        client.sendAndReceive(ClientMessage.GetLeaderboard)
+                    }
+
                     "help", "?" -> printHelp()
 
                     else -> println("Unknown command: $cmd (type 'help' for commands)")
@@ -237,6 +273,15 @@ private fun printHelp() {
         |  hero                    Show hero stats
         |  feed                    Feed hero (costs gold)
         |  trainhero               Train hero (costs mana, gains XP)
+        |
+        |PvP:
+        |  attack                  Find an opponent to attack
+        |  next                    Skip to next opponent
+        |  go                      Start battle with shown opponent
+        |  deploy <type> <x> <y>  Deploy troop during battle (edges only)
+        |  surrender               End battle early
+        |  defenselog              Show recent attacks against you
+        |  leaderboard / lb       Show trophy leaderboard
         |
         |Events:
         |  event                   Show active event status
@@ -458,6 +503,24 @@ private fun showHero(state: GameState?) {
     println("  Bonus damage: +${HeroConfig.bonusDamagePercent(hero.level)}%")
     println("  Feed cost: ${HeroConfig.FEED_COST_GOLD}g")
     println("  Train cost: ${HeroConfig.TRAIN_COST_MANA} mana")
+}
+
+private fun showDefenseLog(state: GameState?) {
+    if (state == null) { println("No state. Run 'village' first."); return }
+    if (state.defenseLog.isEmpty()) {
+        println("No attacks recorded.")
+        return
+    }
+    println("Defense log:")
+    for (entry in state.defenseLog) {
+        val stars = "*".repeat(entry.stars) + "_".repeat(3 - entry.stars)
+        println("  ${entry.attackerName} — $stars — lost: ${formatResources(entry.lootLost)} — trophies: ${entry.trophyDelta}")
+    }
+    println("Trophies: ${state.trophies}")
+    if (state.shieldExpiresAt > System.currentTimeMillis()) {
+        val remaining = (state.shieldExpiresAt - System.currentTimeMillis()) / 3_600_000
+        println("Shield: ${remaining}h remaining")
+    }
 }
 
 private fun formatResources(r: Resources): String {

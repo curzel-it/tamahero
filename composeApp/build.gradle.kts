@@ -113,6 +113,11 @@ compose.desktop {
     application {
         mainClass = "it.curzel.tamahero.MainKt"
 
+        val appArgs = providers.gradleProperty("appArgs").orNull
+            ?.split("\\s+".toRegex())
+            ?: emptyList()
+        args(*appArgs.toTypedArray())
+
         nativeDistributions {
             targetFormats(TargetFormat.Dmg, TargetFormat.Msi, TargetFormat.Deb)
             packageName = "it.curzel.tamahero"

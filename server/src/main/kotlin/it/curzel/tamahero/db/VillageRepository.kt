@@ -31,6 +31,18 @@ object VillageRepository {
         }
     }
 
+    fun getAllVillageUserIds(): List<Long> {
+        val conn = Database.getConnection()
+        conn.prepareStatement("SELECT user_id FROM villages").use { stmt ->
+            val rs = stmt.executeQuery()
+            val ids = mutableListOf<Long>()
+            while (rs.next()) {
+                ids.add(rs.getLong("user_id"))
+            }
+            return ids
+        }
+    }
+
     fun deleteVillage(userId: Long) {
         val conn = Database.getConnection()
         conn.prepareStatement("DELETE FROM villages WHERE user_id = ?").use { stmt ->

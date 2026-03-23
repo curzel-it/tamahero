@@ -81,6 +81,16 @@ object Database {
                     updated_at INTEGER NOT NULL
                 )
             """)
+            stmt.executeUpdate("""
+                CREATE TABLE IF NOT EXISTS device_tokens (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    user_id INTEGER NOT NULL REFERENCES users(id),
+                    token TEXT NOT NULL UNIQUE,
+                    platform TEXT NOT NULL,
+                    created_at INTEGER NOT NULL,
+                    updated_at INTEGER NOT NULL
+                )
+            """)
         }
     }
 }

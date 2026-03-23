@@ -12,6 +12,9 @@ import it.curzel.tamahero.auth.AuthService
 import it.curzel.tamahero.auth.configureAuth
 import it.curzel.tamahero.db.Database
 import it.curzel.tamahero.routes.*
+import it.curzel.tamahero.notifications.FirebasePushNotificationService
+import it.curzel.tamahero.notifications.PushNotificationServiceProvider
+import it.curzel.tamahero.village.PvpBattleRunner
 import it.curzel.tamahero.websocket.TimerMonitor
 import it.curzel.tamahero.websocket.WebSocketHandler
 import kotlinx.serialization.json.buildJsonObject
@@ -27,7 +30,11 @@ fun Application.module() {
     Database.init()
     AuthService.cleanupExpiredTokens()
     configureModule()
+    val firebase = FirebasePushNotificationService()
+    firebase.init()
+    PushNotificationServiceProvider.instance = firebase
     TimerMonitor.start()
+    PvpBattleRunner.start()
 }
 
 fun Application.testModule() {
