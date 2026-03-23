@@ -15,5 +15,6 @@ data class GameState(
     val preBattleBuildings: List<PlacedBuilding> = emptyList(),
     val activeEvent: ActiveEvent? = null,
     val lastEventAt: Long = 0,
+    val hero: Hero = Hero(),
     val lastUpdatedAt: Long,
 )

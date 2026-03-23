@@ -92,7 +92,8 @@ object BuildingConfig {
             BuildingLevelConfig(level = 2, hp = 1, cost = Resources(wood = 40, metal = 10), buildTimeSeconds = 10, width = 1, height = 1, burstDamage = 50, triggerRadius = 1.5f),
         ),
         BuildingType.SpringTrap to listOf(
-            BuildingLevelConfig(level = 1, hp = 1, cost = Resources(wood = 30, metal = 10), buildTimeSeconds = 5, width = 1, height = 1),
+            BuildingLevelConfig(level = 1, hp = 1, cost = Resources(wood = 30, metal = 10), buildTimeSeconds = 5, width = 1, height = 1, triggerRadius = 1f),
+            BuildingLevelConfig(level = 2, hp = 1, cost = Resources(wood = 60, metal = 20), buildTimeSeconds = 10, width = 1, height = 1, triggerRadius = 1.5f),
         ),
         BuildingType.GiantBomb to listOf(
             BuildingLevelConfig(level = 1, hp = 1, cost = Resources(gold = 100, metal = 20), buildTimeSeconds = 10, width = 1, height = 1, burstDamage = 100, triggerRadius = 2f),
@@ -101,6 +102,19 @@ object BuildingConfig {
         BuildingType.ShieldDome to listOf(
             BuildingLevelConfig(level = 1, hp = 100, cost = Resources(gold = 500, wood = 500, metal = 200), buildTimeSeconds = 120, shieldHp = 500, requiredTownHallLevel = 2),
             BuildingLevelConfig(level = 2, hp = 150, cost = Resources(gold = 1000, wood = 1000, metal = 500), buildTimeSeconds = 300, shieldHp = 1000, requiredTownHallLevel = 3),
+        ),
+        BuildingType.ManaWell to listOf(
+            BuildingLevelConfig(level = 1, hp = 200, cost = Resources(gold = 300, wood = 300), buildTimeSeconds = 60, productionPerHour = Resources(mana = 50), requiredTownHallLevel = 2),
+            BuildingLevelConfig(level = 2, hp = 300, cost = Resources(gold = 600, wood = 600), buildTimeSeconds = 180, productionPerHour = Resources(mana = 100), requiredTownHallLevel = 2),
+            BuildingLevelConfig(level = 3, hp = 400, cost = Resources(gold = 1200, wood = 1200), buildTimeSeconds = 300, productionPerHour = Resources(mana = 175), requiredTownHallLevel = 3),
+        ),
+        BuildingType.ManaStorage to listOf(
+            BuildingLevelConfig(level = 1, hp = 200, cost = Resources(gold = 200, wood = 200), buildTimeSeconds = 30, storageCapacity = Resources(mana = 500), requiredTownHallLevel = 2),
+            BuildingLevelConfig(level = 2, hp = 300, cost = Resources(gold = 500, wood = 500), buildTimeSeconds = 120, storageCapacity = Resources(mana = 1500), requiredTownHallLevel = 2),
+        ),
+        BuildingType.BuilderHut to listOf(
+            BuildingLevelConfig(level = 1, hp = 150, cost = Resources(gold = 200, wood = 200), buildTimeSeconds = 30, width = 2, height = 2),
+            BuildingLevelConfig(level = 2, hp = 250, cost = Resources(gold = 500, wood = 500, metal = 100), buildTimeSeconds = 120, width = 2, height = 2, requiredTownHallLevel = 2),
         ),
     )
 
@@ -123,6 +137,9 @@ object BuildingConfig {
         BuildingType.SpringTrap to mapOf(1 to 2, 2 to 4, 3 to 6),
         BuildingType.GiantBomb to mapOf(1 to 0, 2 to 2, 3 to 4),
         BuildingType.ShieldDome to mapOf(2 to 1, 3 to 1),
+        BuildingType.ManaWell to mapOf(2 to 1, 3 to 2),
+        BuildingType.ManaStorage to mapOf(2 to 1, 3 to 2),
+        BuildingType.BuilderHut to mapOf(1 to 1, 2 to 2, 3 to 3),
     )
 
     fun configFor(type: BuildingType, level: Int): BuildingLevelConfig? =

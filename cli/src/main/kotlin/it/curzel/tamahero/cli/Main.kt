@@ -175,6 +175,18 @@ fun main(args: Array<String>) {
                         else println("Last known state cached. Run 'village' to refresh.")
                     }
 
+                    "feed" -> {
+                        if (!connected) { println("Connect first."); continue }
+                        client.sendAndReceive(ClientMessage.FeedHero)
+                    }
+
+                    "trainhero" -> {
+                        if (!connected) { println("Connect first."); continue }
+                        client.sendAndReceive(ClientMessage.TrainHero)
+                    }
+
+                    "hero" -> showHero(client.getLastState())
+
                     "help", "?" -> printHelp()
 
                     else -> println("Unknown command: $cmd (type 'help' for commands)")
@@ -220,6 +232,11 @@ private fun printHelp() {
         |Defense:
         |  rearm <id>              Rearm a triggered trap (50% cost)
         |  rearmall                Rearm all triggered traps
+        |
+        |Hero:
+        |  hero                    Show hero stats
+        |  feed                    Feed hero (costs gold)
+        |  trainhero               Train hero (costs mana, gains XP)
         |
         |Events:
         |  event                   Show active event status
@@ -365,6 +382,9 @@ private fun buildingLabel(type: BuildingType): Char = when (type) {
     BuildingType.GiantBomb -> 'b'
     BuildingType.WizardTower -> 'Z'
     BuildingType.ShieldDome -> 'S'
+    BuildingType.ManaWell -> 'a'
+    BuildingType.ManaStorage -> 'n'
+    BuildingType.BuilderHut -> 'H'
 }
 
 private fun showEvent(state: GameState?) {
@@ -425,6 +445,19 @@ private fun showTroopTypes() {
         val config = TroopConfig.configFor(type, 1) ?: continue
         println("  $type: hp=${config.hp} dps=${config.dps} spd=${config.speed} rng=${config.range} cost=${formatResources(config.trainingCost)} time=${config.trainingTimeSeconds}s")
     }
+}
+
+private fun showHero(state: GameState?) {
+    if (state == null) { println("No state. Run 'village' first."); return }
+    val hero = state.hero
+    val nextLevelXp = HeroConfig.xpForLevel(hero.level + 1)
+    println("Hero (Level ${hero.level}):")
+    println("  XP: ${hero.xp}/${nextLevelXp}")
+    println("  Hunger: ${hero.hunger}/100")
+    println("  Happiness: ${hero.happiness}/100")
+    println("  Bonus damage: +${HeroConfig.bonusDamagePercent(hero.level)}%")
+    println("  Feed cost: ${HeroConfig.FEED_COST_GOLD}g")
+    println("  Train cost: ${HeroConfig.TRAIN_COST_MANA} mana")
 }
 
 private fun formatResources(r: Resources): String {

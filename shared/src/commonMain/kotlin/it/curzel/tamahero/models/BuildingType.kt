@@ -21,11 +21,14 @@ enum class BuildingType {
     SpikeTrap,
     SpringTrap,
     GiantBomb,
-    ShieldDome;
+    ShieldDome,
+    ManaWell,
+    ManaStorage,
+    BuilderHut;
 
-    val isProducer: Boolean get() = this in setOf(LumberCamp, GoldMine, Forge)
+    val isProducer: Boolean get() = this in setOf(LumberCamp, GoldMine, Forge, ManaWell)
     val isDefense: Boolean get() = this in setOf(Cannon, ArcherTower, Mortar, WizardTower, Wall)
-    val isStorage: Boolean get() = this in setOf(WoodStorage, GoldStorage, MetalStorage)
+    val isStorage: Boolean get() = this in setOf(WoodStorage, GoldStorage, MetalStorage, ManaStorage)
     val isTrap: Boolean get() = this in setOf(SpikeTrap, SpringTrap, GiantBomb)
     val isResource: Boolean get() = isProducer || isStorage || this == TownHall
 }

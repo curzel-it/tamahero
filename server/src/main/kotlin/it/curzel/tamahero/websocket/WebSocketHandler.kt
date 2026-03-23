@@ -58,6 +58,8 @@ object WebSocketHandler {
                 is ClientMessage.RearmTrap -> handleVillageAction(userId) { VillageService.rearmTrap(userId, message.buildingId) }
                 is ClientMessage.RearmAllTraps -> handleVillageAction(userId) { VillageService.rearmAllTraps(userId) }
                 is ClientMessage.CollectEventRewards -> handleVillageAction(userId) { VillageService.collectEventRewards(userId) }
+                is ClientMessage.FeedHero -> handleVillageAction(userId) { VillageService.feedHero(userId) }
+                is ClientMessage.TrainHero -> handleVillageAction(userId) { VillageService.trainHero(userId) }
             }
         } catch (e: Exception) {
             logger.warn("Invalid message from player {}: {}", userId, e.message)

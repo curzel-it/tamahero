@@ -104,25 +104,21 @@ class MultiClientTest {
 
         wsClient1.webSocket("/ws?token=$token") {
             skipConnected()
-            send(Frame.Text(sendMessage(ClientMessage.Build(BuildingType.LumberCamp, 5, 5))))
+            // Use FeedHero twice to generate two state updates without worker constraints
+            send(Frame.Text(sendMessage(ClientMessage.FeedHero)))
             val msg1 = receiveServerMessage() as ServerMessage.GameStateUpdated
 
-            send(Frame.Text(sendMessage(ClientMessage.Build(BuildingType.GoldMine, 10, 10))))
+            send(Frame.Text(sendMessage(ClientMessage.FeedHero)))
             val msg2 = receiveServerMessage() as ServerMessage.GameStateUpdated
 
-            assertEquals(2, msg2.state.village.buildings.count {
-                it.type == BuildingType.LumberCamp || it.type == BuildingType.GoldMine
-            })
+            assertTrue(msg2.state.hero.hunger > 0)
         }
 
         val secondMsg = withTimeout(5000) {
-            val first = client2Messages.receive()
-            val second = client2Messages.receive()
-            second
+            client2Messages.receive()
+            client2Messages.receive()
         }
         assertTrue(secondMsg is ServerMessage.GameStateUpdated)
-        assertTrue(secondMsg.state.village.buildings.any { it.type == BuildingType.LumberCamp })
-        assertTrue(secondMsg.state.village.buildings.any { it.type == BuildingType.GoldMine })
 
         client2Job.cancel()
         scope.cancel()

@@ -183,6 +183,9 @@ class CliClient(private val baseUrl: String) {
                 println("  Rewards: gold=${msg.rewards.gold} wood=${msg.rewards.wood} metal=${msg.rewards.metal} mana=${msg.rewards.mana}")
                 println("  Use 'collectrewards' to claim.")
             }
+            is ServerMessage.HeroLevelUp -> {
+                println("HERO LEVEL UP! Now level ${msg.level}")
+            }
             is ServerMessage.Error -> {
                 println("Error: ${msg.reason}")
                 if (msg.details.isNotEmpty()) println("  Details: ${msg.details}")

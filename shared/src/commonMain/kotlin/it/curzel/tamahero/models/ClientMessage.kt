@@ -90,4 +90,12 @@ sealed class ClientMessage {
     @Serializable
     @SerialName("collect_event_rewards")
     data object CollectEventRewards : ClientMessage()
+
+    @Serializable
+    @SerialName("feed_hero")
+    data object FeedHero : ClientMessage()
+
+    @Serializable
+    @SerialName("train_hero")
+    data object TrainHero : ClientMessage()
 }

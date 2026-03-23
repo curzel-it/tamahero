@@ -193,7 +193,7 @@ private fun BuildMenuItem(
 }
 
 private fun categoryFor(type: BuildingType): BuildCategory = when {
-    type.isProducer || type.isStorage -> BuildCategory.Resources
+    type.isProducer || type.isStorage || type == BuildingType.BuilderHut -> BuildCategory.Resources
     type == BuildingType.Barracks || type == BuildingType.ArmyCamp -> BuildCategory.Army
     type.isDefense -> BuildCategory.Defense
     type.isTrap || type == BuildingType.ShieldDome -> BuildCategory.Traps

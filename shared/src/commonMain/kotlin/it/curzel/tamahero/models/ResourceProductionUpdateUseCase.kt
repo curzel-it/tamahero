@@ -20,6 +20,7 @@ object ResourceProductionUpdateUseCase {
                 gold = (config.productionPerHour.gold * elapsedHours).toLong(),
                 wood = (config.productionPerHour.wood * elapsedHours).toLong(),
                 metal = (config.productionPerHour.metal * elapsedHours).toLong(),
+                mana = (config.productionPerHour.mana * elapsedHours).toLong(),
             )
             produced = produced + amount
             building.copy(lastCollectedAt = now)

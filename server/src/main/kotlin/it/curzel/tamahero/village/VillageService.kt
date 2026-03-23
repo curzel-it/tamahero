@@ -21,6 +21,7 @@ object VillageService {
             requireResources(state, config.cost)
             requireWithinBounds(x, y, config.width, config.height)
             requireNoCollision(state.village.buildings, x, y, config.width, config.height, excludeId = null)
+            requireWorkerAvailable(state, now)
 
             val newId = (state.village.buildings.maxOfOrNull { it.id } ?: 0) + 1
             val newBuilding = PlacedBuilding(
@@ -51,6 +52,7 @@ object VillageService {
 
             requireTownHallLevel(state, now, nextConfig.requiredTownHallLevel)
             requireResources(state, nextConfig.cost)
+            requireWorkerAvailable(state, now)
 
             val updatedBuildings = state.village.buildings.map {
                 if (it.id == buildingId) it.copy(level = nextLevel, constructionStartedAt = now, hp = 0)
@@ -137,6 +139,24 @@ object VillageService {
             state.copy(
                 resources = state.resources + rewards,
                 activeEvent = null,
+            )
+        }
+
+    fun feedHero(userId: Long): GameState =
+        loadAndUpdate(userId) { state ->
+            requireResources(state, Resources(gold = HeroConfig.FEED_COST_GOLD))
+            state.copy(
+                resources = state.resources - Resources(gold = HeroConfig.FEED_COST_GOLD),
+                hero = HeroUpdateUseCase.feed(state.hero),
+            )
+        }
+
+    fun trainHero(userId: Long): GameState =
+        loadAndUpdate(userId) { state ->
+            requireResources(state, Resources(mana = HeroConfig.TRAIN_COST_MANA))
+            state.copy(
+                resources = state.resources - Resources(mana = HeroConfig.TRAIN_COST_MANA),
+                hero = HeroUpdateUseCase.train(state.hero),
             )
         }
 
@@ -274,6 +294,16 @@ object VillageService {
         }
     }
 
+    private fun requireWorkerAvailable(state: GameState, now: Long) {
+        val workerCount = state.village.buildings
+            .count { it.type == BuildingType.BuilderHut && it.isComplete(now) }
+            .coerceAtLeast(1)
+        val activeConstructions = state.village.buildings.count { it.isUnderConstruction(now) }
+        if (activeConstructions >= workerCount) {
+            throw VillageException("No workers available ($activeConstructions/$workerCount busy)")
+        }
+    }
+
     private fun requireNoCollision(buildings: List<PlacedBuilding>, x: Int, y: Int, width: Int, height: Int, excludeId: Long?) {
         for (building in buildings) {
             if (building.id == excludeId) continue
@@ -332,6 +362,7 @@ object VillageService {
                 playerId = userId,
                 buildings = listOf(
                     PlacedBuilding(id = 1, type = BuildingType.TownHall, level = 1, x = 18, y = 18, hp = 1000, lastCollectedAt = now),
+                    PlacedBuilding(id = 2, type = BuildingType.BuilderHut, level = 1, x = 16, y = 18, hp = 150, lastCollectedAt = now),
                 ),
             ),
             lastUpdatedAt = now,

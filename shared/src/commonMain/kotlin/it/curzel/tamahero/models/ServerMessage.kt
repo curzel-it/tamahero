@@ -55,6 +55,12 @@ sealed class ServerMessage {
     ) : ServerMessage()
 
     @Serializable
+    @SerialName("hero_level_up")
+    data class HeroLevelUp(
+        val level: Int,
+    ) : ServerMessage()
+
+    @Serializable
     @SerialName("error")
     data class Error(
         val reason: String,

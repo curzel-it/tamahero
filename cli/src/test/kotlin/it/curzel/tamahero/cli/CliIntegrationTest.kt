@@ -45,8 +45,9 @@ class CliIntegrationTest {
             val msg = client.sendAndReceive(ClientMessage.GetVillage) as ServerMessage.GameStateUpdated
             val state = msg.state
 
-            assertEquals(1, state.village.buildings.size)
+            assertEquals(2, state.village.buildings.size)
             assertTrue(state.village.buildings.any { it.type == BuildingType.TownHall && it.level == 1 })
+            assertTrue(state.village.buildings.any { it.type == BuildingType.BuilderHut && it.level == 1 })
 
             assertEquals(1000, state.resources.gold)
             assertEquals(1000, state.resources.wood)
@@ -96,22 +97,16 @@ class CliIntegrationTest {
     }
 
     @Test
-    fun buildMultipleBuildings() = runBlocking {
+    fun workerLimitsBuilding() = runBlocking {
         val client = createConnectedClient()
         try {
-            client.sendAndReceive(ClientMessage.Build(BuildingType.LumberCamp, 0, 0))
-            client.sendAndReceive(ClientMessage.Build(BuildingType.GoldMine, 3, 0))
-            val msg = client.sendAndReceive(ClientMessage.Build(BuildingType.LumberCamp, 6, 0))
-            assertTrue(msg is ServerMessage.GameStateUpdated)
-
-            val state = msg.state
-            assertEquals(4, state.village.buildings.size) // 1 default + 3 new
-            assertEquals(2, state.village.buildings.count { it.type == BuildingType.LumberCamp })
-            assertEquals(1, state.village.buildings.count { it.type == BuildingType.GoldMine })
-
-            // 2 lumber camps * 50 gold + 1 gold mine * 50 wood
-            assertEquals(900, state.resources.gold)
-            assertEquals(950, state.resources.wood)
+            // Build one thing — should succeed (1 worker available)
+            val msg1 = client.sendAndReceive(ClientMessage.Build(BuildingType.LumberCamp, 0, 0))
+            assertTrue(msg1 is ServerMessage.GameStateUpdated)
+            // Try to build another — should fail (worker busy)
+            val msg2 = client.sendAndReceive(ClientMessage.Build(BuildingType.GoldMine, 3, 0))
+            assertTrue(msg2 is ServerMessage.Error)
+            assertTrue(msg2.reason.contains("worker", ignoreCase = true))
         } finally {
             client.close()
         }
@@ -121,11 +116,11 @@ class CliIntegrationTest {
     fun buildFailsWithInsufficientResources() = runBlocking {
         val client = createConnectedClient()
         try {
-            // Drain gold: build 20 lumber camps at 50 gold each = 1000 gold
-            for (i in 0..19) {
-                client.sendAndReceive(ClientMessage.Build(BuildingType.LumberCamp, (i % 20) * 2, (i / 20) * 2))
+            // Drain gold by feeding hero (50g each, 1000g start)
+            for (i in 0 until 20) {
+                client.sendAndReceive(ClientMessage.FeedHero)
             }
-            // Should be out of gold now
+            // Now 0g. Try to build a LumberCamp (50g) — insufficient
             val msg = client.sendAndReceive(ClientMessage.Build(BuildingType.LumberCamp, 0, 10))
             assertTrue(msg is ServerMessage.Error)
             assertTrue(msg.reason.contains("Insufficient"))
@@ -236,7 +231,7 @@ class CliIntegrationTest {
             // Fetch village again — the lumber camp should still be there
             val msg = client.sendAndReceive(ClientMessage.GetVillage)
             assertTrue(msg is ServerMessage.GameStateUpdated)
-            assertEquals(2, msg.state.village.buildings.size)
+            assertEquals(3, msg.state.village.buildings.size) // TownHall + BuilderHut + LumberCamp
             assertTrue(msg.state.village.buildings.any { it.type == BuildingType.LumberCamp })
         } finally {
             client.close()
@@ -275,23 +270,18 @@ class CliIntegrationTest {
     fun resourcesDeductedCumulatively() = runBlocking {
         val client = createConnectedClient()
         try {
-            // Start: 1000 gold, 1000 wood
-            // Build LumberCamp: -50 gold → 950 gold
-            val msg1 = client.sendAndReceive(ClientMessage.Build(BuildingType.LumberCamp, 0, 0))
+            // Start: 1000 gold. Feed hero 3 times (50g each)
+            val msg1 = client.sendAndReceive(ClientMessage.FeedHero)
             assertTrue(msg1 is ServerMessage.GameStateUpdated)
             assertEquals(950, msg1.state.resources.gold)
 
-            // Build GoldMine: -50 wood → 950 wood
-            val msg2 = client.sendAndReceive(ClientMessage.Build(BuildingType.GoldMine, 3, 0))
+            val msg2 = client.sendAndReceive(ClientMessage.FeedHero)
             assertTrue(msg2 is ServerMessage.GameStateUpdated)
-            assertEquals(950, msg2.state.resources.gold)
-            assertEquals(950, msg2.state.resources.wood)
+            assertEquals(900, msg2.state.resources.gold)
 
-            // Build another LumberCamp: -50 gold → 900 gold
-            val msg3 = client.sendAndReceive(ClientMessage.Build(BuildingType.LumberCamp, 6, 0))
+            val msg3 = client.sendAndReceive(ClientMessage.FeedHero)
             assertTrue(msg3 is ServerMessage.GameStateUpdated)
-            assertEquals(900, msg3.state.resources.gold)
-            assertEquals(950, msg3.state.resources.wood)
+            assertEquals(850, msg3.state.resources.gold)
         } finally {
             client.close()
         }
@@ -440,14 +430,13 @@ class CliIntegrationTest {
     }
 
     @Test
-    fun trainTroopsWithBarracks() = runBlocking {
+    fun trainTroopsWithBarracksUnderConstruction() = runBlocking {
         val client = createConnectedClient()
         try {
-            // Build Barracks (100g + 100w) and ArmyCamp (100g + 100w)
+            // Build Barracks (100g + 100w) — under construction
             client.sendAndReceive(ClientMessage.Build(BuildingType.Barracks, 0, 0))
-            client.sendAndReceive(ClientMessage.Build(BuildingType.ArmyCamp, 5, 0))
 
-            // Train a soldier (25g) — Barracks is under construction so should fail
+            // Train a soldier — Barracks is under construction so should fail
             val msg = client.sendAndReceive(ClientMessage.Train(TroopType.HumanSoldier, 1))
             assertTrue(msg is ServerMessage.Error)
             assertTrue(msg.reason.contains("Barracks"))
@@ -457,14 +446,10 @@ class CliIntegrationTest {
     }
 
     @Test
-    fun cancelTrainingRefunds() = runBlocking {
+    fun cancelTrainingInvalidIndex() = runBlocking {
         val client = createConnectedClient()
         try {
-            // Build Barracks + ArmyCamp
-            client.sendAndReceive(ClientMessage.Build(BuildingType.Barracks, 0, 0))
-            client.sendAndReceive(ClientMessage.Build(BuildingType.ArmyCamp, 5, 0))
-
-            // Can't train without completed barracks, so test cancel on invalid index
+            // Test cancel on invalid index (no training queue)
             val msg = client.sendAndReceive(ClientMessage.CancelTraining(0))
             assertTrue(msg is ServerMessage.Error)
             assertTrue(msg.reason.contains("Invalid"))

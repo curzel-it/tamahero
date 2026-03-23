@@ -24,6 +24,9 @@ object SpriteSheetConfig {
         BuildingType.Wall to SpriteRegion(128, 192, 32, 32),
         BuildingType.SpikeTrap to SpriteRegion(160, 192, 32, 32),
         BuildingType.SpringTrap to SpriteRegion(192, 192, 32, 32),
+        BuildingType.ManaWell to SpriteRegion(0, 192, 64, 64),
+        BuildingType.ManaStorage to SpriteRegion(192, 128, 64, 64),
+        BuildingType.BuilderHut to SpriteRegion(64, 128, 64, 64),
     )
 
     private val TROOP_SPRITES = mapOf(
