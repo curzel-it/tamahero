@@ -27,192 +27,182 @@ class CombatSystemTest {
     // --- Targeting AI ---
 
     @Test
-    fun goblinTargetsResourceBuildings() {
-        val storage = building(1, BuildingType.GoldStorage, x = 15, y = 5)
-        val cannon = building(2, BuildingType.Cannon, x = 5, y = 5)
-        val goblin = troop(100, TroopType.Goblin, x = 10f, y = 5.5f)
-        val result = battle(listOf(storage, cannon), listOf(goblin), 100)
+    fun droneTargetsResourceBuildings() {
+        val storage = building(1, BuildingType.CreditVault, x = 15, y = 5)
+        val railGun = building(2, BuildingType.RailGun, x = 5, y = 5)
+        val drone = troop(100, TroopType.Drone, x = 10f, y = 5.5f)
+        val result = battle(listOf(storage, railGun), listOf(drone), 100)
         val moved = result.troops.first()
-        // Goblin should target GoldStorage (resource), not cannon (defense)
-        // even though cannon is closer
         assertEquals(storage.id, moved.targetId)
     }
 
     @Test
-    fun orcBerserkerTargetsDefenses() {
-        val storage = building(1, BuildingType.GoldStorage, x = 5, y = 5)
-        val cannon = building(2, BuildingType.Cannon, x = 15, y = 5)
-        val orc = troop(100, TroopType.OrcBerserker, x = 10f, y = 5.5f)
-        val result = battle(listOf(storage, cannon), listOf(orc), 100)
+    fun juggernautTargetsDefenses() {
+        val storage = building(1, BuildingType.CreditVault, x = 5, y = 5)
+        val railGun = building(2, BuildingType.RailGun, x = 15, y = 5)
+        val juggernaut = troop(100, TroopType.Juggernaut, x = 10f, y = 5.5f)
+        val result = battle(listOf(storage, railGun), listOf(juggernaut), 100)
         val moved = result.troops.first()
-        assertEquals(cannon.id, moved.targetId)
+        assertEquals(railGun.id, moved.targetId)
     }
 
     @Test
-    fun dwarfSapperTargetsWallsFirst() {
-        val storage = building(1, BuildingType.GoldStorage, x = 5, y = 5)
-        val wall = building(2, BuildingType.Wall, x = 15, y = 5)
-        val sapper = troop(100, TroopType.DwarfSapper, x = 10f, y = 5.5f)
-        val result = battle(listOf(storage, wall), listOf(sapper), 100)
+    fun engineerTargetsBarriersFirst() {
+        val storage = building(1, BuildingType.CreditVault, x = 5, y = 5)
+        val barrier = building(2, BuildingType.Barrier, x = 15, y = 5)
+        val engineer = troop(100, TroopType.Engineer, x = 10f, y = 5.5f)
+        val result = battle(listOf(storage, barrier), listOf(engineer), 100)
         val moved = result.troops.first()
-        assertEquals(wall.id, moved.targetId)
+        assertEquals(barrier.id, moved.targetId)
     }
 
     @Test
-    fun dwarfSapperTargetsDefenseWhenNoWalls() {
-        val storage = building(1, BuildingType.GoldStorage, x = 5, y = 5)
-        val cannon = building(2, BuildingType.Cannon, x = 15, y = 5)
-        val sapper = troop(100, TroopType.DwarfSapper, x = 10f, y = 5.5f)
-        val result = battle(listOf(storage, cannon), listOf(sapper), 100)
+    fun engineerTargetsDefenseWhenNoBarriers() {
+        val storage = building(1, BuildingType.CreditVault, x = 5, y = 5)
+        val railGun = building(2, BuildingType.RailGun, x = 15, y = 5)
+        val engineer = troop(100, TroopType.Engineer, x = 10f, y = 5.5f)
+        val result = battle(listOf(storage, railGun), listOf(engineer), 100)
         val moved = result.troops.first()
-        assertEquals(cannon.id, moved.targetId)
+        assertEquals(railGun.id, moved.targetId)
     }
 
     @Test
-    fun goblinFallsBackToNearestWhenNoResources() {
-        val cannon = building(1, BuildingType.Cannon, x = 5, y = 5)
-        val wall = building(2, BuildingType.Wall, x = 15, y = 5)
-        val goblin = troop(100, TroopType.Goblin, x = 10f, y = 5.5f)
-        val result = battle(listOf(cannon, wall), listOf(goblin), 100)
+    fun droneFallsBackToNearestWhenNoResources() {
+        val railGun = building(1, BuildingType.RailGun, x = 5, y = 5)
+        val barrier = building(2, BuildingType.Barrier, x = 15, y = 5)
+        val drone = troop(100, TroopType.Drone, x = 10f, y = 5.5f)
+        val result = battle(listOf(railGun, barrier), listOf(drone), 100)
         val moved = result.troops.first()
-        // Should target cannon (nearest) since no resource buildings
-        assertEquals(cannon.id, moved.targetId)
+        assertEquals(railGun.id, moved.targetId)
     }
 
     // --- Wall Breaker mechanics ---
 
     @Test
-    fun dwarfSapperDealsExtraDamageToWalls() {
-        // Wall is 1x1 at (5,5). Sapper ON the wall tile (distance=0, within range 0.5)
-        val wall = building(1, BuildingType.Wall, x = 5, y = 5, hp = 500)
-        // Need a second non-wall building so the battle doesn't end immediately when wall dies
-        val storage = building(2, BuildingType.GoldStorage, x = 20, y = 20, hp = 200)
-        val sapper = troop(100, TroopType.DwarfSapper, x = 5.5f, y = 5.5f, hp = 1000)
+    fun engineerDealsExtraDamageToBarriers() {
+        val barrier = building(1, BuildingType.Barrier, x = 5, y = 5, hp = 500)
+        val storage = building(2, BuildingType.CreditVault, x = 20, y = 20, hp = 200)
+        val engineer = troop(100, TroopType.Engineer, x = 5.5f, y = 5.5f, hp = 1000)
 
-        val result = battle(listOf(wall, storage), listOf(sapper), 10_000)
-        val damagedWall = result.village.buildings.find { it.id == 1L }
-        assertNull(damagedWall, "Wall should be destroyed by wall breaker")
+        val result = battle(listOf(barrier, storage), listOf(engineer), 10_000)
+        val damagedBarrier = result.village.buildings.find { it.id == 1L }
+        assertNull(damagedBarrier, "Barrier should be destroyed by engineer")
     }
 
     @Test
-    fun dwarfSapperNormalDamageToNonWalls() {
-        val storage = building(1, BuildingType.GoldStorage, x = 5, y = 5, hp = 200)
-        val sapper = troop(100, TroopType.DwarfSapper, x = 5.5f, y = 4.5f, hp = 1000)
-        val result = battle(listOf(storage), listOf(sapper), 5_000)
+    fun engineerNormalDamageToNonBarriers() {
+        val storage = building(1, BuildingType.CreditVault, x = 5, y = 5, hp = 200)
+        val engineer = troop(100, TroopType.Engineer, x = 5.5f, y = 4.5f, hp = 1000)
+        val result = battle(listOf(storage), listOf(engineer), 5_000)
         val damaged = result.village.buildings.find { it.id == 1L }
-        // Normal DPS (12) for 5 seconds = 60 damage. Storage: 200-60 = 140
         assertNotNull(damaged)
-        assertTrue(damaged.hp in 120..160, "Normal damage (no wall multiplier) expected, got ${damaged.hp}")
+        assertTrue(damaged.hp in 120..160, "Normal damage (no barrier multiplier) expected, got ${damaged.hp}")
     }
 
     // --- New troop types ---
 
     @Test
-    fun wizardHasRangedSplash() {
-        val config = TroopConfig.configFor(TroopType.Wizard, 1)!!
-        assertTrue(config.range >= 2f, "Wizard should have ranged attack")
-        assertTrue(config.splashRadius > 0f, "Wizard should have splash damage")
-        assertTrue(config.dps >= 40, "Wizard should be a glass cannon")
+    fun spectreHasRangedSplash() {
+        val config = TroopConfig.configFor(TroopType.Spectre, 1)!!
+        assertTrue(config.range >= 2f, "Spectre should have ranged attack")
+        assertTrue(config.splashRadius > 0f, "Spectre should have splash damage")
+        assertTrue(config.dps >= 40, "Spectre should be a glass cannon")
     }
 
     @Test
-    fun dragonIsTankyWithSplash() {
-        val config = TroopConfig.configFor(TroopType.Dragon, 1)!!
-        assertTrue(config.hp >= 400, "Dragon should be very tanky")
-        assertTrue(config.splashRadius > 0f, "Dragon should have splash damage")
-        assertTrue(config.range >= 2f, "Dragon should have ranged attack")
+    fun gunshipIsTankyWithSplash() {
+        val config = TroopConfig.configFor(TroopType.Gunship, 1)!!
+        assertTrue(config.hp >= 400, "Gunship should be very tanky")
+        assertTrue(config.splashRadius > 0f, "Gunship should have splash damage")
+        assertTrue(config.range >= 2f, "Gunship should have ranged attack")
     }
 
     @Test
-    fun goblinIsFast() {
-        val config = TroopConfig.configFor(TroopType.Goblin, 1)!!
-        val soldierConfig = TroopConfig.configFor(TroopType.HumanSoldier, 1)!!
-        assertTrue(config.speed > soldierConfig.speed, "Goblin should be faster than soldier")
-        assertTrue(config.speed >= 1.5f, "Goblin should be fast")
+    fun droneIsFast() {
+        val config = TroopConfig.configFor(TroopType.Drone, 1)!!
+        val marineConfig = TroopConfig.configFor(TroopType.Marine, 1)!!
+        assertTrue(config.speed > marineConfig.speed, "Drone should be faster than marine")
+        assertTrue(config.speed >= 1.5f, "Drone should be fast")
     }
 
     // --- New defenses ---
 
     @Test
-    fun wizardTowerHasSplash() {
-        val config = BuildingConfig.configFor(BuildingType.WizardTower, 1)!!
-        assertTrue(config.splashRadius > 0f, "WizardTower should have splash damage")
-        assertTrue(config.damage > 0, "WizardTower should deal damage")
-        assertTrue(config.range > 2f, "WizardTower should have decent range")
+    fun teslaTowerHasSplash() {
+        val config = BuildingConfig.configFor(BuildingType.TeslaTower, 1)!!
+        assertTrue(config.splashRadius > 0f, "TeslaTower should have splash damage")
+        assertTrue(config.damage > 0, "TeslaTower should deal damage")
+        assertTrue(config.range > 2f, "TeslaTower should have decent range")
     }
 
     @Test
-    fun wizardTowerDamagesMultipleTroops() {
-        val tower = building(1, BuildingType.WizardTower, x = 10, y = 5)
-        // Two soldiers close together within WizardTower range
-        val t1 = troop(100, TroopType.HumanSoldier, x = 8f, y = 5.5f)
-        val t2 = troop(101, TroopType.HumanSoldier, x = 8.5f, y = 5.5f)
+    fun teslaTowerDamagesMultipleTroops() {
+        val tower = building(1, BuildingType.TeslaTower, x = 10, y = 5)
+        val t1 = troop(100, TroopType.Marine, x = 8f, y = 5.5f)
+        val t2 = troop(101, TroopType.Marine, x = 8.5f, y = 5.5f)
         val result = battle(listOf(tower), listOf(t1, t2), 2_000)
         for (t in result.troops) {
-            assertTrue(t.hp < 45, "Troop ${t.id} should be damaged by WizardTower splash")
+            assertTrue(t.hp < 45, "Troop ${t.id} should be damaged by TeslaTower splash")
         }
     }
 
-    // --- Giant Bomb trap ---
+    // --- NovaBomb trap ---
 
     @Test
-    fun giantBombDealsMassiveDamage() {
-        val trap = building(1, BuildingType.GiantBomb, x = 5, y = 5, hp = 1)
-        val target = building(2, BuildingType.GoldStorage, x = 10, y = 5)
-        val t1 = troop(100, TroopType.HumanSoldier, x = 5f, y = 5f)
-        val t2 = troop(101, TroopType.HumanSoldier, x = 5.5f, y = 5.5f)
+    fun novaBombDealsMassiveDamage() {
+        val trap = building(1, BuildingType.NovaBomb, x = 5, y = 5, hp = 1)
+        val target = building(2, BuildingType.CreditVault, x = 10, y = 5)
+        val t1 = troop(100, TroopType.Marine, x = 5f, y = 5f)
+        val t2 = troop(101, TroopType.Marine, x = 5.5f, y = 5.5f)
         val result = battle(listOf(trap, target), listOf(t1, t2), 100)
-        // GiantBomb has burstDamage=100, triggerRadius=2.0
-        // Soldiers have 45 hp — both should be dead
-        assertTrue(result.troops.isEmpty(), "GiantBomb should kill both soldiers (100 burst damage vs 45 hp)")
-        val triggeredTrap = result.village.buildings.find { it.type == BuildingType.GiantBomb }
+        assertTrue(result.troops.isEmpty(), "NovaBomb should kill both marines (100 burst damage vs 45 hp)")
+        val triggeredTrap = result.village.buildings.find { it.type == BuildingType.NovaBomb }
         assertTrue(triggeredTrap?.triggered == true)
     }
 
     @Test
-    fun giantBombLargerRadiusThanSpikeTrap() {
-        val giantBombConfig = BuildingConfig.configFor(BuildingType.GiantBomb, 1)!!
-        val spikeTrapConfig = BuildingConfig.configFor(BuildingType.SpikeTrap, 1)!!
-        assertTrue(giantBombConfig.triggerRadius > spikeTrapConfig.triggerRadius)
-        assertTrue(giantBombConfig.burstDamage > spikeTrapConfig.burstDamage)
+    fun novaBombLargerRadiusThanMineTrap() {
+        val novaBombConfig = BuildingConfig.configFor(BuildingType.NovaBomb, 1)!!
+        val mineTrapConfig = BuildingConfig.configFor(BuildingType.MineTrap, 1)!!
+        assertTrue(novaBombConfig.triggerRadius > mineTrapConfig.triggerRadius)
+        assertTrue(novaBombConfig.burstDamage > mineTrapConfig.burstDamage)
     }
 
-    // --- Spring trap expanded to include Goblin ---
+    // --- GravityTrap ---
 
     @Test
-    fun springTrapKillsGoblin() {
-        val trap = building(1, BuildingType.SpringTrap, x = 5, y = 5, hp = 1)
-        val target = building(2, BuildingType.GoldStorage, x = 10, y = 5)
-        val goblin = troop(100, TroopType.Goblin, x = 5f, y = 5f)
-        val result = battle(listOf(trap, target), listOf(goblin), 100)
-        assertTrue(result.troops.isEmpty(), "SpringTrap should remove Goblin")
+    fun gravityTrapKillsDrone() {
+        val trap = building(1, BuildingType.GravityTrap, x = 5, y = 5, hp = 1)
+        val target = building(2, BuildingType.CreditVault, x = 10, y = 5)
+        val drone = troop(100, TroopType.Drone, x = 5f, y = 5f)
+        val result = battle(listOf(trap, target), listOf(drone), 100)
+        assertTrue(result.troops.isEmpty(), "GravityTrap should remove Drone")
     }
 
     @Test
-    fun springTrapDoesNotKillDragon() {
-        val trap = building(1, BuildingType.SpringTrap, x = 5, y = 5, hp = 1)
-        val target = building(2, BuildingType.GoldStorage, x = 10, y = 5)
-        val dragon = troop(100, TroopType.Dragon, x = 5f, y = 5f)
-        val result = battle(listOf(trap, target), listOf(dragon), 100)
-        assertTrue(result.troops.isNotEmpty(), "SpringTrap should not kill heavy Dragon")
+    fun gravityTrapDoesNotKillGunship() {
+        val trap = building(1, BuildingType.GravityTrap, x = 5, y = 5, hp = 1)
+        val target = building(2, BuildingType.CreditVault, x = 10, y = 5)
+        val gunship = troop(100, TroopType.Gunship, x = 5f, y = 5f)
+        val result = battle(listOf(trap, target), listOf(gunship), 100)
+        assertTrue(result.troops.isNotEmpty(), "GravityTrap should not kill heavy Gunship")
     }
 
     // --- Battle endings ---
 
     @Test
     fun battleEndsWhenAllBuildingsDestroyed() {
-        val storage = building(1, BuildingType.GoldStorage, x = 5, y = 5, hp = 10)
-        val soldier = troop(100, TroopType.HumanSoldier, x = 5.5f, y = 4.5f, hp = 1000)
-        val result = battle(listOf(storage), listOf(soldier), 5_000)
+        val storage = building(1, BuildingType.CreditVault, x = 5, y = 5, hp = 10)
+        val marine = troop(100, TroopType.Marine, x = 5.5f, y = 4.5f, hp = 1000)
+        val result = battle(listOf(storage), listOf(marine), 5_000)
         assertTrue(result.troops.isEmpty(), "Troops should be cleared when all buildings destroyed")
     }
 
     @Test
     fun battleEndsWhenAllTroopsDie() {
-        val cannon = building(1, BuildingType.Cannon, x = 5, y = 5)
-        // Weak soldier within cannon range
-        val soldier = troop(100, TroopType.HumanSoldier, x = 5.5f, y = 4.5f, hp = 5)
-        val result = battle(listOf(cannon), listOf(soldier), 5_000)
+        val railGun = building(1, BuildingType.RailGun, x = 5, y = 5)
+        val marine = troop(100, TroopType.Marine, x = 5.5f, y = 4.5f, hp = 5)
+        val result = battle(listOf(railGun), listOf(marine), 5_000)
         assertTrue(result.troops.isEmpty(), "Troops should all be dead")
     }
 
@@ -220,26 +210,23 @@ class CombatSystemTest {
 
     @Test
     fun mixedArmyWithTargeting() {
-        val storage = building(1, BuildingType.GoldStorage, x = 10, y = 10, hp = 200)
-        val cannon = building(2, BuildingType.Cannon, x = 20, y = 10)
-        val wall = building(3, BuildingType.Wall, x = 15, y = 10)
+        val storage = building(1, BuildingType.CreditVault, x = 10, y = 10, hp = 200)
+        val railGun = building(2, BuildingType.RailGun, x = 20, y = 10)
+        val barrier = building(3, BuildingType.Barrier, x = 15, y = 10)
 
-        val soldier = troop(100, TroopType.HumanSoldier, x = 5f, y = 10.5f)
-        val orc = troop(101, TroopType.OrcBerserker, x = 5f, y = 11.5f)
-        val sapper = troop(102, TroopType.DwarfSapper, x = 5f, y = 12.5f)
+        val marine = troop(100, TroopType.Marine, x = 5f, y = 10.5f)
+        val juggernaut = troop(101, TroopType.Juggernaut, x = 5f, y = 11.5f)
+        val engineer = troop(102, TroopType.Engineer, x = 5f, y = 12.5f)
 
-        val result = battle(listOf(storage, cannon, wall), listOf(soldier, orc, sapper), 100)
+        val result = battle(listOf(storage, railGun, barrier), listOf(marine, juggernaut, engineer), 100)
 
-        val soldierTarget = result.troops.find { it.id == 100L }?.targetId
-        val orcTarget = result.troops.find { it.id == 101L }?.targetId
-        val sapperTarget = result.troops.find { it.id == 102L }?.targetId
+        val marineTarget = result.troops.find { it.id == 100L }?.targetId
+        val juggernautTarget = result.troops.find { it.id == 101L }?.targetId
+        val engineerTarget = result.troops.find { it.id == 102L }?.targetId
 
-        // Soldier: nearest (storage at distance ~5)
-        assertEquals(storage.id, soldierTarget, "Soldier should target nearest (storage)")
-        // Orc: targets defenses — nearest defense is wall (at ~10) or cannon (at ~15)
-        assertTrue(orcTarget == cannon.id || orcTarget == wall.id, "OrcBerserker should target a defense")
-        // Sapper: targets walls first
-        assertEquals(wall.id, sapperTarget, "DwarfSapper should target wall first")
+        assertEquals(storage.id, marineTarget, "Marine should target nearest (storage)")
+        assertTrue(juggernautTarget == railGun.id || juggernautTarget == barrier.id, "Juggernaut should target a defense")
+        assertEquals(barrier.id, engineerTarget, "Engineer should target barrier first")
     }
 
     // --- Stat balance checks ---
@@ -258,7 +245,7 @@ class CombatSystemTest {
 
     @Test
     fun allDefenseTypesHaveDamage() {
-        for (type in listOf(BuildingType.Cannon, BuildingType.ArcherTower, BuildingType.Mortar, BuildingType.WizardTower)) {
+        for (type in listOf(BuildingType.RailGun, BuildingType.LaserTurret, BuildingType.MissileBattery, BuildingType.TeslaTower)) {
             val config = BuildingConfig.configFor(type, 1)
             assertNotNull(config, "$type should have a level 1 config")
             assertTrue(config.damage > 0, "$type should deal damage")
@@ -268,13 +255,13 @@ class CombatSystemTest {
 
     @Test
     fun allTrapTypesHaveEffect() {
-        for (type in listOf(BuildingType.SpikeTrap, BuildingType.GiantBomb)) {
+        for (type in listOf(BuildingType.MineTrap, BuildingType.NovaBomb)) {
             val config = BuildingConfig.configFor(type, 1)
             assertNotNull(config, "$type should have a config")
             assertTrue(config.burstDamage > 0, "$type should have burst damage")
             assertTrue(config.triggerRadius > 0, "$type should have trigger radius")
         }
-        val springConfig = BuildingConfig.configFor(BuildingType.SpringTrap, 1)
-        assertNotNull(springConfig, "SpringTrap should have a config")
+        val gravityConfig = BuildingConfig.configFor(BuildingType.GravityTrap, 1)
+        assertNotNull(gravityConfig, "GravityTrap should have a config")
     }
 }

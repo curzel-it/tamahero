@@ -51,9 +51,9 @@ class PushNotificationTest {
             defenderId = defenderId,
             attackerName = "attacker123",
             stars = 2,
-            lootGold = 500,
-            lootWood = 300,
-            lootMetal = 100,
+            lootCredits = 500,
+            lootAlloy = 300,
+            lootCrystal = 100,
         )
 
         val notifs = mock.sentWithType("defense_result")
@@ -61,7 +61,7 @@ class PushNotificationTest {
         assertEquals(defenderId, notifs[0].userId)
         assertTrue(notifs[0].title.contains("attacked"))
         assertTrue(notifs[0].body.contains("attacker123"))
-        assertTrue(notifs[0].body.contains("500g"))
+        assertTrue(notifs[0].body.contains("500cr"))
     }
 
     @Test
@@ -86,11 +86,11 @@ class PushNotificationTest {
 
         val (_, userId) = registerUser(client)
 
-        mock.notifyEventEnded(userId, "Storm", true)
+        mock.notifyEventEnded(userId, "IonStorm", true)
 
         val notifs = mock.sentWithType("event_ended")
         assertEquals(1, notifs.size)
-        assertTrue(notifs[0].body.contains("Storm"))
+        assertTrue(notifs[0].body.contains("IonStorm"))
         assertTrue(notifs[0].body.contains("defended successfully"))
     }
 
@@ -101,7 +101,7 @@ class PushNotificationTest {
 
         val (_, userId) = registerUser(client)
 
-        mock.notifyEventEnded(userId, "Earthquake", false)
+        mock.notifyEventEnded(userId, "Quake", false)
 
         val notifs = mock.sentWithType("event_ended")
         assertEquals(1, notifs.size)
@@ -115,12 +115,12 @@ class PushNotificationTest {
 
         val (_, userId) = registerUser(client)
 
-        mock.notifyBuildingComplete(userId, "Cannon", 1)
+        mock.notifyBuildingComplete(userId, "RailGun", 1)
 
         val notifs = mock.sentWithType("building_complete")
         assertEquals(1, notifs.size)
         assertTrue(notifs[0].title.contains("Construction Complete"))
-        assertTrue(notifs[0].body.contains("Cannon"))
+        assertTrue(notifs[0].body.contains("RailGun"))
     }
 
     @Test
@@ -130,11 +130,11 @@ class PushNotificationTest {
 
         val (_, userId) = registerUser(client)
 
-        mock.notifyTrainingComplete(userId, "ElfArcher", 2)
+        mock.notifyTrainingComplete(userId, "Sniper", 2)
 
         val notifs = mock.sentWithType("training_complete")
         assertEquals(1, notifs.size)
-        assertTrue(notifs[0].body.contains("ElfArcher"))
+        assertTrue(notifs[0].body.contains("Sniper"))
         assertTrue(notifs[0].body.contains("level 2"))
     }
 
@@ -150,9 +150,9 @@ class PushNotificationTest {
         mock.notifyUnderAttack(userId, "attacker")
         mock.notifyDefenseResult(userId, "attacker", 2, 500, 300, 100)
         mock.notifyEventStarted(userId, "Battle")
-        mock.notifyEventEnded(userId, "Storm", true)
-        mock.notifyBuildingComplete(userId, "Cannon", 1)
-        mock.notifyTrainingComplete(userId, "Dragon", 3)
+        mock.notifyEventEnded(userId, "IonStorm", true)
+        mock.notifyBuildingComplete(userId, "RailGun", 1)
+        mock.notifyTrainingComplete(userId, "Gunship", 3)
 
         assertEquals(0, mock.sentCount, "No push notifications should be sent to connected users")
     }

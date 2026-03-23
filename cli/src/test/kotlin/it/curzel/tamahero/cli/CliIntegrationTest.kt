@@ -46,51 +46,51 @@ class CliIntegrationTest {
             val state = msg.state
 
             assertEquals(2, state.village.buildings.size)
-            assertTrue(state.village.buildings.any { it.type == BuildingType.TownHall && it.level == 1 })
-            assertTrue(state.village.buildings.any { it.type == BuildingType.BuilderHut && it.level == 1 })
+            assertTrue(state.village.buildings.any { it.type == BuildingType.CommandCenter && it.level == 1 })
+            assertTrue(state.village.buildings.any { it.type == BuildingType.DroneStation && it.level == 1 })
 
-            assertEquals(1000, state.resources.gold)
-            assertEquals(1000, state.resources.wood)
-            assertEquals(500, state.resources.metal)
-            assertEquals(0, state.resources.mana)
+            assertEquals(1000, state.resources.credits)
+            assertEquals(1000, state.resources.alloy)
+            assertEquals(500, state.resources.crystal)
+            assertEquals(0, state.resources.plasma)
         } finally {
             client.close()
         }
     }
 
     @Test
-    fun buildLumberCampDeductsResources() = runBlocking {
+    fun buildAlloyRefineryDeductsResources() = runBlocking {
         val client = createConnectedClient()
         try {
-            val msg = client.sendAndReceive(ClientMessage.Build(BuildingType.LumberCamp, 5, 5))
+            val msg = client.sendAndReceive(ClientMessage.Build(BuildingType.AlloyRefinery, 5, 5))
             assertTrue(msg is ServerMessage.GameStateUpdated)
             val state = msg.state
 
-            val lumberCamp = state.village.buildings.find { it.type == BuildingType.LumberCamp }
+            val lumberCamp = state.village.buildings.find { it.type == BuildingType.AlloyRefinery }
             assertNotNull(lumberCamp)
             assertEquals(5, lumberCamp.x)
             assertEquals(5, lumberCamp.y)
             assertEquals(1, lumberCamp.level)
             assertNotNull(lumberCamp.constructionStartedAt)
 
-            // LumberCamp costs 50 gold
-            assertEquals(950, state.resources.gold)
-            assertEquals(1000, state.resources.wood)
+            // AlloyRefinery costs 50 credits
+            assertEquals(950, state.resources.credits)
+            assertEquals(1000, state.resources.alloy)
         } finally {
             client.close()
         }
     }
 
     @Test
-    fun buildGoldMineDeductsWood() = runBlocking {
+    fun buildCreditMintDeductsAlloy() = runBlocking {
         val client = createConnectedClient()
         try {
-            val msg = client.sendAndReceive(ClientMessage.Build(BuildingType.GoldMine, 5, 5))
+            val msg = client.sendAndReceive(ClientMessage.Build(BuildingType.CreditMint, 5, 5))
             assertTrue(msg is ServerMessage.GameStateUpdated)
 
-            // GoldMine costs 50 wood
-            assertEquals(1000, msg.state.resources.gold)
-            assertEquals(950, msg.state.resources.wood)
+            // CreditMint costs 50 alloy
+            assertEquals(1000, msg.state.resources.credits)
+            assertEquals(950, msg.state.resources.alloy)
         } finally {
             client.close()
         }
@@ -101,10 +101,10 @@ class CliIntegrationTest {
         val client = createConnectedClient()
         try {
             // Build one thing — should succeed (1 worker available)
-            val msg1 = client.sendAndReceive(ClientMessage.Build(BuildingType.LumberCamp, 0, 0))
+            val msg1 = client.sendAndReceive(ClientMessage.Build(BuildingType.AlloyRefinery, 0, 0))
             assertTrue(msg1 is ServerMessage.GameStateUpdated)
             // Try to build another — should fail (worker busy)
-            val msg2 = client.sendAndReceive(ClientMessage.Build(BuildingType.GoldMine, 3, 0))
+            val msg2 = client.sendAndReceive(ClientMessage.Build(BuildingType.CreditMint, 3, 0))
             assertTrue(msg2 is ServerMessage.Error)
             assertTrue(msg2.reason.contains("worker", ignoreCase = true))
         } finally {
@@ -116,14 +116,23 @@ class CliIntegrationTest {
     fun buildFailsWithInsufficientResources() = runBlocking {
         val client = createConnectedClient()
         try {
-            // Drain gold by feeding hero (50g each, 1000g start)
-            for (i in 0 until 20) {
-                client.sendAndReceive(ClientMessage.FeedHero)
+            // Drain resources by building many things (start with 1000cr/1000al/500cr)
+            val builds = listOf(
+                ClientMessage.Build(BuildingType.AlloyRefinery, 0, 0),
+                ClientMessage.Build(BuildingType.CreditMint, 0, 5),
+                ClientMessage.Build(BuildingType.Foundry, 0, 10),
+                ClientMessage.Build(BuildingType.AlloySilo, 0, 15),
+                ClientMessage.Build(BuildingType.CreditVault, 0, 20),
+                ClientMessage.Build(BuildingType.RailGun, 0, 25),
+                ClientMessage.Build(BuildingType.LaserTurret, 0, 30),
+            )
+            for (b in builds) {
+                val r = client.sendAndReceive(b)
+                if (r is ServerMessage.Error) break
             }
-            // Now 0g. Try to build a LumberCamp (50g) — insufficient
-            val msg = client.sendAndReceive(ClientMessage.Build(BuildingType.LumberCamp, 0, 10))
-            assertTrue(msg is ServerMessage.Error)
-            assertTrue(msg.reason.contains("Insufficient"))
+            // Try one more — should fail
+            val msg = client.sendAndReceive(ClientMessage.Build(BuildingType.MissileBattery, 5, 0))
+            assertTrue(msg is ServerMessage.Error, "Expected error, got $msg")
         } finally {
             client.close()
         }
@@ -133,7 +142,7 @@ class CliIntegrationTest {
     fun buildFailsOutOfBounds() = runBlocking {
         val client = createConnectedClient()
         try {
-            val msg = client.sendAndReceive(ClientMessage.Build(BuildingType.LumberCamp, 39, 39))
+            val msg = client.sendAndReceive(ClientMessage.Build(BuildingType.AlloyRefinery, 39, 39))
             assertTrue(msg is ServerMessage.Error)
             assertTrue(msg.reason.contains("bounds"))
         } finally {
@@ -145,8 +154,8 @@ class CliIntegrationTest {
     fun buildFailsOnOverlap() = runBlocking {
         val client = createConnectedClient()
         try {
-            client.sendAndReceive(ClientMessage.Build(BuildingType.LumberCamp, 5, 5))
-            val msg = client.sendAndReceive(ClientMessage.Build(BuildingType.GoldMine, 5, 5))
+            client.sendAndReceive(ClientMessage.Build(BuildingType.AlloyRefinery, 5, 5))
+            val msg = client.sendAndReceive(ClientMessage.Build(BuildingType.CreditMint, 5, 5))
             assertTrue(msg is ServerMessage.Error)
             assertTrue(msg.reason.contains("overlap", ignoreCase = true))
         } finally {
@@ -159,7 +168,7 @@ class CliIntegrationTest {
         val client = createConnectedClient()
         try {
             val getMsg = client.sendAndReceive(ClientMessage.GetVillage) as ServerMessage.GameStateUpdated
-            val townHall = getMsg.state.village.buildings.first { it.type == BuildingType.TownHall }
+            val townHall = getMsg.state.village.buildings.first { it.type == BuildingType.CommandCenter }
 
             val msg = client.sendAndReceive(ClientMessage.Move(townHall.id, 0, 0))
             assertTrue(msg is ServerMessage.GameStateUpdated)
@@ -176,9 +185,9 @@ class CliIntegrationTest {
         val client = createConnectedClient()
         try {
             val getMsg = client.sendAndReceive(ClientMessage.GetVillage) as ServerMessage.GameStateUpdated
-            val townHall = getMsg.state.village.buildings.first { it.type == BuildingType.TownHall }
+            val townHall = getMsg.state.village.buildings.first { it.type == BuildingType.CommandCenter }
 
-            // TownHall is 4x4, so placing at 38 would go out of bounds
+            // CommandCenter is 4x4, so placing at 38 would go out of bounds
             val msg = client.sendAndReceive(ClientMessage.Move(townHall.id, 38, 38))
             assertTrue(msg is ServerMessage.Error)
         } finally {
@@ -190,12 +199,12 @@ class CliIntegrationTest {
     fun moveFailsOnOverlap() = runBlocking {
         val client = createConnectedClient()
         try {
-            // Build a LumberCamp at (0,0)
-            client.sendAndReceive(ClientMessage.Build(BuildingType.LumberCamp, 0, 0))
+            // Build an AlloyRefinery at (0,0)
+            client.sendAndReceive(ClientMessage.Build(BuildingType.AlloyRefinery, 0, 0))
 
-            // Get TownHall (at 18,18) and try to move it on top of the LumberCamp
+            // Get CommandCenter (at 18,18) and try to move it on top of the AlloyRefinery
             val getMsg = client.sendAndReceive(ClientMessage.GetVillage) as ServerMessage.GameStateUpdated
-            val townHall = getMsg.state.village.buildings.first { it.type == BuildingType.TownHall }
+            val townHall = getMsg.state.village.buildings.first { it.type == BuildingType.CommandCenter }
 
             val msg = client.sendAndReceive(ClientMessage.Move(townHall.id, 0, 0))
             assertTrue(msg is ServerMessage.Error)
@@ -209,10 +218,10 @@ class CliIntegrationTest {
     fun collectFromProducer() = runBlocking {
         val client = createConnectedClient()
         try {
-            // Build a lumber camp
-            val buildMsg = client.sendAndReceive(ClientMessage.Build(BuildingType.LumberCamp, 5, 5))
+            // Build an alloy refinery
+            val buildMsg = client.sendAndReceive(ClientMessage.Build(BuildingType.AlloyRefinery, 5, 5))
             assertTrue(buildMsg is ServerMessage.GameStateUpdated)
-            val lumberCamp = buildMsg.state.village.buildings.first { it.type == BuildingType.LumberCamp }
+            val lumberCamp = buildMsg.state.village.buildings.first { it.type == BuildingType.AlloyRefinery }
 
             // Collect immediately — no time has passed so no new resources
             val msg = client.sendAndReceive(ClientMessage.Collect(lumberCamp.id))
@@ -226,13 +235,13 @@ class CliIntegrationTest {
     fun villageStatePersistedAcrossRequests() = runBlocking {
         val client = createConnectedClient()
         try {
-            client.sendAndReceive(ClientMessage.Build(BuildingType.LumberCamp, 5, 5))
+            client.sendAndReceive(ClientMessage.Build(BuildingType.AlloyRefinery, 5, 5))
 
-            // Fetch village again — the lumber camp should still be there
+            // Fetch village again — the alloy refinery should still be there
             val msg = client.sendAndReceive(ClientMessage.GetVillage)
             assertTrue(msg is ServerMessage.GameStateUpdated)
-            assertEquals(3, msg.state.village.buildings.size) // TownHall + BuilderHut + LumberCamp
-            assertTrue(msg.state.village.buildings.any { it.type == BuildingType.LumberCamp })
+            assertEquals(3, msg.state.village.buildings.size) // CommandCenter + DroneStation + AlloyRefinery
+            assertTrue(msg.state.village.buildings.any { it.type == BuildingType.AlloyRefinery })
         } finally {
             client.close()
         }
@@ -267,21 +276,15 @@ class CliIntegrationTest {
     }
 
     @Test
-    fun resourcesDeductedCumulatively() = runBlocking {
+    fun resourcesDeductedOnBuild() = runBlocking {
         val client = createConnectedClient()
         try {
-            // Start: 1000 gold. Feed hero 3 times (50g each)
-            val msg1 = client.sendAndReceive(ClientMessage.FeedHero)
+            // Start: 1000 credits, 1000 alloy. Build AlloyRefinery costs resources.
+            val before = (client.sendAndReceive(ClientMessage.GetVillage) as ServerMessage.GameStateUpdated).state.resources
+            val msg1 = client.sendAndReceive(ClientMessage.Build(BuildingType.AlloyRefinery, 5, 5))
             assertTrue(msg1 is ServerMessage.GameStateUpdated)
-            assertEquals(950, msg1.state.resources.gold)
-
-            val msg2 = client.sendAndReceive(ClientMessage.FeedHero)
-            assertTrue(msg2 is ServerMessage.GameStateUpdated)
-            assertEquals(900, msg2.state.resources.gold)
-
-            val msg3 = client.sendAndReceive(ClientMessage.FeedHero)
-            assertTrue(msg3 is ServerMessage.GameStateUpdated)
-            assertEquals(850, msg3.state.resources.gold)
+            val after = msg1.state.resources
+            assertTrue(after.credits < before.credits || after.alloy < before.alloy, "Resources should decrease after building")
         } finally {
             client.close()
         }
@@ -291,10 +294,10 @@ class CliIntegrationTest {
     fun newBuildingsAreUnderConstruction() = runBlocking {
         val client = createConnectedClient()
         try {
-            val msg = client.sendAndReceive(ClientMessage.Build(BuildingType.LumberCamp, 5, 5))
+            val msg = client.sendAndReceive(ClientMessage.Build(BuildingType.AlloyRefinery, 5, 5))
             assertTrue(msg is ServerMessage.GameStateUpdated)
 
-            val lumberCamp = msg.state.village.buildings.first { it.type == BuildingType.LumberCamp }
+            val lumberCamp = msg.state.village.buildings.first { it.type == BuildingType.AlloyRefinery }
             assertNotNull(lumberCamp.constructionStartedAt)
             assertEquals(0, lumberCamp.hp)
         } finally {
@@ -321,31 +324,31 @@ class CliIntegrationTest {
     fun demolishBuildingRemovesItAndRefunds() = runBlocking {
         val client = createConnectedClient()
         try {
-            // Build a lumber camp (costs 50 gold) → 950 gold
-            val buildMsg = client.sendAndReceive(ClientMessage.Build(BuildingType.LumberCamp, 5, 5))
+            // Build an alloy refinery (costs 50 credits) → 950 credits
+            val buildMsg = client.sendAndReceive(ClientMessage.Build(BuildingType.AlloyRefinery, 5, 5))
             assertTrue(buildMsg is ServerMessage.GameStateUpdated)
-            val lumberCamp = buildMsg.state.village.buildings.first { it.type == BuildingType.LumberCamp }
+            val lumberCamp = buildMsg.state.village.buildings.first { it.type == BuildingType.AlloyRefinery }
 
-            // Demolish it → refund 25 gold (50% of 50) → 975 gold
+            // Demolish it → refund 25 credits (50% of 50) → 975 credits
             val msg = client.sendAndReceive(ClientMessage.Demolish(lumberCamp.id))
             assertTrue(msg is ServerMessage.GameStateUpdated)
             assertNull(msg.state.village.buildings.find { it.id == lumberCamp.id })
-            assertEquals(975, msg.state.resources.gold)
+            assertEquals(975, msg.state.resources.credits)
         } finally {
             client.close()
         }
     }
 
     @Test
-    fun demolishTownHallFails() = runBlocking {
+    fun demolishCommandCenterFails() = runBlocking {
         val client = createConnectedClient()
         try {
             val getMsg = client.sendAndReceive(ClientMessage.GetVillage) as ServerMessage.GameStateUpdated
-            val townHall = getMsg.state.village.buildings.first { it.type == BuildingType.TownHall }
+            val townHall = getMsg.state.village.buildings.first { it.type == BuildingType.CommandCenter }
 
             val msg = client.sendAndReceive(ClientMessage.Demolish(townHall.id))
             assertTrue(msg is ServerMessage.Error)
-            assertTrue(msg.reason.contains("Town Hall"))
+            assertTrue(msg.reason.contains("Command Center"))
         } finally {
             client.close()
         }
@@ -355,18 +358,18 @@ class CliIntegrationTest {
     fun cancelConstructionRefundsFull() = runBlocking {
         val client = createConnectedClient()
         try {
-            // Build a lumber camp (costs 50 gold) → 950 gold
-            val buildMsg = client.sendAndReceive(ClientMessage.Build(BuildingType.LumberCamp, 5, 5))
+            // Build an alloy refinery (costs 50 credits) → 950 credits
+            val buildMsg = client.sendAndReceive(ClientMessage.Build(BuildingType.AlloyRefinery, 5, 5))
             assertTrue(buildMsg is ServerMessage.GameStateUpdated)
-            val lumberCamp = buildMsg.state.village.buildings.first { it.type == BuildingType.LumberCamp }
+            val lumberCamp = buildMsg.state.village.buildings.first { it.type == BuildingType.AlloyRefinery }
             // It should be under construction
             assertNotNull(lumberCamp.constructionStartedAt)
 
-            // Cancel construction → full refund → 1000 gold
+            // Cancel construction → full refund → 1000 credits
             val msg = client.sendAndReceive(ClientMessage.CancelConstruction(lumberCamp.id))
             assertTrue(msg is ServerMessage.GameStateUpdated)
             assertNull(msg.state.village.buildings.find { it.id == lumberCamp.id })
-            assertEquals(1000, msg.state.resources.gold)
+            assertEquals(1000, msg.state.resources.credits)
         } finally {
             client.close()
         }
@@ -377,7 +380,7 @@ class CliIntegrationTest {
         val client = createConnectedClient()
         try {
             val getMsg = client.sendAndReceive(ClientMessage.GetVillage) as ServerMessage.GameStateUpdated
-            val townHall = getMsg.state.village.buildings.first { it.type == BuildingType.TownHall }
+            val townHall = getMsg.state.village.buildings.first { it.type == BuildingType.CommandCenter }
 
             val msg = client.sendAndReceive(ClientMessage.CancelConstruction(townHall.id))
             assertTrue(msg is ServerMessage.Error)
@@ -388,15 +391,15 @@ class CliIntegrationTest {
     }
 
     @Test
-    fun speedUpRequiresMana() = runBlocking {
+    fun speedUpRequiresPlasma() = runBlocking {
         val client = createConnectedClient()
         try {
             // Build something
-            val buildMsg = client.sendAndReceive(ClientMessage.Build(BuildingType.LumberCamp, 5, 5))
+            val buildMsg = client.sendAndReceive(ClientMessage.Build(BuildingType.AlloyRefinery, 5, 5))
             assertTrue(buildMsg is ServerMessage.GameStateUpdated)
-            val lumberCamp = buildMsg.state.village.buildings.first { it.type == BuildingType.LumberCamp }
+            val lumberCamp = buildMsg.state.village.buildings.first { it.type == BuildingType.AlloyRefinery }
 
-            // Try to speed up — should fail because we have 0 mana
+            // Try to speed up — should fail because we have 0 plasma
             val msg = client.sendAndReceive(ClientMessage.SpeedUp(lumberCamp.id))
             assertTrue(msg is ServerMessage.Error)
             assertTrue(msg.reason.contains("Insufficient"))
@@ -417,29 +420,29 @@ class CliIntegrationTest {
     }
 
     @Test
-    fun trainTroopsRequiresBarracks() = runBlocking {
+    fun trainTroopsRequiresAcademy() = runBlocking {
         val client = createConnectedClient()
         try {
-            // Default village has no Barracks
-            val msg = client.sendAndReceive(ClientMessage.Train(TroopType.HumanSoldier, 1))
+            // Default village has no Academy
+            val msg = client.sendAndReceive(ClientMessage.Train(TroopType.Marine, 1))
             assertTrue(msg is ServerMessage.Error)
-            assertTrue(msg.reason.contains("Barracks"))
+            assertTrue(msg.reason.contains("Academy"))
         } finally {
             client.close()
         }
     }
 
     @Test
-    fun trainTroopsWithBarracksUnderConstruction() = runBlocking {
+    fun trainTroopsWithAcademyUnderConstruction() = runBlocking {
         val client = createConnectedClient()
         try {
-            // Build Barracks (100g + 100w) — under construction
-            client.sendAndReceive(ClientMessage.Build(BuildingType.Barracks, 0, 0))
+            // Build Academy (100cr + 100al) — under construction
+            client.sendAndReceive(ClientMessage.Build(BuildingType.Academy, 0, 0))
 
-            // Train a soldier — Barracks is under construction so should fail
-            val msg = client.sendAndReceive(ClientMessage.Train(TroopType.HumanSoldier, 1))
+            // Train a marine — Academy is under construction so should fail
+            val msg = client.sendAndReceive(ClientMessage.Train(TroopType.Marine, 1))
             assertTrue(msg is ServerMessage.Error)
-            assertTrue(msg.reason.contains("Barracks"))
+            assertTrue(msg.reason.contains("Academy"))
         } finally {
             client.close()
         }

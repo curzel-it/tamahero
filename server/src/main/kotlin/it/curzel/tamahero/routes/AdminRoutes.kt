@@ -27,10 +27,10 @@ data class TriggerEventTroop(
 @Serializable
 data class GrantResourcesRequest(
     val userId: Long,
-    val gold: Long = 0,
-    val wood: Long = 0,
-    val metal: Long = 0,
-    val mana: Long = 0,
+    val credits: Long = 0,
+    val alloy: Long = 0,
+    val crystal: Long = 0,
+    val plasma: Long = 0,
 )
 
 @Serializable
@@ -99,7 +99,7 @@ fun Route.adminRoutes() {
         post("/grant-resources") {
             val adminId = requireAdmin(call) ?: return@post
             val request = call.receive<GrantResourcesRequest>()
-            val resources = Resources(gold = request.gold, wood = request.wood, metal = request.metal, mana = request.mana)
+            val resources = Resources(credits = request.credits, alloy = request.alloy, crystal = request.crystal, plasma = request.plasma)
             try {
                 val state = VillageService.grantResources(request.userId, resources)
                 ConnectionManager.sendToPlayer(request.userId, ServerMessage.ResourcesUpdated(state.resources))

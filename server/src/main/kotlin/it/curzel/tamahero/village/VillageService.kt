@@ -94,10 +94,10 @@ object VillageService {
     fun trainTroops(userId: Long, type: TroopType, count: Int): GameState =
         loadAndUpdate(userId) { state ->
             val now = state.lastUpdatedAt
-            val hasBarracks = state.village.buildings.any {
-                it.type == BuildingType.Barracks && it.isComplete(now)
+            val hasAcademy = state.village.buildings.any {
+                it.type == BuildingType.Academy && it.isComplete(now)
             }
-            if (!hasBarracks) throw VillageException("No completed Barracks")
+            if (!hasAcademy) throw VillageException("No completed Academy")
 
             val config = TroopConfig.configFor(type, 1)
                 ?: throw VillageException("Unknown troop type")
@@ -142,24 +142,6 @@ object VillageService {
             )
         }
 
-    fun feedHero(userId: Long): GameState =
-        loadAndUpdate(userId) { state ->
-            requireResources(state, Resources(gold = HeroConfig.FEED_COST_GOLD))
-            state.copy(
-                resources = state.resources - Resources(gold = HeroConfig.FEED_COST_GOLD),
-                hero = HeroUpdateUseCase.feed(state.hero),
-            )
-        }
-
-    fun trainHero(userId: Long): GameState =
-        loadAndUpdate(userId) { state ->
-            requireResources(state, Resources(mana = HeroConfig.TRAIN_COST_MANA))
-            state.copy(
-                resources = state.resources - Resources(mana = HeroConfig.TRAIN_COST_MANA),
-                hero = HeroUpdateUseCase.train(state.hero),
-            )
-        }
-
     fun rearmTrap(userId: Long, buildingId: Long): GameState =
         loadAndUpdate(userId) { state ->
             val building = state.village.buildings.find { it.id == buildingId }
@@ -201,8 +183,8 @@ object VillageService {
         loadAndUpdate(userId) { state ->
             val building = state.village.buildings.find { it.id == buildingId }
                 ?: throw VillageException("Building not found")
-            if (building.type == BuildingType.TownHall) {
-                throw VillageException("Cannot demolish Town Hall")
+            if (building.type == BuildingType.CommandCenter) {
+                throw VillageException("Cannot demolish Command Center")
             }
             val config = BuildingConfig.configFor(building.type, building.level)
             val refund = config?.cost?.times(0.5) ?: Resources()
@@ -241,14 +223,14 @@ object VillageService {
             val completionTime = (building.constructionStartedAt ?: 0) + config.buildTimeSeconds * 1000
             val remainingMs = (completionTime - now).coerceAtLeast(0)
             val manaCost = ((remainingMs / 10_000) + 1).toLong()
-            requireResources(state, Resources(mana = manaCost))
+            requireResources(state, Resources(plasma = manaCost))
 
             val updatedBuildings = state.village.buildings.map {
                 if (it.id == buildingId) it.copy(constructionStartedAt = null, hp = config.hp)
                 else it
             }
             state.copy(
-                resources = state.resources - Resources(mana = manaCost),
+                resources = state.resources - Resources(plasma = manaCost),
                 village = state.village.copy(buildings = updatedBuildings),
             )
         }
@@ -264,16 +246,16 @@ object VillageService {
 
     private fun requireTownHallLevel(state: GameState, now: Long, required: Int) {
         val townHallLevel = state.village.buildings
-            .filter { it.type == BuildingType.TownHall && it.isComplete(now) }
+            .filter { it.type == BuildingType.CommandCenter && it.isComplete(now) }
             .maxOfOrNull { it.level } ?: 0
         if (required > townHallLevel) {
-            throw VillageException("Town Hall level $required required")
+            throw VillageException("Command Center level $required required")
         }
     }
 
     private fun requireBuildingLimit(state: GameState, now: Long, type: BuildingType) {
         val thLevel = state.village.buildings
-            .filter { it.type == BuildingType.TownHall && it.isComplete(now) }
+            .filter { it.type == BuildingType.CommandCenter && it.isComplete(now) }
             .maxOfOrNull { it.level } ?: 0
         val maxCount = BuildingConfig.maxCount(type, thLevel) ?: return
         val currentCount = state.village.buildings.count { it.type == type }
@@ -296,7 +278,7 @@ object VillageService {
 
     private fun requireWorkerAvailable(state: GameState, now: Long) {
         val workerCount = state.village.buildings
-            .count { it.type == BuildingType.BuilderHut && it.isComplete(now) }
+            .count { it.type == BuildingType.DroneStation && it.isComplete(now) }
             .coerceAtLeast(1)
         val activeConstructions = state.village.buildings.count { it.isUnderConstruction(now) }
         if (activeConstructions >= workerCount) {
@@ -364,12 +346,12 @@ object VillageService {
     private fun createDefaultVillage(userId: Long, now: Long): GameState {
         val state = GameState(
             playerId = userId,
-            resources = Resources(gold = 1000, wood = 1000, metal = 500),
+            resources = Resources(credits = 1000, alloy = 1000, crystal = 500),
             village = Village(
                 playerId = userId,
                 buildings = listOf(
-                    PlacedBuilding(id = 1, type = BuildingType.TownHall, level = 1, x = 18, y = 18, hp = 1000, lastCollectedAt = now),
-                    PlacedBuilding(id = 2, type = BuildingType.BuilderHut, level = 1, x = 16, y = 18, hp = 150, lastCollectedAt = now),
+                    PlacedBuilding(id = 1, type = BuildingType.CommandCenter, level = 1, x = 18, y = 18, hp = 1000, lastCollectedAt = now),
+                    PlacedBuilding(id = 2, type = BuildingType.DroneStation, level = 1, x = 16, y = 18, hp = 150, lastCollectedAt = now),
                 ),
             ),
             lastUpdatedAt = now,

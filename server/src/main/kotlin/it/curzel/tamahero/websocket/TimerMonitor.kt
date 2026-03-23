@@ -100,7 +100,7 @@ object TimerMonitor {
         var finalState = updated
         if (finalState.activeEvent == null && shouldTriggerEvent(finalState, now)) {
             val thLevel = finalState.village.buildings
-                .filter { it.type == BuildingType.TownHall && it.constructionStartedAt == null }
+                .filter { it.type == BuildingType.CommandCenter && it.constructionStartedAt == null }
                 .maxOfOrNull { it.level } ?: 1
             val eligible = PveEventConfig.eligibleEvents(thLevel)
             if (eligible.isNotEmpty()) {

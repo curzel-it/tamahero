@@ -26,120 +26,118 @@ data class BuildingLevelConfig(
 
 object BuildingConfig {
     private val configs: Map<BuildingType, List<BuildingLevelConfig>> = mapOf(
-        BuildingType.TownHall to listOf(
+        BuildingType.CommandCenter to listOf(
             BuildingLevelConfig(level = 1, hp = 1000, cost = Resources(), buildTimeSeconds = 0, width = 4, height = 4, requiredTownHallLevel = 0),
-            BuildingLevelConfig(level = 2, hp = 1500, cost = Resources(gold = 500, wood = 500), buildTimeSeconds = 60, width = 4, height = 4, requiredTownHallLevel = 1),
-            BuildingLevelConfig(level = 3, hp = 2000, cost = Resources(gold = 1500, wood = 1500, metal = 500), buildTimeSeconds = 300, width = 4, height = 4, requiredTownHallLevel = 2),
+            BuildingLevelConfig(level = 2, hp = 1500, cost = Resources(credits = 500, alloy = 500), buildTimeSeconds = 60, width = 4, height = 4, requiredTownHallLevel = 1),
+            BuildingLevelConfig(level = 3, hp = 2000, cost = Resources(credits = 1500, alloy = 1500, crystal = 500), buildTimeSeconds = 300, width = 4, height = 4, requiredTownHallLevel = 2),
         ),
-        BuildingType.LumberCamp to listOf(
-            BuildingLevelConfig(level = 1, hp = 200, cost = Resources(gold = 50), buildTimeSeconds = 10, productionPerHour = Resources(wood = 100)),
-            BuildingLevelConfig(level = 2, hp = 300, cost = Resources(gold = 150), buildTimeSeconds = 30, productionPerHour = Resources(wood = 200)),
-            BuildingLevelConfig(level = 3, hp = 400, cost = Resources(gold = 400), buildTimeSeconds = 120, productionPerHour = Resources(wood = 350)),
+        BuildingType.AlloyRefinery to listOf(
+            BuildingLevelConfig(level = 1, hp = 200, cost = Resources(credits = 50), buildTimeSeconds = 10, productionPerHour = Resources(alloy = 100)),
+            BuildingLevelConfig(level = 2, hp = 300, cost = Resources(credits = 150), buildTimeSeconds = 30, productionPerHour = Resources(alloy = 200)),
+            BuildingLevelConfig(level = 3, hp = 400, cost = Resources(credits = 400), buildTimeSeconds = 120, productionPerHour = Resources(alloy = 350)),
         ),
-        BuildingType.GoldMine to listOf(
-            BuildingLevelConfig(level = 1, hp = 200, cost = Resources(wood = 50), buildTimeSeconds = 10, productionPerHour = Resources(gold = 100)),
-            BuildingLevelConfig(level = 2, hp = 300, cost = Resources(wood = 150), buildTimeSeconds = 30, productionPerHour = Resources(gold = 200)),
-            BuildingLevelConfig(level = 3, hp = 400, cost = Resources(wood = 400), buildTimeSeconds = 120, productionPerHour = Resources(gold = 350)),
+        BuildingType.CreditMint to listOf(
+            BuildingLevelConfig(level = 1, hp = 200, cost = Resources(alloy = 50), buildTimeSeconds = 10, productionPerHour = Resources(credits = 100)),
+            BuildingLevelConfig(level = 2, hp = 300, cost = Resources(alloy = 150), buildTimeSeconds = 30, productionPerHour = Resources(credits = 200)),
+            BuildingLevelConfig(level = 3, hp = 400, cost = Resources(alloy = 400), buildTimeSeconds = 120, productionPerHour = Resources(credits = 350)),
         ),
-        BuildingType.Forge to listOf(
-            BuildingLevelConfig(level = 1, hp = 200, cost = Resources(gold = 200, wood = 200), buildTimeSeconds = 60, productionPerHour = Resources(metal = 50), requiredTownHallLevel = 2),
-            BuildingLevelConfig(level = 2, hp = 300, cost = Resources(gold = 500, wood = 500), buildTimeSeconds = 180, productionPerHour = Resources(metal = 100), requiredTownHallLevel = 2),
+        BuildingType.Foundry to listOf(
+            BuildingLevelConfig(level = 1, hp = 200, cost = Resources(credits = 200, alloy = 200), buildTimeSeconds = 60, productionPerHour = Resources(crystal = 50), requiredTownHallLevel = 2),
+            BuildingLevelConfig(level = 2, hp = 300, cost = Resources(credits = 500, alloy = 500), buildTimeSeconds = 180, productionPerHour = Resources(crystal = 100), requiredTownHallLevel = 2),
         ),
-        BuildingType.WoodStorage to listOf(
-            BuildingLevelConfig(level = 1, hp = 200, cost = Resources(gold = 50), buildTimeSeconds = 10, storageCapacity = Resources(wood = 1000)),
-            BuildingLevelConfig(level = 2, hp = 300, cost = Resources(gold = 150), buildTimeSeconds = 30, storageCapacity = Resources(wood = 2500)),
-            BuildingLevelConfig(level = 3, hp = 400, cost = Resources(gold = 400), buildTimeSeconds = 120, storageCapacity = Resources(wood = 5000)),
+        BuildingType.AlloySilo to listOf(
+            BuildingLevelConfig(level = 1, hp = 200, cost = Resources(credits = 50), buildTimeSeconds = 10, storageCapacity = Resources(alloy = 1000)),
+            BuildingLevelConfig(level = 2, hp = 300, cost = Resources(credits = 150), buildTimeSeconds = 30, storageCapacity = Resources(alloy = 2500)),
+            BuildingLevelConfig(level = 3, hp = 400, cost = Resources(credits = 400), buildTimeSeconds = 120, storageCapacity = Resources(alloy = 5000)),
         ),
-        BuildingType.GoldStorage to listOf(
-            BuildingLevelConfig(level = 1, hp = 200, cost = Resources(wood = 50), buildTimeSeconds = 10, storageCapacity = Resources(gold = 1000)),
-            BuildingLevelConfig(level = 2, hp = 300, cost = Resources(wood = 150), buildTimeSeconds = 30, storageCapacity = Resources(gold = 2500)),
-            BuildingLevelConfig(level = 3, hp = 400, cost = Resources(wood = 400), buildTimeSeconds = 120, storageCapacity = Resources(gold = 5000)),
+        BuildingType.CreditVault to listOf(
+            BuildingLevelConfig(level = 1, hp = 200, cost = Resources(alloy = 50), buildTimeSeconds = 10, storageCapacity = Resources(credits = 1000)),
+            BuildingLevelConfig(level = 2, hp = 300, cost = Resources(alloy = 150), buildTimeSeconds = 30, storageCapacity = Resources(credits = 2500)),
+            BuildingLevelConfig(level = 3, hp = 400, cost = Resources(alloy = 400), buildTimeSeconds = 120, storageCapacity = Resources(credits = 5000)),
         ),
-        BuildingType.MetalStorage to listOf(
-            BuildingLevelConfig(level = 1, hp = 200, cost = Resources(gold = 100, wood = 100), buildTimeSeconds = 30, storageCapacity = Resources(metal = 500), requiredTownHallLevel = 2),
-            BuildingLevelConfig(level = 2, hp = 300, cost = Resources(gold = 300, wood = 300), buildTimeSeconds = 120, storageCapacity = Resources(metal = 1500), requiredTownHallLevel = 2),
+        BuildingType.CrystalSilo to listOf(
+            BuildingLevelConfig(level = 1, hp = 200, cost = Resources(credits = 100, alloy = 100), buildTimeSeconds = 30, storageCapacity = Resources(crystal = 500), requiredTownHallLevel = 2),
+            BuildingLevelConfig(level = 2, hp = 300, cost = Resources(credits = 300, alloy = 300), buildTimeSeconds = 120, storageCapacity = Resources(crystal = 1500), requiredTownHallLevel = 2),
         ),
-        BuildingType.Barracks to listOf(
-            BuildingLevelConfig(level = 1, hp = 300, cost = Resources(gold = 100, wood = 100), buildTimeSeconds = 30, width = 4, height = 2, requiredTownHallLevel = 1),
-            BuildingLevelConfig(level = 2, hp = 450, cost = Resources(gold = 300, wood = 300), buildTimeSeconds = 120, width = 4, height = 2, requiredTownHallLevel = 2),
+        BuildingType.Academy to listOf(
+            BuildingLevelConfig(level = 1, hp = 300, cost = Resources(credits = 100, alloy = 100), buildTimeSeconds = 30, width = 4, height = 2, requiredTownHallLevel = 1),
+            BuildingLevelConfig(level = 2, hp = 450, cost = Resources(credits = 300, alloy = 300), buildTimeSeconds = 120, width = 4, height = 2, requiredTownHallLevel = 2),
         ),
-        BuildingType.ArmyCamp to listOf(
-            BuildingLevelConfig(level = 1, hp = 200, cost = Resources(gold = 100, wood = 100), buildTimeSeconds = 30, width = 4, height = 2, requiredTownHallLevel = 1, troopCapacity = 20),
-            BuildingLevelConfig(level = 2, hp = 300, cost = Resources(gold = 300, wood = 300), buildTimeSeconds = 120, width = 4, height = 2, requiredTownHallLevel = 2, troopCapacity = 30),
+        BuildingType.Hangar to listOf(
+            BuildingLevelConfig(level = 1, hp = 200, cost = Resources(credits = 100, alloy = 100), buildTimeSeconds = 30, width = 4, height = 2, requiredTownHallLevel = 1, troopCapacity = 20),
+            BuildingLevelConfig(level = 2, hp = 300, cost = Resources(credits = 300, alloy = 300), buildTimeSeconds = 120, width = 4, height = 2, requiredTownHallLevel = 2, troopCapacity = 30),
         ),
-        BuildingType.Cannon to listOf(
-            BuildingLevelConfig(level = 1, hp = 300, cost = Resources(gold = 200), buildTimeSeconds = 30, damage = 10, range = 3f, attackSpeedMs = 1000),
-            BuildingLevelConfig(level = 2, hp = 450, cost = Resources(gold = 500), buildTimeSeconds = 120, damage = 15, range = 3.5f, attackSpeedMs = 1000),
+        BuildingType.RailGun to listOf(
+            BuildingLevelConfig(level = 1, hp = 300, cost = Resources(credits = 200), buildTimeSeconds = 30, damage = 10, range = 3f, attackSpeedMs = 1000),
+            BuildingLevelConfig(level = 2, hp = 450, cost = Resources(credits = 500), buildTimeSeconds = 120, damage = 15, range = 3.5f, attackSpeedMs = 1000),
         ),
-        BuildingType.ArcherTower to listOf(
-            BuildingLevelConfig(level = 1, hp = 250, cost = Resources(gold = 200, wood = 100), buildTimeSeconds = 30, damage = 7, range = 4f, attackSpeedMs = 800),
-            BuildingLevelConfig(level = 2, hp = 375, cost = Resources(gold = 500, wood = 250), buildTimeSeconds = 120, damage = 11, range = 4.5f, attackSpeedMs = 800),
+        BuildingType.LaserTurret to listOf(
+            BuildingLevelConfig(level = 1, hp = 250, cost = Resources(credits = 200, alloy = 100), buildTimeSeconds = 30, damage = 7, range = 4f, attackSpeedMs = 800),
+            BuildingLevelConfig(level = 2, hp = 375, cost = Resources(credits = 500, alloy = 250), buildTimeSeconds = 120, damage = 11, range = 4.5f, attackSpeedMs = 800),
         ),
-        BuildingType.Wall to listOf(
-            BuildingLevelConfig(level = 1, hp = 500, cost = Resources(wood = 20), buildTimeSeconds = 5, width = 1, height = 1),
-            BuildingLevelConfig(level = 2, hp = 1000, cost = Resources(wood = 50, metal = 20), buildTimeSeconds = 15, width = 1, height = 1),
+        BuildingType.Barrier to listOf(
+            BuildingLevelConfig(level = 1, hp = 500, cost = Resources(alloy = 20), buildTimeSeconds = 5, width = 1, height = 1),
+            BuildingLevelConfig(level = 2, hp = 1000, cost = Resources(alloy = 50, crystal = 20), buildTimeSeconds = 15, width = 1, height = 1),
         ),
-        BuildingType.Mortar to listOf(
-            BuildingLevelConfig(level = 1, hp = 250, cost = Resources(gold = 300, wood = 100), buildTimeSeconds = 60, damage = 15, range = 5f, minRange = 2f, attackSpeedMs = 2000, splashRadius = 1.5f),
-            BuildingLevelConfig(level = 2, hp = 375, cost = Resources(gold = 600, wood = 200), buildTimeSeconds = 180, damage = 22, range = 5.5f, minRange = 2f, attackSpeedMs = 2000, splashRadius = 1.5f),
+        BuildingType.MissileBattery to listOf(
+            BuildingLevelConfig(level = 1, hp = 250, cost = Resources(credits = 300, alloy = 100), buildTimeSeconds = 60, damage = 15, range = 5f, minRange = 2f, attackSpeedMs = 2000, splashRadius = 1.5f),
+            BuildingLevelConfig(level = 2, hp = 375, cost = Resources(credits = 600, alloy = 200), buildTimeSeconds = 180, damage = 22, range = 5.5f, minRange = 2f, attackSpeedMs = 2000, splashRadius = 1.5f),
         ),
-        BuildingType.WizardTower to listOf(
-            BuildingLevelConfig(level = 1, hp = 350, cost = Resources(gold = 400, wood = 200), buildTimeSeconds = 60, damage = 11, range = 3.5f, attackSpeedMs = 1500, splashRadius = 1f),
-            BuildingLevelConfig(level = 2, hp = 500, cost = Resources(gold = 800, wood = 400), buildTimeSeconds = 180, damage = 16, range = 3.5f, attackSpeedMs = 1500, splashRadius = 1f),
+        BuildingType.TeslaTower to listOf(
+            BuildingLevelConfig(level = 1, hp = 350, cost = Resources(credits = 400, alloy = 200), buildTimeSeconds = 60, damage = 11, range = 3.5f, attackSpeedMs = 1500, splashRadius = 1f),
+            BuildingLevelConfig(level = 2, hp = 500, cost = Resources(credits = 800, alloy = 400), buildTimeSeconds = 180, damage = 16, range = 3.5f, attackSpeedMs = 1500, splashRadius = 1f),
         ),
-        BuildingType.SpikeTrap to listOf(
-            BuildingLevelConfig(level = 1, hp = 1, cost = Resources(wood = 20), buildTimeSeconds = 5, width = 1, height = 1, burstDamage = 30, triggerRadius = 1f),
-            BuildingLevelConfig(level = 2, hp = 1, cost = Resources(wood = 40, metal = 10), buildTimeSeconds = 10, width = 1, height = 1, burstDamage = 50, triggerRadius = 1.5f),
+        BuildingType.MineTrap to listOf(
+            BuildingLevelConfig(level = 1, hp = 1, cost = Resources(alloy = 20), buildTimeSeconds = 5, width = 1, height = 1, burstDamage = 30, triggerRadius = 1f),
+            BuildingLevelConfig(level = 2, hp = 1, cost = Resources(alloy = 40, crystal = 10), buildTimeSeconds = 10, width = 1, height = 1, burstDamage = 50, triggerRadius = 1.5f),
         ),
-        BuildingType.SpringTrap to listOf(
-            BuildingLevelConfig(level = 1, hp = 1, cost = Resources(wood = 30, metal = 10), buildTimeSeconds = 5, width = 1, height = 1, triggerRadius = 1f),
-            BuildingLevelConfig(level = 2, hp = 1, cost = Resources(wood = 60, metal = 20), buildTimeSeconds = 10, width = 1, height = 1, triggerRadius = 1.5f),
+        BuildingType.GravityTrap to listOf(
+            BuildingLevelConfig(level = 1, hp = 1, cost = Resources(alloy = 30, crystal = 10), buildTimeSeconds = 5, width = 1, height = 1, triggerRadius = 1f),
+            BuildingLevelConfig(level = 2, hp = 1, cost = Resources(alloy = 60, crystal = 20), buildTimeSeconds = 10, width = 1, height = 1, triggerRadius = 1.5f),
         ),
-        BuildingType.GiantBomb to listOf(
-            BuildingLevelConfig(level = 1, hp = 1, cost = Resources(gold = 100, metal = 20), buildTimeSeconds = 10, width = 1, height = 1, burstDamage = 100, triggerRadius = 2f),
-            BuildingLevelConfig(level = 2, hp = 1, cost = Resources(gold = 200, metal = 40), buildTimeSeconds = 15, width = 1, height = 1, burstDamage = 150, triggerRadius = 2.5f),
+        BuildingType.NovaBomb to listOf(
+            BuildingLevelConfig(level = 1, hp = 1, cost = Resources(credits = 100, crystal = 20), buildTimeSeconds = 10, width = 1, height = 1, burstDamage = 100, triggerRadius = 2f),
+            BuildingLevelConfig(level = 2, hp = 1, cost = Resources(credits = 200, crystal = 40), buildTimeSeconds = 15, width = 1, height = 1, burstDamage = 150, triggerRadius = 2.5f),
         ),
         BuildingType.ShieldDome to listOf(
-            BuildingLevelConfig(level = 1, hp = 100, cost = Resources(gold = 500, wood = 500, metal = 200), buildTimeSeconds = 120, shieldHp = 500, requiredTownHallLevel = 2),
-            BuildingLevelConfig(level = 2, hp = 150, cost = Resources(gold = 1000, wood = 1000, metal = 500), buildTimeSeconds = 300, shieldHp = 1000, requiredTownHallLevel = 3),
+            BuildingLevelConfig(level = 1, hp = 100, cost = Resources(credits = 500, alloy = 500, crystal = 200), buildTimeSeconds = 120, shieldHp = 500, requiredTownHallLevel = 2),
+            BuildingLevelConfig(level = 2, hp = 150, cost = Resources(credits = 1000, alloy = 1000, crystal = 500), buildTimeSeconds = 300, shieldHp = 1000, requiredTownHallLevel = 3),
         ),
-        BuildingType.ManaWell to listOf(
-            BuildingLevelConfig(level = 1, hp = 200, cost = Resources(gold = 300, wood = 300), buildTimeSeconds = 60, productionPerHour = Resources(mana = 50), requiredTownHallLevel = 2),
-            BuildingLevelConfig(level = 2, hp = 300, cost = Resources(gold = 600, wood = 600), buildTimeSeconds = 180, productionPerHour = Resources(mana = 100), requiredTownHallLevel = 2),
-            BuildingLevelConfig(level = 3, hp = 400, cost = Resources(gold = 1200, wood = 1200), buildTimeSeconds = 300, productionPerHour = Resources(mana = 175), requiredTownHallLevel = 3),
+        BuildingType.PlasmaReactor to listOf(
+            BuildingLevelConfig(level = 1, hp = 200, cost = Resources(credits = 300, alloy = 300), buildTimeSeconds = 60, productionPerHour = Resources(plasma = 50), requiredTownHallLevel = 2),
+            BuildingLevelConfig(level = 2, hp = 300, cost = Resources(credits = 600, alloy = 600), buildTimeSeconds = 180, productionPerHour = Resources(plasma = 100), requiredTownHallLevel = 2),
+            BuildingLevelConfig(level = 3, hp = 400, cost = Resources(credits = 1200, alloy = 1200), buildTimeSeconds = 300, productionPerHour = Resources(plasma = 175), requiredTownHallLevel = 3),
         ),
-        BuildingType.ManaStorage to listOf(
-            BuildingLevelConfig(level = 1, hp = 200, cost = Resources(gold = 200, wood = 200), buildTimeSeconds = 30, storageCapacity = Resources(mana = 500), requiredTownHallLevel = 2),
-            BuildingLevelConfig(level = 2, hp = 300, cost = Resources(gold = 500, wood = 500), buildTimeSeconds = 120, storageCapacity = Resources(mana = 1500), requiredTownHallLevel = 2),
+        BuildingType.PlasmaBank to listOf(
+            BuildingLevelConfig(level = 1, hp = 200, cost = Resources(credits = 200, alloy = 200), buildTimeSeconds = 30, storageCapacity = Resources(plasma = 500), requiredTownHallLevel = 2),
+            BuildingLevelConfig(level = 2, hp = 300, cost = Resources(credits = 500, alloy = 500), buildTimeSeconds = 120, storageCapacity = Resources(plasma = 1500), requiredTownHallLevel = 2),
         ),
-        BuildingType.BuilderHut to listOf(
-            BuildingLevelConfig(level = 1, hp = 150, cost = Resources(gold = 200, wood = 200), buildTimeSeconds = 30, width = 2, height = 2),
-            BuildingLevelConfig(level = 2, hp = 250, cost = Resources(gold = 500, wood = 500, metal = 100), buildTimeSeconds = 120, width = 2, height = 2, requiredTownHallLevel = 2),
+        BuildingType.DroneStation to listOf(
+            BuildingLevelConfig(level = 1, hp = 150, cost = Resources(credits = 200, alloy = 200), buildTimeSeconds = 30, width = 2, height = 2),
+            BuildingLevelConfig(level = 2, hp = 250, cost = Resources(credits = 500, alloy = 500, crystal = 100), buildTimeSeconds = 120, width = 2, height = 2, requiredTownHallLevel = 2),
         ),
     )
 
-    // Max count per building type, keyed by TownHall level
-    // Missing entries or missing TH levels mean unlimited (e.g. Wall)
     private val maxCounts: Map<BuildingType, Map<Int, Int>> = mapOf(
-        BuildingType.LumberCamp to mapOf(1 to 2, 2 to 4, 3 to 6),
-        BuildingType.GoldMine to mapOf(1 to 2, 2 to 4, 3 to 6),
-        BuildingType.Forge to mapOf(2 to 1, 3 to 2),
-        BuildingType.WoodStorage to mapOf(1 to 1, 2 to 2, 3 to 3),
-        BuildingType.GoldStorage to mapOf(1 to 1, 2 to 2, 3 to 3),
-        BuildingType.MetalStorage to mapOf(2 to 1, 3 to 2),
-        BuildingType.Barracks to mapOf(1 to 1, 2 to 2, 3 to 2),
-        BuildingType.ArmyCamp to mapOf(1 to 1, 2 to 2, 3 to 3),
-        BuildingType.Cannon to mapOf(1 to 2, 2 to 3, 3 to 5),
-        BuildingType.ArcherTower to mapOf(1 to 1, 2 to 3, 3 to 4),
-        BuildingType.Mortar to mapOf(1 to 0, 2 to 1, 3 to 2),
-        BuildingType.WizardTower to mapOf(1 to 0, 2 to 1, 3 to 2),
-        BuildingType.SpikeTrap to mapOf(1 to 4, 2 to 6, 3 to 8),
-        BuildingType.SpringTrap to mapOf(1 to 2, 2 to 4, 3 to 6),
-        BuildingType.GiantBomb to mapOf(1 to 0, 2 to 2, 3 to 4),
+        BuildingType.AlloyRefinery to mapOf(1 to 2, 2 to 4, 3 to 6),
+        BuildingType.CreditMint to mapOf(1 to 2, 2 to 4, 3 to 6),
+        BuildingType.Foundry to mapOf(2 to 1, 3 to 2),
+        BuildingType.AlloySilo to mapOf(1 to 1, 2 to 2, 3 to 3),
+        BuildingType.CreditVault to mapOf(1 to 1, 2 to 2, 3 to 3),
+        BuildingType.CrystalSilo to mapOf(2 to 1, 3 to 2),
+        BuildingType.Academy to mapOf(1 to 1, 2 to 2, 3 to 2),
+        BuildingType.Hangar to mapOf(1 to 1, 2 to 2, 3 to 3),
+        BuildingType.RailGun to mapOf(1 to 2, 2 to 3, 3 to 5),
+        BuildingType.LaserTurret to mapOf(1 to 1, 2 to 3, 3 to 4),
+        BuildingType.MissileBattery to mapOf(1 to 0, 2 to 1, 3 to 2),
+        BuildingType.TeslaTower to mapOf(1 to 0, 2 to 1, 3 to 2),
+        BuildingType.MineTrap to mapOf(1 to 4, 2 to 6, 3 to 8),
+        BuildingType.GravityTrap to mapOf(1 to 2, 2 to 4, 3 to 6),
+        BuildingType.NovaBomb to mapOf(1 to 0, 2 to 2, 3 to 4),
         BuildingType.ShieldDome to mapOf(2 to 1, 3 to 1),
-        BuildingType.ManaWell to mapOf(2 to 1, 3 to 2),
-        BuildingType.ManaStorage to mapOf(2 to 1, 3 to 2),
-        BuildingType.BuilderHut to mapOf(1 to 1, 2 to 2, 3 to 3),
+        BuildingType.PlasmaReactor to mapOf(2 to 1, 3 to 2),
+        BuildingType.PlasmaBank to mapOf(2 to 1, 3 to 2),
+        BuildingType.DroneStation to mapOf(1 to 1, 2 to 2, 3 to 3),
     )
 
     fun configFor(type: BuildingType, level: Int): BuildingLevelConfig? =
@@ -150,7 +148,6 @@ object BuildingConfig {
 
     fun maxCount(type: BuildingType, townHallLevel: Int): Int? {
         val limits = maxCounts[type] ?: return null
-        // Find the limit for the highest TH level <= townHallLevel
         return limits.entries
             .filter { it.key <= townHallLevel }
             .maxByOrNull { it.key }

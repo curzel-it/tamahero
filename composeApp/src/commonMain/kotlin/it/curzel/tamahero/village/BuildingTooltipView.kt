@@ -38,12 +38,12 @@ fun BuildingTooltipView(
                 fontSize = 11.sp,
             )
             val prod = config.productionPerHour
-            if (prod.gold > 0 || prod.wood > 0 || prod.metal > 0 || prod.mana > 0) {
+            if (prod.credits > 0 || prod.alloy > 0 || prod.crystal > 0 || prod.plasma > 0) {
                 val prodText = buildList {
-                    if (prod.gold > 0) add("${prod.gold}g")
-                    if (prod.wood > 0) add("${prod.wood}w")
-                    if (prod.metal > 0) add("${prod.metal}m")
-                    if (prod.mana > 0) add("${prod.mana}mana")
+                    if (prod.credits > 0) add("${prod.credits}cr")
+                    if (prod.alloy > 0) add("${prod.alloy}al")
+                    if (prod.crystal > 0) add("${prod.crystal}xy")
+                    if (prod.plasma > 0) add("${prod.plasma}pl")
                 }.joinToString(" ")
                 Text(prodText + "/hr", color = TamaColors.TextMuted, fontSize = 11.sp)
             }

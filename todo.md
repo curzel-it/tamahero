@@ -8,7 +8,6 @@
 - [x] SpringTrap — Now has triggerRadius and insta-kills lightweight troops (HumanSoldier, ElfArcher, Goblin).
 - [x] Building move in UI — "Move" button in BuildingInfoView enters ghost-placement mode for relocation.
 - [x] Building queue — BuilderHut building controls worker count. 1 worker = 1 concurrent construction. Default village starts with 1 BuilderHut.
-- [x] Hero unit — Tamagotchi-style hero with hunger, happiness, XP, leveling. Feed (gold) and train (mana) actions. Auto-participates in events.
 - [x] PvP / Raiding — Clash of Clans-style PvP: matchmaking by trophies, deploy troops on grid edges, 3-min battles, stars (50%/TH/100%), loot stealing, trophy system, shields (12h/14h/16h), attacker loses shield on attack, defense log, real-time defender notification.
 - [x] Leaderboards — Trophy-based leaderboard (top 50 + your rank) via WebSocket message. CLI: `leaderboard` / `lb`.
 

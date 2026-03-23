@@ -31,14 +31,14 @@ class VillageViewModel : ViewModel() {
     private val _troops = MutableStateFlow<List<Troop>>(emptyList())
     val troops = _troops.asStateFlow()
 
-    private val _hero = MutableStateFlow(Hero())
-    val hero = _hero.asStateFlow()
-
     private val _floatingTexts = MutableStateFlow<List<FloatingText>>(emptyList())
     val floatingTexts = _floatingTexts.asStateFlow()
 
     private val _offlineSummary = MutableStateFlow<String?>(null)
     val offlineSummary = _offlineSummary.asStateFlow()
+
+    private val _errorMessage = MutableStateFlow<String?>(null)
+    val errorMessage = _errorMessage.asStateFlow()
 
     private var firstUpdate = true
     private var previousResources: Resources? = null
@@ -59,7 +59,6 @@ class VillageViewModel : ViewModel() {
                         _army.value = state.army
                         _trainingQueue.value = state.trainingQueue
                         _troops.value = state.troops
-                        _hero.value = state.hero
                     }
                     is ServerMessage.ResourcesUpdated -> {
                         trackResourceChanges(message.resources)
@@ -67,9 +66,11 @@ class VillageViewModel : ViewModel() {
                     }
                     is ServerMessage.BuildingComplete,
                     is ServerMessage.TrainingComplete,
-                    is ServerMessage.EventEnded,
-                    is ServerMessage.HeroLevelUp -> {
+                    is ServerMessage.EventEnded -> {
                         GameSocketClient.getVillage()
+                    }
+                    is ServerMessage.Error -> {
+                        _errorMessage.value = message.reason
                     }
                     else -> {}
                 }
@@ -81,19 +82,23 @@ class VillageViewModel : ViewModel() {
         _offlineSummary.value = null
     }
 
+    fun dismissError() {
+        _errorMessage.value = null
+    }
+
     private fun trackResourceChanges(newResources: Resources) {
         val prev = previousResources
         previousResources = newResources
         if (prev == null) return
         val diffs = mutableListOf<FloatingText>()
-        val dGold = newResources.gold - prev.gold
-        val dWood = newResources.wood - prev.wood
-        val dMetal = newResources.metal - prev.metal
-        val dMana = newResources.mana - prev.mana
-        if (dGold != 0L) diffs.add(FloatingText("${if (dGold > 0) "+" else ""}${dGold} gold", androidx.compose.ui.graphics.Color(0xFFFFD700)))
-        if (dWood != 0L) diffs.add(FloatingText("${if (dWood > 0) "+" else ""}${dWood} wood", androidx.compose.ui.graphics.Color(0xFF4CAF50)))
-        if (dMetal != 0L) diffs.add(FloatingText("${if (dMetal > 0) "+" else ""}${dMetal} metal", androidx.compose.ui.graphics.Color(0xFF9E9E9E)))
-        if (dMana != 0L) diffs.add(FloatingText("${if (dMana > 0) "+" else ""}${dMana} mana", androidx.compose.ui.graphics.Color(0xFF7B1FA2)))
+        val dCredits = newResources.credits - prev.credits
+        val dAlloy = newResources.alloy - prev.alloy
+        val dCrystal = newResources.crystal - prev.crystal
+        val dPlasma = newResources.plasma - prev.plasma
+        if (dCredits != 0L) diffs.add(FloatingText("${if (dCredits > 0) "+" else ""}${dCredits} credits", androidx.compose.ui.graphics.Color(0xFFFFD700)))
+        if (dAlloy != 0L) diffs.add(FloatingText("${if (dAlloy > 0) "+" else ""}${dAlloy} alloy", androidx.compose.ui.graphics.Color(0xFF4CAF50)))
+        if (dCrystal != 0L) diffs.add(FloatingText("${if (dCrystal > 0) "+" else ""}${dCrystal} crystal", androidx.compose.ui.graphics.Color(0xFF9E9E9E)))
+        if (dPlasma != 0L) diffs.add(FloatingText("${if (dPlasma > 0) "+" else ""}${dPlasma} plasma", androidx.compose.ui.graphics.Color(0xFF7B1FA2)))
         if (diffs.isNotEmpty()) {
             _floatingTexts.value = (_floatingTexts.value + diffs).takeLast(10)
         }
@@ -106,7 +111,7 @@ class VillageViewModel : ViewModel() {
         val minutes = gap / 60_000
         val summary = buildString {
             appendLine("While you were away (${minutes}m):")
-            if (state.resources.gold > 0 || state.resources.wood > 0) {
+            if (state.resources.credits > 0 || state.resources.alloy > 0) {
                 appendLine("Resources accumulated")
             }
             val completed = state.village.buildings.count { it.constructionStartedAt == null && it.hp > 0 }
@@ -114,7 +119,6 @@ class VillageViewModel : ViewModel() {
             if (state.army.totalCount > 0) {
                 appendLine("Army: ${state.army.totalCount} troops ready")
             }
-            appendLine("Hero: Lv${state.hero.level}, hunger ${state.hero.hunger}%, happy ${state.hero.happiness}%")
         }
         _offlineSummary.value = summary
     }

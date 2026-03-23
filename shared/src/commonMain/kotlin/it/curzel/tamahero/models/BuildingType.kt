@@ -4,31 +4,31 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 enum class BuildingType {
-    TownHall,
-    LumberCamp,
-    GoldMine,
-    Forge,
-    WoodStorage,
-    GoldStorage,
-    MetalStorage,
-    Barracks,
-    ArmyCamp,
-    Cannon,
-    ArcherTower,
-    Mortar,
-    WizardTower,
-    Wall,
-    SpikeTrap,
-    SpringTrap,
-    GiantBomb,
+    CommandCenter,
+    AlloyRefinery,
+    CreditMint,
+    Foundry,
+    AlloySilo,
+    CreditVault,
+    CrystalSilo,
+    Academy,
+    Hangar,
+    RailGun,
+    LaserTurret,
+    MissileBattery,
+    TeslaTower,
+    Barrier,
+    MineTrap,
+    GravityTrap,
+    NovaBomb,
     ShieldDome,
-    ManaWell,
-    ManaStorage,
-    BuilderHut;
+    PlasmaReactor,
+    PlasmaBank,
+    DroneStation;
 
-    val isProducer: Boolean get() = this in setOf(LumberCamp, GoldMine, Forge, ManaWell)
-    val isDefense: Boolean get() = this in setOf(Cannon, ArcherTower, Mortar, WizardTower, Wall)
-    val isStorage: Boolean get() = this in setOf(WoodStorage, GoldStorage, MetalStorage, ManaStorage)
-    val isTrap: Boolean get() = this in setOf(SpikeTrap, SpringTrap, GiantBomb)
-    val isResource: Boolean get() = isProducer || isStorage || this == TownHall
+    val isProducer: Boolean get() = this in setOf(AlloyRefinery, CreditMint, Foundry, PlasmaReactor)
+    val isDefense: Boolean get() = this in setOf(RailGun, LaserTurret, MissileBattery, TeslaTower, Barrier)
+    val isStorage: Boolean get() = this in setOf(AlloySilo, CreditVault, CrystalSilo, PlasmaBank)
+    val isTrap: Boolean get() = this in setOf(MineTrap, GravityTrap, NovaBomb)
+    val isResource: Boolean get() = isProducer || isStorage || this == CommandCenter
 }

@@ -11,17 +11,17 @@ class TrainingUpdateUseCaseTest {
         hasArmyCamp: Boolean = true,
     ): GameState {
         val buildings = mutableListOf(
-            PlacedBuilding(id = 1, type = BuildingType.TownHall, level = 1, x = 0, y = 0, hp = 1000),
+            PlacedBuilding(id = 1, type = BuildingType.CommandCenter, level = 1, x = 0, y = 0, hp = 1000),
         )
         if (hasBarracks) {
-            buildings.add(PlacedBuilding(id = 2, type = BuildingType.Barracks, level = 1, x = 5, y = 0, hp = 300))
+            buildings.add(PlacedBuilding(id = 2, type = BuildingType.Academy, level = 1, x = 5, y = 0, hp = 300))
         }
         if (hasArmyCamp) {
-            buildings.add(PlacedBuilding(id = 3, type = BuildingType.ArmyCamp, level = 1, x = 10, y = 0, hp = 200))
+            buildings.add(PlacedBuilding(id = 3, type = BuildingType.Hangar, level = 1, x = 10, y = 0, hp = 200))
         }
         return GameState(
             playerId = 1,
-            resources = Resources(gold = 500),
+            resources = Resources(credits = 500),
             village = Village(playerId = 1, buildings = buildings),
             trainingQueue = queue,
             army = army,
@@ -40,7 +40,7 @@ class TrainingUpdateUseCaseTest {
     @Test
     fun startsTrainingFirstInQueue() {
         val queue = TrainingQueue(listOf(
-            TrainingQueueEntry(TroopType.HumanSoldier),
+            TrainingQueueEntry(TroopType.Marine),
         ))
         val state = baseState(queue = queue)
         val result = TrainingUpdateUseCase.update(state, now = 1000)
@@ -51,19 +51,19 @@ class TrainingUpdateUseCaseTest {
     fun completesTrainingAfterTime() {
         // HumanSoldier takes 20 seconds
         val queue = TrainingQueue(listOf(
-            TrainingQueueEntry(TroopType.HumanSoldier, startedAt = 0),
+            TrainingQueueEntry(TroopType.Marine, startedAt = 0),
         ))
         val state = baseState(queue = queue)
         val result = TrainingUpdateUseCase.update(state, now = 20_000)
         assertTrue(result.trainingQueue.entries.isEmpty())
         assertEquals(1, result.army.totalCount)
-        assertEquals(TroopType.HumanSoldier, result.army.troops.first().type)
+        assertEquals(TroopType.Marine, result.army.troops.first().type)
     }
 
     @Test
     fun doesNotCompleteBeforeTime() {
         val queue = TrainingQueue(listOf(
-            TrainingQueueEntry(TroopType.HumanSoldier, startedAt = 0),
+            TrainingQueueEntry(TroopType.Marine, startedAt = 0),
         ))
         val state = baseState(queue = queue)
         val result = TrainingUpdateUseCase.update(state, now = 10_000)
@@ -74,25 +74,25 @@ class TrainingUpdateUseCaseTest {
     @Test
     fun startsNextAfterCompletion() {
         val queue = TrainingQueue(listOf(
-            TrainingQueueEntry(TroopType.HumanSoldier, startedAt = 0),
-            TrainingQueueEntry(TroopType.ElfArcher),
+            TrainingQueueEntry(TroopType.Marine, startedAt = 0),
+            TrainingQueueEntry(TroopType.Sniper),
         ))
         val state = baseState(queue = queue)
         val result = TrainingUpdateUseCase.update(state, now = 20_000)
         assertEquals(1, result.army.totalCount)
         assertEquals(1, result.trainingQueue.entries.size)
-        assertEquals(TroopType.ElfArcher, result.trainingQueue.entries.first().troopType)
+        assertEquals(TroopType.Sniper, result.trainingQueue.entries.first().troopType)
         assertNotNull(result.trainingQueue.entries.first().startedAt)
     }
 
     @Test
     fun respectsArmyCapacity() {
         // ArmyCamp level 1 = 20 capacity
-        val army = Army((1..20).map { ArmyTroop(TroopType.HumanSoldier, 1, 1) }.let {
-            listOf(ArmyTroop(TroopType.HumanSoldier, 1, 20))
+        val army = Army((1..20).map { ArmyTroop(TroopType.Marine, 1, 1) }.let {
+            listOf(ArmyTroop(TroopType.Marine, 1, 20))
         })
         val queue = TrainingQueue(listOf(
-            TrainingQueueEntry(TroopType.HumanSoldier, startedAt = 0),
+            TrainingQueueEntry(TroopType.Marine, startedAt = 0),
         ))
         val state = baseState(queue = queue, army = army)
         val result = TrainingUpdateUseCase.update(state, now = 20_000)
@@ -104,7 +104,7 @@ class TrainingUpdateUseCaseTest {
     @Test
     fun noBarracksNoTraining() {
         val queue = TrainingQueue(listOf(
-            TrainingQueueEntry(TroopType.HumanSoldier),
+            TrainingQueueEntry(TroopType.Marine),
         ))
         val state = baseState(queue = queue, hasBarracks = false)
         val result = TrainingUpdateUseCase.update(state, now = 100_000)
@@ -114,15 +114,15 @@ class TrainingUpdateUseCaseTest {
     @Test
     fun multipleBarracksTrainInParallel() {
         val buildings = listOf(
-            PlacedBuilding(id = 1, type = BuildingType.TownHall, level = 1, x = 0, y = 0, hp = 1000),
-            PlacedBuilding(id = 2, type = BuildingType.Barracks, level = 1, x = 5, y = 0, hp = 300),
-            PlacedBuilding(id = 3, type = BuildingType.Barracks, level = 1, x = 8, y = 0, hp = 300),
-            PlacedBuilding(id = 4, type = BuildingType.ArmyCamp, level = 1, x = 12, y = 0, hp = 200),
+            PlacedBuilding(id = 1, type = BuildingType.CommandCenter, level = 1, x = 0, y = 0, hp = 1000),
+            PlacedBuilding(id = 2, type = BuildingType.Academy, level = 1, x = 5, y = 0, hp = 300),
+            PlacedBuilding(id = 3, type = BuildingType.Academy, level = 1, x = 8, y = 0, hp = 300),
+            PlacedBuilding(id = 4, type = BuildingType.Hangar, level = 1, x = 12, y = 0, hp = 200),
         )
         val queue = TrainingQueue(listOf(
-            TrainingQueueEntry(TroopType.HumanSoldier),
-            TrainingQueueEntry(TroopType.ElfArcher),
-            TrainingQueueEntry(TroopType.OrcBerserker),
+            TrainingQueueEntry(TroopType.Marine),
+            TrainingQueueEntry(TroopType.Sniper),
+            TrainingQueueEntry(TroopType.Juggernaut),
         ))
         val state = GameState(
             playerId = 1, resources = Resources(),
@@ -137,9 +137,9 @@ class TrainingUpdateUseCaseTest {
 
     @Test
     fun addsTroopToExistingArmyEntry() {
-        val army = Army(listOf(ArmyTroop(TroopType.HumanSoldier, 1, 3)))
+        val army = Army(listOf(ArmyTroop(TroopType.Marine, 1, 3)))
         val queue = TrainingQueue(listOf(
-            TrainingQueueEntry(TroopType.HumanSoldier, startedAt = 0),
+            TrainingQueueEntry(TroopType.Marine, startedAt = 0),
         ))
         val state = baseState(queue = queue, army = army)
         val result = TrainingUpdateUseCase.update(state, now = 20_000)

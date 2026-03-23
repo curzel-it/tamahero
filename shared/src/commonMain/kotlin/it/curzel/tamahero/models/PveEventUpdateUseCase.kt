@@ -47,7 +47,7 @@ object PveEventUpdateUseCase {
             val config = BuildingConfig.configFor(building.type, building.level) ?: continue
 
             val shouldDamage = when (event.type) {
-                EventType.Storm -> isEdgeBuilding(building)
+                EventType.IonStorm -> isEdgeBuilding(building)
                 else -> pseudoRandom(building.id, now, 0) < 0.6
             }
             if (!shouldDamage) continue
@@ -66,8 +66,8 @@ object PveEventUpdateUseCase {
             event.rewards.success
         } else {
             Resources(
-                gold = (totalDamage * event.rewards.debrisRecoveryRate * 0.5).toLong(),
-                wood = (totalDamage * event.rewards.debrisRecoveryRate * 0.5).toLong(),
+                credits = (totalDamage * event.rewards.debrisRecoveryRate * 0.5).toLong(),
+                alloy = (totalDamage * event.rewards.debrisRecoveryRate * 0.5).toLong(),
             )
         }
 
@@ -127,9 +127,9 @@ object PveEventUpdateUseCase {
         } else {
             val recoveryValue = (destroyedHp * event.rewards.debrisRecoveryRate).toLong()
             Resources(
-                gold = recoveryValue / 3,
-                wood = recoveryValue / 3,
-                metal = recoveryValue / 6,
+                credits = recoveryValue / 3,
+                alloy = recoveryValue / 3,
+                crystal = recoveryValue / 6,
             )
         }
 

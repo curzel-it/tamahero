@@ -61,8 +61,6 @@ object WebSocketHandler {
                 is ClientMessage.RearmTrap -> handleVillageAction(userId) { VillageService.rearmTrap(userId, message.buildingId) }
                 is ClientMessage.RearmAllTraps -> handleVillageAction(userId) { VillageService.rearmAllTraps(userId) }
                 is ClientMessage.CollectEventRewards -> handleVillageAction(userId) { VillageService.collectEventRewards(userId) }
-                is ClientMessage.FeedHero -> handleVillageAction(userId) { VillageService.feedHero(userId) }
-                is ClientMessage.TrainHero -> handleVillageAction(userId) { VillageService.trainHero(userId) }
                 is ClientMessage.FindOpponent -> handlePvpAction(userId) { PvpService.findOpponent(userId) }
                 is ClientMessage.NextOpponent -> handlePvpAction(userId) { PvpService.findOpponent(userId) }
                 is ClientMessage.StartPvp -> handlePvpAction(userId) { PvpService.startBattle(userId, message.targetId) }

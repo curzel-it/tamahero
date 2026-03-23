@@ -30,7 +30,7 @@ private enum class BuildCategory(val label: String) {
     Traps("Traps"),
 }
 
-private enum class BuildItemState { Buyable, TooExpensive, MaxedOut, Locked }
+private enum class BuildItemState { Buyable, NoBuildersAvailable, TooExpensive, MaxedOut, Locked }
 
 @Composable
 fun BuildMenuView(
@@ -42,13 +42,20 @@ fun BuildMenuView(
 ) {
     var selectedTab by remember { mutableStateOf(BuildCategory.Resources) }
     val townHallLevel = buildings
-        .filter { it.type == BuildingType.TownHall && it.constructionStartedAt == null }
+        .filter { it.type == BuildingType.CommandCenter && it.constructionStartedAt == null }
         .maxOfOrNull { it.level } ?: 1
 
-    val allTypes = BuildingType.entries.filter { it != BuildingType.TownHall }
+    val now = System.currentTimeMillis()
+    val workerCount = buildings
+        .count { it.type == BuildingType.DroneStation && it.isComplete(now) }
+        .coerceAtLeast(1)
+    val activeConstructions = buildings.count { it.isUnderConstruction(now) }
+    val availableBuilders = workerCount - activeConstructions
+
+    val allTypes = BuildingType.entries.filter { it != BuildingType.CommandCenter }
     val categorized = allTypes.groupBy { categoryFor(it) }
     val currentItems = (categorized[selectedTab] ?: emptyList()).sortedWith(
-        compareBy<BuildingType> { stateFor(it, resources, townHallLevel, buildings).ordinal }
+        compareBy<BuildingType> { stateFor(it, resources, townHallLevel, buildings, availableBuilders).ordinal }
             .thenBy { it.name }
     )
 
@@ -67,7 +74,19 @@ fun BuildMenuView(
                 .clickable(enabled = false, onClick = {})
                 .padding(TamaSpacing.Medium),
         ) {
-            Text("Build", color = TamaColors.Text, fontSize = 18.sp)
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Text("Build", color = TamaColors.Text, fontSize = 18.sp)
+                Text(
+                    "Builders: $availableBuilders/$workerCount",
+                    color = if (availableBuilders > 0) TamaColors.Success else TamaColors.Error,
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight.Bold,
+                )
+            }
             Spacer(Modifier.height(TamaSpacing.Small))
 
             Row(
@@ -101,7 +120,7 @@ fun BuildMenuView(
             ) {
                 items(currentItems) { type ->
                     val config = BuildingConfig.configFor(type, 1)
-                    val itemState = stateFor(type, resources, townHallLevel, buildings)
+                    val itemState = stateFor(type, resources, townHallLevel, buildings, availableBuilders)
                     val currentCount = buildings.count { it.type == type }
                     val maxCount = BuildingConfig.maxCount(type, townHallLevel)
                     BuildMenuItem(
@@ -132,19 +151,21 @@ private fun BuildMenuItem(
     onClick: () -> Unit,
 ) {
     val costText = buildList {
-        if (cost.gold > 0) add("${cost.gold}g")
-        if (cost.wood > 0) add("${cost.wood}w")
-        if (cost.metal > 0) add("${cost.metal}m")
+        if (cost.credits > 0) add("${cost.credits}cr")
+        if (cost.alloy > 0) add("${cost.alloy}al")
+        if (cost.crystal > 0) add("${cost.crystal}xy")
     }.joinToString(" ")
 
     val borderColor = when (state) {
         BuildItemState.Buyable -> TamaColors.Success
+        BuildItemState.NoBuildersAvailable -> TamaColors.Warning
         BuildItemState.TooExpensive -> TamaColors.Warning
         BuildItemState.MaxedOut -> TamaColors.Info
         BuildItemState.Locked -> TamaColors.TextMuted
     }
     val alpha = when (state) {
         BuildItemState.Buyable -> 1f
+        BuildItemState.NoBuildersAvailable -> 0.6f
         BuildItemState.TooExpensive -> 0.6f
         BuildItemState.MaxedOut -> 0.5f
         BuildItemState.Locked -> 0.3f
@@ -174,10 +195,13 @@ private fun BuildMenuItem(
 
         when (state) {
             BuildItemState.Locked -> {
-                Text("TH $requiredTh", color = TamaColors.TextMuted, fontSize = 12.sp)
+                Text("CC $requiredTh", color = TamaColors.TextMuted, fontSize = 12.sp)
             }
             BuildItemState.MaxedOut -> {
                 Text("Max", color = TamaColors.Info, fontSize = 12.sp)
+            }
+            BuildItemState.NoBuildersAvailable -> {
+                Text("No builders", color = TamaColors.Warning, fontSize = 12.sp)
             }
             else -> {
                 if (costText.isNotEmpty()) {
@@ -193,8 +217,8 @@ private fun BuildMenuItem(
 }
 
 private fun categoryFor(type: BuildingType): BuildCategory = when {
-    type.isProducer || type.isStorage || type == BuildingType.BuilderHut -> BuildCategory.Resources
-    type == BuildingType.Barracks || type == BuildingType.ArmyCamp -> BuildCategory.Army
+    type.isProducer || type.isStorage || type == BuildingType.DroneStation -> BuildCategory.Resources
+    type == BuildingType.Academy || type == BuildingType.Hangar -> BuildCategory.Army
     type.isDefense -> BuildCategory.Defense
     type.isTrap || type == BuildingType.ShieldDome -> BuildCategory.Traps
     else -> BuildCategory.Resources
@@ -205,11 +229,13 @@ private fun stateFor(
     resources: Resources,
     townHallLevel: Int,
     buildings: List<PlacedBuilding>,
+    availableBuilders: Int,
 ): BuildItemState {
     val config = BuildingConfig.configFor(type, 1) ?: return BuildItemState.Locked
     if (config.requiredTownHallLevel > townHallLevel) return BuildItemState.Locked
     val maxCount = BuildingConfig.maxCount(type, townHallLevel)
     if (maxCount != null && buildings.count { it.type == type } >= maxCount) return BuildItemState.MaxedOut
     if (!resources.hasEnough(config.cost)) return BuildItemState.TooExpensive
+    if (availableBuilders <= 0) return BuildItemState.NoBuildersAvailable
     return BuildItemState.Buyable
 }

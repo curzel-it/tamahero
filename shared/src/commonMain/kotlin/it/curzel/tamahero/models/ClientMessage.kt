@@ -92,14 +92,6 @@ sealed class ClientMessage {
     data object CollectEventRewards : ClientMessage()
 
     @Serializable
-    @SerialName("feed_hero")
-    data object FeedHero : ClientMessage()
-
-    @Serializable
-    @SerialName("train_hero")
-    data object TrainHero : ClientMessage()
-
-    @Serializable
     @SerialName("find_opponent")
     data object FindOpponent : ClientMessage()
 

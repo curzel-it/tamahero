@@ -31,7 +31,7 @@ fun BuildingInfoView(
     val maxLevel = BuildingConfig.maxLevel(building.type)
     val isUnderConstruction = building.constructionStartedAt != null
     val isProducer = config?.productionPerHour?.let {
-        it.gold > 0 || it.wood > 0 || it.metal > 0
+        it.credits > 0 || it.alloy > 0 || it.crystal > 0
     } ?: false
 
     Column(
@@ -61,18 +61,18 @@ fun BuildingInfoView(
             if (isProducer) {
                 val prod = config.productionPerHour
                 val prodText = buildList {
-                    if (prod.gold > 0) add("${prod.gold} gold")
-                    if (prod.wood > 0) add("${prod.wood} wood")
-                    if (prod.metal > 0) add("${prod.metal} metal")
+                    if (prod.credits > 0) add("${prod.credits} credits")
+                    if (prod.alloy > 0) add("${prod.alloy} alloy")
+                    if (prod.crystal > 0) add("${prod.crystal} crystal")
                 }.joinToString(", ")
                 Text("Production: $prodText/hr", color = TamaColors.TextMuted, fontSize = 14.sp)
             }
             val storage = config.storageCapacity
-            if (storage.gold > 0 || storage.wood > 0 || storage.metal > 0) {
+            if (storage.credits > 0 || storage.alloy > 0 || storage.crystal > 0) {
                 val storageText = buildList {
-                    if (storage.gold > 0) add("${storage.gold} gold")
-                    if (storage.wood > 0) add("${storage.wood} wood")
-                    if (storage.metal > 0) add("${storage.metal} metal")
+                    if (storage.credits > 0) add("${storage.credits} credits")
+                    if (storage.alloy > 0) add("${storage.alloy} alloy")
+                    if (storage.crystal > 0) add("${storage.crystal} crystal")
                 }.joinToString(", ")
                 Text("Storage: $storageText", color = TamaColors.TextMuted, fontSize = 14.sp)
             }
@@ -194,8 +194,8 @@ private fun ConstructionProgress(building: PlacedBuilding, buildTimeSeconds: Lon
 
 private fun formatCost(cost: Resources): String {
     return buildList {
-        if (cost.gold > 0) add("${cost.gold}g")
-        if (cost.wood > 0) add("${cost.wood}w")
-        if (cost.metal > 0) add("${cost.metal}m")
+        if (cost.credits > 0) add("${cost.credits}cr")
+        if (cost.alloy > 0) add("${cost.alloy}al")
+        if (cost.crystal > 0) add("${cost.crystal}xy")
     }.joinToString(" ")
 }

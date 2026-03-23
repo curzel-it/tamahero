@@ -17,10 +17,10 @@ object ResourceProductionUpdateUseCase {
             if (elapsedMs <= 0) return@map building
             val elapsedHours = elapsedMs / 3_600_000.0
             val amount = Resources(
-                gold = (config.productionPerHour.gold * elapsedHours).toLong(),
-                wood = (config.productionPerHour.wood * elapsedHours).toLong(),
-                metal = (config.productionPerHour.metal * elapsedHours).toLong(),
-                mana = (config.productionPerHour.mana * elapsedHours).toLong(),
+                credits = (config.productionPerHour.credits * elapsedHours).toLong(),
+                alloy = (config.productionPerHour.alloy * elapsedHours).toLong(),
+                crystal = (config.productionPerHour.crystal * elapsedHours).toLong(),
+                plasma = (config.productionPerHour.plasma * elapsedHours).toLong(),
             )
             produced = produced + amount
             building.copy(lastCollectedAt = now)

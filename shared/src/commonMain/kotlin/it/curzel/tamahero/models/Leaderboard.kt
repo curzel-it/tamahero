@@ -8,5 +8,5 @@ data class LeaderboardEntry(
     val playerId: Long,
     val playerName: String,
     val trophies: Int,
-    val townHallLevel: Int,
+    val commandCenterLevel: Int,
 )

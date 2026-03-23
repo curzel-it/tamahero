@@ -6,29 +6,29 @@ import kotlin.test.assertEquals
 class PvpBattleTest {
 
     @Test
-    fun `loot available is 20 percent of resources and 10 percent of mana`() {
-        val resources = Resources(gold = 10000, wood = 5000, metal = 2000, mana = 1000)
+    fun `loot available is 20 percent of resources and 10 percent of plasma`() {
+        val resources = Resources(credits = 10000, alloy = 5000, crystal = 2000, plasma = 1000)
         val available = PvpCalculations.calculateLootAvailable(resources)
-        assertEquals(2000, available.gold)
-        assertEquals(1000, available.wood)
-        assertEquals(400, available.metal)
-        assertEquals(100, available.mana)
+        assertEquals(2000, available.credits)
+        assertEquals(1000, available.alloy)
+        assertEquals(400, available.crystal)
+        assertEquals(100, available.plasma)
     }
 
     @Test
     fun `loot stolen scales with destruction percent`() {
-        val available = Resources(gold = 2000, wood = 1000, metal = 400, mana = 100)
+        val available = Resources(credits = 2000, alloy = 1000, crystal = 400, plasma = 100)
         val loot50 = PvpCalculations.calculateLootStolen(available, 50)
-        assertEquals(1000, loot50.gold)
-        assertEquals(500, loot50.wood)
-        assertEquals(200, loot50.metal)
-        assertEquals(50, loot50.mana)
+        assertEquals(1000, loot50.credits)
+        assertEquals(500, loot50.alloy)
+        assertEquals(200, loot50.crystal)
+        assertEquals(50, loot50.plasma)
 
         val loot100 = PvpCalculations.calculateLootStolen(available, 100)
-        assertEquals(2000, loot100.gold)
+        assertEquals(2000, loot100.credits)
 
         val loot0 = PvpCalculations.calculateLootStolen(available, 0)
-        assertEquals(0, loot0.gold)
+        assertEquals(0, loot0.credits)
     }
 
     @Test
@@ -74,11 +74,11 @@ class PvpBattleTest {
     }
 
     @Test
-    fun `star calculation based on destruction and town hall`() {
+    fun `star calculation based on destruction and command center`() {
         val base = listOf(
-            PlacedBuilding(id = 1, type = BuildingType.TownHall, level = 1, x = 18, y = 18, hp = 1000),
-            PlacedBuilding(id = 2, type = BuildingType.Cannon, level = 1, x = 10, y = 10, hp = 500),
-            PlacedBuilding(id = 3, type = BuildingType.GoldMine, level = 1, x = 5, y = 5, hp = 500),
+            PlacedBuilding(id = 1, type = BuildingType.CommandCenter, level = 1, x = 18, y = 18, hp = 1000),
+            PlacedBuilding(id = 2, type = BuildingType.RailGun, level = 1, x = 10, y = 10, hp = 500),
+            PlacedBuilding(id = 3, type = BuildingType.CreditMint, level = 1, x = 5, y = 5, hp = 500),
         )
 
         val battle = PvpBattle(
@@ -105,7 +105,7 @@ class PvpBattleTest {
 
         // TH destroyed (50% destruction: 1000/2000 = 50%, plus TH destroyed = 2 stars)
         val noTh = battle.copy(buildings = listOf(base[1], base[2]))
-        assert(noTh.townHallDestroyed)
+        assert(noTh.commandCenterDestroyed)
         assertEquals(50, noTh.destructionPercent)
         assertEquals(2, noTh.currentStars)
 

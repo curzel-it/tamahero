@@ -5,15 +5,15 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 enum class EventType {
-    Earthquake,
-    Storm,
+    Quake,
+    IonStorm,
     ScoutParty,
     Battle;
 
-    val isBattle: Boolean get() = this !in setOf(Earthquake, Storm)
-    val isDisaster: Boolean get() = this in setOf(Earthquake, Storm)
+    val isBattle: Boolean get() = this !in setOf(Quake, IonStorm)
+    val isDisaster: Boolean get() = this in setOf(Quake, IonStorm)
     val requiredTownHallLevel: Int get() = when (this) {
-        Earthquake, Storm, ScoutParty -> 1
+        Quake, IonStorm, ScoutParty -> 1
         Battle -> 1
     }
 }

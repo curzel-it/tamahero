@@ -69,13 +69,13 @@ class AdminRoutesTest {
     }
 
     @Test
-    fun triggerEarthquake() = testApp { client ->
+    fun triggerQuake() = testApp { client ->
         val (adminToken, _) = registerAdmin(client)
         val (_, targetUserId) = registerUser(client)
         val response = client.post("/api/admin/trigger-event") {
             header("Authorization", "Bearer $adminToken")
             contentType(ContentType.Application.Json)
-            setBody("""{"userId":$targetUserId,"eventType":"Earthquake"}""")
+            setBody("""{"userId":$targetUserId,"eventType":"Quake"}""")
         }
         assertEquals(HttpStatusCode.OK, response.status)
         val body = ProtocolJson.decodeFromString<AdminResponse>(response.bodyAsText())
@@ -83,13 +83,13 @@ class AdminRoutesTest {
     }
 
     @Test
-    fun triggerStorm() = testApp { client ->
+    fun triggerIonStorm() = testApp { client ->
         val (adminToken, _) = registerAdmin(client)
         val (_, targetUserId) = registerUser(client)
         val response = client.post("/api/admin/trigger-event") {
             header("Authorization", "Bearer $adminToken")
             contentType(ContentType.Application.Json)
-            setBody("""{"userId":$targetUserId,"eventType":"Storm"}""")
+            setBody("""{"userId":$targetUserId,"eventType":"IonStorm"}""")
         }
         assertEquals(HttpStatusCode.OK, response.status)
         val body = ProtocolJson.decodeFromString<AdminResponse>(response.bodyAsText())
@@ -123,7 +123,7 @@ class AdminRoutesTest {
         val response = client.post("/api/admin/trigger-event") {
             header("Authorization", "Bearer $adminToken")
             contentType(ContentType.Application.Json)
-            setBody("""{"userId":$targetUserId,"eventType":"Earthquake"}""")
+            setBody("""{"userId":$targetUserId,"eventType":"Quake"}""")
         }
         assertEquals(HttpStatusCode.BadRequest, response.status)
         val body = ProtocolJson.decodeFromString<AdminResponse>(response.bodyAsText())
@@ -150,7 +150,7 @@ class AdminRoutesTest {
         val response = client.post("/api/admin/grant-resources") {
             header("Authorization", "Bearer $adminToken")
             contentType(ContentType.Application.Json)
-            setBody("""{"userId":$targetUserId,"gold":5000,"wood":3000,"metal":1000}""")
+            setBody("""{"userId":$targetUserId,"credits":5000,"alloy":3000,"crystal":1000}""")
         }
         assertEquals(HttpStatusCode.OK, response.status)
         assertTrue(ProtocolJson.decodeFromString<AdminResponse>(response.bodyAsText()).success)

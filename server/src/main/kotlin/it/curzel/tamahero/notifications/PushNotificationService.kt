@@ -15,7 +15,7 @@ interface PushNotificationService {
         sendIfOffline(
             defenderId,
             "You are under attack!",
-            "$attackerName is attacking your village!",
+            "$attackerName is attacking your base!",
             mapOf("type" to "under_attack"),
         )
     }
@@ -24,15 +24,15 @@ interface PushNotificationService {
         defenderId: Long,
         attackerName: String,
         stars: Int,
-        lootGold: Long,
-        lootWood: Long,
-        lootMetal: Long,
+        lootCredits: Long,
+        lootAlloy: Long,
+        lootCrystal: Long,
     ) {
         val starText = "\u2B50".repeat(stars)
         sendIfOffline(
             defenderId,
-            "Your village was attacked!",
-            "$attackerName attacked you $starText — lost ${lootGold}g ${lootWood}w ${lootMetal}m",
+            "Your base was attacked!",
+            "$attackerName attacked you $starText — lost ${lootCredits}cr ${lootAlloy}al ${lootCrystal}xy",
             mapOf("type" to "defense_result"),
         )
     }
@@ -59,7 +59,7 @@ interface PushNotificationService {
         sendIfOffline(
             userId,
             "Event Started",
-            "A $eventType event has begun! Defend your village!",
+            "A $eventType event has begun! Defend your base!",
             mapOf("type" to "event_started"),
         )
     }

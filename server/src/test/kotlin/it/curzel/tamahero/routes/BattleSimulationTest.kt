@@ -92,80 +92,68 @@ class BattleSimulationTest {
     }
 
     @Test
-    fun singleSoldierVsSingleCannon() = testApp { client ->
+    fun singleMarineVsSingleRailGun() = testApp { client ->
         val (adminToken, _) = registerAdmin(client)
         val (_, userId) = registerUser(client)
 
-        // Place a cannon near the center (next to TownHall at 18,18 which is 4x4)
-        placeBuilding(client, adminToken, userId, "Cannon", x = 16, y = 18)
+        placeBuilding(client, adminToken, userId, "RailGun", x = 16, y = 18)
 
-        // Verify setup
         val before = getVillage(client, adminToken, userId)
-        val cannon = before.village.buildings.find { it.type == BuildingType.Cannon }
-        assertNotNull(cannon, "Cannon should exist")
-        assertEquals(300, cannon.hp, "Cannon should have full HP")
+        val railGun = before.village.buildings.find { it.type == BuildingType.RailGun }
+        assertNotNull(railGun, "RailGun should exist")
+        assertEquals(300, railGun.hp, "RailGun should have full HP")
 
-        // Trigger a battle event with a single HumanSoldier
         triggerEvent(client, adminToken, userId, "ScoutParty", listOf(
-            TriggerEventTroop(type = "HumanSoldier", count = 1, level = 1),
+            TriggerEventTroop(type = "Marine", count = 1, level = 1),
         ))
 
-        // Verify troops were spawned
         val duringBattle = getVillage(client, adminToken, userId)
         assertNotNull(duringBattle.activeEvent, "Event should be active")
         assertEquals(EventType.ScoutParty, duringBattle.activeEvent!!.type)
 
-        // Advance time by 60 seconds — enough for soldier to reach cannon and die
-        // Soldier speed=1.0, distance ~16-20 tiles, cannon dps=10, soldier hp=50
         advanceTime(client, adminToken, userId, 60_000)
 
-        // Check results
         val after = getVillage(client, adminToken, userId)
-        assertEquals(0, after.troops.size, "Soldier should be dead")
+        assertEquals(0, after.troops.size, "Marine should be dead")
         assertTrue(after.activeEvent?.completed == true, "Event should be completed")
 
-        val cannonAfter = after.village.buildings.find { it.type == BuildingType.Cannon }
-        assertNotNull(cannonAfter, "Cannon should survive")
-        assertTrue(cannonAfter.hp > 0, "Cannon should have HP remaining")
+        val railGunAfter = after.village.buildings.find { it.type == BuildingType.RailGun }
+        assertNotNull(railGunAfter, "RailGun should survive")
+        assertTrue(railGunAfter.hp > 0, "RailGun should have HP remaining")
 
-        val townHall = after.village.buildings.find { it.type == BuildingType.TownHall }
-        assertNotNull(townHall, "TownHall should survive")
-        assertTrue(townHall.hp > 0, "TownHall should have HP remaining")
+        val commandCenter = after.village.buildings.find { it.type == BuildingType.CommandCenter }
+        assertNotNull(commandCenter, "CommandCenter should survive")
+        assertTrue(commandCenter.hp > 0, "CommandCenter should have HP remaining")
     }
 
     @Test
-    fun soldierNavigatesAroundBuildings() = testApp { client ->
+    fun marineNavigatesAroundBuildings() = testApp { client ->
         val (adminToken, _) = registerAdmin(client)
         val (_, userId) = registerUser(client)
 
-        // Default village: TownHall at (18,18) 4x4
-        // Place two cannons flanking the TownHall — soldiers must path around buildings
-        placeBuilding(client, adminToken, userId, "Cannon", x = 16, y = 18)
-        placeBuilding(client, adminToken, userId, "Cannon", x = 22, y = 18)
+        placeBuilding(client, adminToken, userId, "RailGun", x = 16, y = 18)
+        placeBuilding(client, adminToken, userId, "RailGun", x = 22, y = 18)
 
         triggerEvent(client, adminToken, userId, "ScoutParty", listOf(
-            TriggerEventTroop(type = "HumanSoldier", count = 1, level = 1),
+            TriggerEventTroop(type = "Marine", count = 1, level = 1),
         ))
 
-        // Advance enough time for battle to conclude
         advanceTime(client, adminToken, userId, 120_000)
 
         val after = getVillage(client, adminToken, userId)
-        assertEquals(0, after.troops.size, "Soldier should be dead")
+        assertEquals(0, after.troops.size, "Marine should be dead")
         assertTrue(after.activeEvent?.completed == true, "Event should be completed")
     }
 
     @Test
-    fun multipleSoldiersOverwhelmCannon() = testApp { client ->
+    fun multipleMarinesOverwhelmRailGun() = testApp { client ->
         val (adminToken, _) = registerAdmin(client)
         val (_, userId) = registerUser(client)
 
-        // Just cannon + town hall
-        placeBuilding(client, adminToken, userId, "Cannon", x = 16, y = 18)
+        placeBuilding(client, adminToken, userId, "RailGun", x = 16, y = 18)
 
-        // Send 10 soldiers — should overwhelm defenses
         triggerEvent(client, adminToken, userId, "ScoutParty", listOf(
-            TriggerEventTroop(type = "HumanSoldier", count = 10, level = 1),
+            TriggerEventTroop(type = "Marine", count = 10, level = 1),
         ))
 
         advanceTime(client, adminToken, userId, 120_000)

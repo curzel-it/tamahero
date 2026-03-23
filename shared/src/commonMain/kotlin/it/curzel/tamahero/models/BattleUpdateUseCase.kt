@@ -60,7 +60,7 @@ object BattleUpdateUseCase {
 
             if (dist <= config.range) {
                 var damage = (config.dps * deltaSeconds).toInt().coerceAtLeast(1)
-                if (target.type == BuildingType.Wall && config.wallDamageMultiplier > 1f) {
+                if (target.type == BuildingType.Barrier && config.wallDamageMultiplier > 1f) {
                     damage = (damage * config.wallDamageMultiplier).toInt()
                 }
                 if (config.splashRadius > 0f) {
@@ -82,7 +82,7 @@ object BattleUpdateUseCase {
         // Trigger traps
         troops = triggerTraps(troops, buildings).toMutableList()
 
-        // Defense damage (cannons, archer towers, mortars)
+        // Defense damage
         troops = applyDefenseDamage(troops, buildings, deltaSeconds).toMutableList()
 
         return state.copy(
@@ -162,7 +162,7 @@ object BattleUpdateUseCase {
                 available.filter { it.type.isDefense }.minByOrNull { distanceTo(troop, it) }
                     ?: available.minByOrNull { distanceTo(troop, it) }
             TargetPreference.Walls ->
-                available.filter { it.type == BuildingType.Wall }.minByOrNull { distanceTo(troop, it) }
+                available.filter { it.type == BuildingType.Barrier }.minByOrNull { distanceTo(troop, it) }
                     ?: available.filter { it.type.isDefense }.minByOrNull { distanceTo(troop, it) }
                     ?: available.minByOrNull { distanceTo(troop, it) }
             TargetPreference.Resources ->
@@ -184,7 +184,7 @@ object BattleUpdateUseCase {
             if (troopsOnTrap.isEmpty()) continue
 
             when (trap.type) {
-                BuildingType.SpikeTrap, BuildingType.GiantBomb -> {
+                BuildingType.MineTrap, BuildingType.NovaBomb -> {
                     val affected = result.filter { distanceTo(it, trap) <= config.triggerRadius }
                     for (troop in affected) {
                         val idx = result.indexOfFirst { it.id == troop.id }
@@ -196,9 +196,9 @@ object BattleUpdateUseCase {
                     }
                     buildings[i] = trap.copy(triggered = true)
                 }
-                BuildingType.SpringTrap -> {
+                BuildingType.GravityTrap -> {
                     val victim = troopsOnTrap.firstOrNull {
-                        it.type == TroopType.HumanSoldier || it.type == TroopType.ElfArcher || it.type == TroopType.Goblin
+                        it.type == TroopType.Marine || it.type == TroopType.Sniper || it.type == TroopType.Drone
                     }
                     if (victim != null) {
                         result.removeAll { it.id == victim.id }
@@ -228,7 +228,7 @@ object BattleUpdateUseCase {
             if (config.damage <= 0) continue
 
             if (config.splashRadius > 0) {
-                // Mortar — splash damage to all troops in range, respects minRange
+                // Splash damage to all troops in range, respects minRange
                 val inRange = result.filter {
                     val dist = distanceTo(it, defense)
                     dist <= config.range && dist >= config.minRange
@@ -247,7 +247,7 @@ object BattleUpdateUseCase {
                     }
                 }
             } else {
-                // Single target (Cannon, ArcherTower)
+                // Single target
                 val target = result.minByOrNull { distanceTo(it, defense) } ?: continue
                 val dist = distanceTo(target, defense)
                 if (dist > config.range) continue

@@ -36,13 +36,13 @@ data class PvpBattle(
         return ((destroyed * 100) / total).coerceIn(0, 100)
     }
 
-    val townHallDestroyed: Boolean get() =
-        !buildings.any { it.type == BuildingType.TownHall }
+    val commandCenterDestroyed: Boolean get() =
+        !buildings.any { it.type == BuildingType.CommandCenter }
 
     val currentStars: Int get() {
         var s = 0
         if (destructionPercent >= 50) s++
-        if (townHallDestroyed) s++
+        if (commandCenterDestroyed) s++
         if (destructionPercent >= 100) s++
         return s
     }
@@ -78,7 +78,7 @@ data class MatchmakingResult(
     val targetId: Long,
     val targetName: String,
     val targetTrophies: Int,
-    val targetTownHallLevel: Int,
+    val targetCommandCenterLevel: Int,
     val targetBase: Village,
     val lootAvailable: Resources,
 )
@@ -87,20 +87,20 @@ object PvpCalculations {
 
     fun calculateLootAvailable(defenderResources: Resources): Resources {
         return Resources(
-            gold = (defenderResources.gold * 0.2).toLong().coerceAtLeast(0),
-            wood = (defenderResources.wood * 0.2).toLong().coerceAtLeast(0),
-            metal = (defenderResources.metal * 0.2).toLong().coerceAtLeast(0),
-            mana = (defenderResources.mana * 0.1).toLong().coerceAtLeast(0),
+            credits = (defenderResources.credits * 0.2).toLong().coerceAtLeast(0),
+            alloy = (defenderResources.alloy * 0.2).toLong().coerceAtLeast(0),
+            crystal = (defenderResources.crystal * 0.2).toLong().coerceAtLeast(0),
+            plasma = (defenderResources.plasma * 0.1).toLong().coerceAtLeast(0),
         )
     }
 
     fun calculateLootStolen(availableLoot: Resources, destructionPercent: Int): Resources {
         val factor = destructionPercent / 100.0
         return Resources(
-            gold = (availableLoot.gold * factor).toLong(),
-            wood = (availableLoot.wood * factor).toLong(),
-            metal = (availableLoot.metal * factor).toLong(),
-            mana = (availableLoot.mana * factor).toLong(),
+            credits = (availableLoot.credits * factor).toLong(),
+            alloy = (availableLoot.alloy * factor).toLong(),
+            crystal = (availableLoot.crystal * factor).toLong(),
+            plasma = (availableLoot.plasma * factor).toLong(),
         )
     }
 

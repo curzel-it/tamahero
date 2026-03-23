@@ -175,18 +175,6 @@ fun main(args: Array<String>) {
                         else println("Last known state cached. Run 'village' to refresh.")
                     }
 
-                    "feed" -> {
-                        if (!connected) { println("Connect first."); continue }
-                        client.sendAndReceive(ClientMessage.FeedHero)
-                    }
-
-                    "trainhero" -> {
-                        if (!connected) { println("Connect first."); continue }
-                        client.sendAndReceive(ClientMessage.TrainHero)
-                    }
-
-                    "hero" -> showHero(client.getLastState())
-
                     "attack" -> {
                         if (!connected) { println("Connect first."); continue }
                         client.sendAndReceive(ClientMessage.FindOpponent)
@@ -252,7 +240,7 @@ private fun printHelp() {
         |  move <id> <x> <y>      Move a building
         |  demolish <id>           Demolish a building (50% refund)
         |  cancel <id>             Cancel construction (full refund)
-        |  speedup <id>            Instant finish with mana
+        |  speedup <id>            Instant finish with plasma
         |
         |Resources:
         |  collect <id>            Collect from a producer
@@ -268,11 +256,6 @@ private fun printHelp() {
         |Defense:
         |  rearm <id>              Rearm a triggered trap (50% cost)
         |  rearmall                Rearm all triggered traps
-        |
-        |Hero:
-        |  hero                    Show hero stats
-        |  feed                    Feed hero (costs gold)
-        |  trainhero               Train hero (costs mana, gains XP)
         |
         |PvP:
         |  attack                  Find an opponent to attack
@@ -347,7 +330,7 @@ private fun showBuildingTypes() {
         if (config.productionPerHour != Resources()) extras.add("produces ${formatResources(config.productionPerHour)}/hr")
         if (config.storageCapacity != Resources()) extras.add("stores ${formatResources(config.storageCapacity)}")
         if (config.damage > 0) extras.add("dmg=${config.damage}")
-        if (config.requiredTownHallLevel > 1) extras.add("requires TH${config.requiredTownHallLevel}")
+        if (config.requiredTownHallLevel > 1) extras.add("requires CC${config.requiredTownHallLevel}")
         val extra = if (extras.isNotEmpty()) " — ${extras.joinToString()}" else ""
         println("  $type: cost=${formatResources(config.cost)}, build=${config.buildTimeSeconds}s, ${config.width}x${config.height}$extra")
     }
@@ -362,10 +345,10 @@ private fun showStorageCapacity(state: GameState?) {
         totalCapacity = totalCapacity + config.storageCapacity
     }
     println("Resources / Storage capacity:")
-    println("  Gold:  ${state.resources.gold} / ${if (totalCapacity.gold > 0) totalCapacity.gold else "unlimited"}")
-    println("  Wood:  ${state.resources.wood} / ${if (totalCapacity.wood > 0) totalCapacity.wood else "unlimited"}")
-    println("  Metal: ${state.resources.metal} / ${if (totalCapacity.metal > 0) totalCapacity.metal else "unlimited"}")
-    println("  Mana:  ${state.resources.mana}")
+    println("  Credits: ${state.resources.credits} / ${if (totalCapacity.credits > 0) totalCapacity.credits else "unlimited"}")
+    println("  Alloy:   ${state.resources.alloy} / ${if (totalCapacity.alloy > 0) totalCapacity.alloy else "unlimited"}")
+    println("  Crystal: ${state.resources.crystal} / ${if (totalCapacity.crystal > 0) totalCapacity.crystal else "unlimited"}")
+    println("  Plasma:  ${state.resources.plasma}")
 }
 
 private fun showMap(state: GameState?) {
@@ -403,33 +386,33 @@ private fun showMap(state: GameState?) {
         println("  ${String(row)}")
     }
     println()
-    println("Legend: T=TownHall L=LumberCamp G=GoldMine F=Forge")
-    println("  w=WoodStorage g=GoldStorage m=MetalStorage B=Barracks")
-    println("  A=ArmyCamp C=Cannon R=ArcherTower W=Wall")
+    println("Legend: C=CommandCenter A=AlloyRefinery M=CreditMint F=Foundry")
+    println("  a=AlloySilo c=CreditVault x=CrystalSilo B=Academy")
+    println("  H=Hangar R=RailGun L=LaserTurret W=Barrier")
 }
 
 private fun buildingLabel(type: BuildingType): Char = when (type) {
-    BuildingType.TownHall -> 'T'
-    BuildingType.LumberCamp -> 'L'
-    BuildingType.GoldMine -> 'G'
-    BuildingType.Forge -> 'F'
-    BuildingType.WoodStorage -> 'w'
-    BuildingType.GoldStorage -> 'g'
-    BuildingType.MetalStorage -> 'm'
-    BuildingType.Barracks -> 'B'
-    BuildingType.ArmyCamp -> 'A'
-    BuildingType.Cannon -> 'C'
-    BuildingType.ArcherTower -> 'R'
-    BuildingType.Wall -> 'W'
-    BuildingType.Mortar -> 'M'
-    BuildingType.SpikeTrap -> 's'
-    BuildingType.SpringTrap -> 'p'
-    BuildingType.GiantBomb -> 'b'
-    BuildingType.WizardTower -> 'Z'
+    BuildingType.CommandCenter -> 'C'
+    BuildingType.AlloyRefinery -> 'A'
+    BuildingType.CreditMint -> 'M'
+    BuildingType.Foundry -> 'F'
+    BuildingType.AlloySilo -> 'a'
+    BuildingType.CreditVault -> 'c'
+    BuildingType.CrystalSilo -> 'x'
+    BuildingType.Academy -> 'B'
+    BuildingType.Hangar -> 'H'
+    BuildingType.RailGun -> 'R'
+    BuildingType.LaserTurret -> 'L'
+    BuildingType.Barrier -> 'W'
+    BuildingType.MissileBattery -> 'I'
+    BuildingType.MineTrap -> 's'
+    BuildingType.GravityTrap -> 'p'
+    BuildingType.NovaBomb -> 'b'
+    BuildingType.TeslaTower -> 'Z'
     BuildingType.ShieldDome -> 'S'
-    BuildingType.ManaWell -> 'a'
-    BuildingType.ManaStorage -> 'n'
-    BuildingType.BuilderHut -> 'H'
+    BuildingType.PlasmaReactor -> 'r'
+    BuildingType.PlasmaBank -> 'n'
+    BuildingType.DroneStation -> 'D'
 }
 
 private fun showEvent(state: GameState?) {
@@ -464,7 +447,7 @@ private fun parseTroopType(name: String): TroopType? {
 private fun showArmy(state: GameState?) {
     if (state == null) { println("No state. Run 'village' first."); return }
     val capacity = state.village.buildings
-        .filter { it.type == BuildingType.ArmyCamp && it.constructionStartedAt == null }
+        .filter { it.type == BuildingType.Hangar && it.constructionStartedAt == null }
         .sumOf { BuildingConfig.configFor(it.type, it.level)?.troopCapacity ?: 0 }
 
     println("Army (${state.army.totalCount}/$capacity):")
@@ -492,19 +475,6 @@ private fun showTroopTypes() {
     }
 }
 
-private fun showHero(state: GameState?) {
-    if (state == null) { println("No state. Run 'village' first."); return }
-    val hero = state.hero
-    val nextLevelXp = HeroConfig.xpForLevel(hero.level + 1)
-    println("Hero (Level ${hero.level}):")
-    println("  XP: ${hero.xp}/${nextLevelXp}")
-    println("  Hunger: ${hero.hunger}/100")
-    println("  Happiness: ${hero.happiness}/100")
-    println("  Bonus damage: +${HeroConfig.bonusDamagePercent(hero.level)}%")
-    println("  Feed cost: ${HeroConfig.FEED_COST_GOLD}g")
-    println("  Train cost: ${HeroConfig.TRAIN_COST_MANA} mana")
-}
-
 private fun showDefenseLog(state: GameState?) {
     if (state == null) { println("No state. Run 'village' first."); return }
     if (state.defenseLog.isEmpty()) {
@@ -525,9 +495,9 @@ private fun showDefenseLog(state: GameState?) {
 
 private fun formatResources(r: Resources): String {
     val parts = mutableListOf<String>()
-    if (r.gold > 0) parts.add("${r.gold}g")
-    if (r.wood > 0) parts.add("${r.wood}w")
-    if (r.metal > 0) parts.add("${r.metal}m")
-    if (r.mana > 0) parts.add("${r.mana}mana")
+    if (r.credits > 0) parts.add("${r.credits}cr")
+    if (r.alloy > 0) parts.add("${r.alloy}al")
+    if (r.crystal > 0) parts.add("${r.crystal}xy")
+    if (r.plasma > 0) parts.add("${r.plasma}pl")
     return if (parts.isEmpty()) "free" else parts.joinToString(" ")
 }

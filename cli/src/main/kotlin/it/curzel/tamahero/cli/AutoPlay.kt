@@ -50,7 +50,7 @@ class AutoPlay(private val client: CliClient) {
 
         updateGrid(buildings)
 
-        val townHall = buildings.first { it.type == BuildingType.TownHall }
+        val townHall = buildings.first { it.type == BuildingType.CommandCenter }
         val thLevel = townHall.level
         val resources = state.resources
 
@@ -105,7 +105,7 @@ class AutoPlay(private val client: CliClient) {
                 }
             }
         }
-        // Spiral outward from TownHall (18,18) to cluster buildings nicely
+        // Spiral outward from CommandCenter (18,18) to cluster buildings nicely
         for (radius in 1..20) {
             for (dy in -radius..radius) {
                 for (dx in -radius..radius) {
@@ -127,30 +127,30 @@ class AutoPlay(private val client: CliClient) {
         state: GameState
     ): Action? {
         fun count(type: BuildingType) = buildings.count { it.type == type }
-        fun canAfford(cost: Resources) = resources.gold >= cost.gold && resources.wood >= cost.wood && resources.metal >= cost.metal
+        fun canAfford(cost: Resources) = resources.credits >= cost.credits && resources.alloy >= cost.alloy && resources.crystal >= cost.crystal
 
         val buildOrder = listOf(
             // Phase 1: basic economy
-            BuildRequest(BuildingType.GoldStorage, maxCount = 1),
-            BuildRequest(BuildingType.WoodStorage, maxCount = 1),
-            BuildRequest(BuildingType.LumberCamp, maxCount = 1),
-            BuildRequest(BuildingType.GoldMine, maxCount = 1),
-            BuildRequest(BuildingType.LumberCamp, maxCount = 2),
-            BuildRequest(BuildingType.GoldMine, maxCount = 2),
+            BuildRequest(BuildingType.CreditVault, maxCount = 1),
+            BuildRequest(BuildingType.AlloySilo, maxCount = 1),
+            BuildRequest(BuildingType.AlloyRefinery, maxCount = 1),
+            BuildRequest(BuildingType.CreditMint, maxCount = 1),
+            BuildRequest(BuildingType.AlloyRefinery, maxCount = 2),
+            BuildRequest(BuildingType.CreditMint, maxCount = 2),
             // Phase 2: military
-            BuildRequest(BuildingType.Barracks, maxCount = 1),
-            BuildRequest(BuildingType.ArmyCamp, maxCount = 1),
+            BuildRequest(BuildingType.Academy, maxCount = 1),
+            BuildRequest(BuildingType.Hangar, maxCount = 1),
             // Phase 3: more economy
-            BuildRequest(BuildingType.LumberCamp, maxCount = 3),
-            BuildRequest(BuildingType.GoldMine, maxCount = 3),
-            BuildRequest(BuildingType.GoldStorage, maxCount = 2),
-            BuildRequest(BuildingType.WoodStorage, maxCount = 2),
+            BuildRequest(BuildingType.AlloyRefinery, maxCount = 3),
+            BuildRequest(BuildingType.CreditMint, maxCount = 3),
+            BuildRequest(BuildingType.CreditVault, maxCount = 2),
+            BuildRequest(BuildingType.AlloySilo, maxCount = 2),
             // Phase 4: defenses
-            BuildRequest(BuildingType.Cannon, maxCount = 1),
-            BuildRequest(BuildingType.ArcherTower, maxCount = 1),
-            BuildRequest(BuildingType.Cannon, maxCount = 2),
-            BuildRequest(BuildingType.ArcherTower, maxCount = 2),
-            BuildRequest(BuildingType.Mortar, maxCount = 1),
+            BuildRequest(BuildingType.RailGun, maxCount = 1),
+            BuildRequest(BuildingType.LaserTurret, maxCount = 1),
+            BuildRequest(BuildingType.RailGun, maxCount = 2),
+            BuildRequest(BuildingType.LaserTurret, maxCount = 2),
+            BuildRequest(BuildingType.MissileBattery, maxCount = 1),
         )
 
         // Try to build next thing in build order
@@ -165,7 +165,7 @@ class AutoPlay(private val client: CliClient) {
 
         // Try to upgrade existing buildings (producers first, then storage, then defenses)
         val upgradeOrder = buildings
-            .filter { it.constructionStartedAt == null && it.type != BuildingType.TownHall }
+            .filter { it.constructionStartedAt == null && it.type != BuildingType.CommandCenter }
             .sortedBy { b ->
                 when {
                     b.type.isProducer -> 0
@@ -186,14 +186,14 @@ class AutoPlay(private val client: CliClient) {
         }
 
         // Try to train troops
-        val hasBarracks = buildings.any { it.type == BuildingType.Barracks && it.constructionStartedAt == null }
+        val hasBarracks = buildings.any { it.type == BuildingType.Academy && it.constructionStartedAt == null }
         val armyCapacity = buildings
-            .filter { it.type == BuildingType.ArmyCamp && it.constructionStartedAt == null }
+            .filter { it.type == BuildingType.Hangar && it.constructionStartedAt == null }
             .sumOf { BuildingConfig.configFor(it.type, it.level)?.troopCapacity ?: 0 }
         val currentTroops = state.army.totalCount + state.trainingQueue.entries.size
 
         if (hasBarracks && currentTroops < armyCapacity) {
-            val troopType = TroopType.HumanSoldier
+            val troopType = TroopType.Marine
             val config = TroopConfig.configFor(troopType, 1)
             if (config != null && canAfford(config.trainingCost)) {
                 return Action("Training $troopType", ClientMessage.Train(troopType, 1))
@@ -201,11 +201,11 @@ class AutoPlay(private val client: CliClient) {
         }
 
         // Try to upgrade TownHall last
-        val townHall = buildings.first { it.type == BuildingType.TownHall }
-        val thNextConfig = BuildingConfig.configFor(BuildingType.TownHall, townHall.level + 1)
+        val townHall = buildings.first { it.type == BuildingType.CommandCenter }
+        val thNextConfig = BuildingConfig.configFor(BuildingType.CommandCenter, townHall.level + 1)
         if (thNextConfig != null && canAfford(thNextConfig.cost)) {
             return Action(
-                "Upgrading TownHall to level ${townHall.level + 1}",
+                "Upgrading CommandCenter to level ${townHall.level + 1}",
                 ClientMessage.Upgrade(townHall.id)
             )
         }

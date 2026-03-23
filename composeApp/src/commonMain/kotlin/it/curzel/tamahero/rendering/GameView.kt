@@ -51,9 +51,10 @@ fun GameView(
     val army by villageViewModel.army.collectAsState()
     val trainingQueue by villageViewModel.trainingQueue.collectAsState()
     val troops by villageViewModel.troops.collectAsState()
-    val hero by villageViewModel.hero.collectAsState()
+
     val floatingTexts by villageViewModel.floatingTexts.collectAsState()
     val offlineSummary by villageViewModel.offlineSummary.collectAsState()
+    val errorMessage by villageViewModel.errorMessage.collectAsState()
     val selectedType by placementViewModel.selectedType.collectAsState()
     val ghostX by placementViewModel.ghostGridX.collectAsState()
     val ghostY by placementViewModel.ghostGridY.collectAsState()
@@ -65,10 +66,19 @@ fun GameView(
     var showAccount by remember { mutableStateOf(false) }
     var showWsLog by remember { mutableStateOf(false) }
     var showArmy by remember { mutableStateOf(false) }
-    var showHero by remember { mutableStateOf(false) }
+
     var showSettings by remember { mutableStateOf(false) }
     var hoverPos by remember { mutableStateOf<Offset?>(null) }
     var hoveredBuilding by remember { mutableStateOf<it.curzel.tamahero.models.PlacedBuilding?>(null) }
+
+    val pvpViewModel = remember { PvpViewModel() }
+    val pvpPhase by pvpViewModel.phase.collectAsState()
+    val pvpMatch by pvpViewModel.match.collectAsState()
+    val pvpBattle by pvpViewModel.battle.collectAsState()
+    val pvpResult by pvpViewModel.result.collectAsState()
+    val pvpError by pvpViewModel.error.collectAsState()
+    val inBattle = pvpPhase == PvpPhase.Battling
+    var selectedDeployTroop by remember { mutableStateOf<it.curzel.tamahero.models.TroopType?>(null) }
 
     LaunchedEffect(buildings) {
         placementViewModel.updateBuildings(buildings)
@@ -104,7 +114,6 @@ fun GameView(
                         when {
                             showAccount -> { showAccount = false; true }
                             showArmy -> { showArmy = false; true }
-                            showHero -> { showHero = false; true }
                             showSettings -> { showSettings = false; true }
                             placementViewModel.isPlacing -> { placementViewModel.cancelPlacement(); true }
                             selectedBuilding != null -> { selectionViewModel.deselect(); true }
@@ -188,7 +197,14 @@ fun GameView(
                             } while (changes.any { it.pressed })
 
                             if (isTap) {
-                                selectionViewModel.selectAt(startPos.x, startPos.y, viewModel.camera.value, renderingScale)
+                                if (inBattle && selectedDeployTroop != null) {
+                                    val tileSize = it.curzel.tamahero.game.TILE_SIZE * renderingScale
+                                    val gx = (startPos.x / tileSize + viewModel.camera.value.x).toFloat()
+                                    val gy = (startPos.y / tileSize + viewModel.camera.value.y).toFloat()
+                                    pvpViewModel.deployTroop(selectedDeployTroop!!, gx, gy)
+                                } else {
+                                    selectionViewModel.selectAt(startPos.x, startPos.y, viewModel.camera.value, renderingScale)
+                                }
                                 focusRequester.requestFocus()
                             }
                         }
@@ -210,26 +226,39 @@ fun GameView(
                 selectedBuildingId = selectedBuilding?.id,
                 floatingTexts = floatingTexts,
             )
-            GameHudView(
-                resources = resources,
-                isPlacing = placementViewModel.isPlacing,
-                onBuildClick = {
-                    selectionViewModel.deselect()
-                    showBuildMenu = true
-                    focusRequester.requestFocus()
-                },
-                onCancelClick = {
-                    placementViewModel.cancelPlacement()
-                    focusRequester.requestFocus()
-                },
-                onAccountClick = { showAccount = true },
-                onArmyClick = { showArmy = true },
-                onHeroClick = { showHero = true },
-                onSettingsClick = { showSettings = true },
-                onCollectAllClick = { GameSocketClient.collectAll() },
-                onWsLogClick = { showWsLog = !showWsLog },
-                modifier = Modifier.align(Alignment.TopStart),
-            )
+            if (!inBattle) {
+                GameHudView(
+                    resources = resources,
+                    isPlacing = placementViewModel.isPlacing,
+                    onBuildClick = {
+                        selectionViewModel.deselect()
+                        showBuildMenu = true
+                        focusRequester.requestFocus()
+                    },
+                    onCancelClick = {
+                        placementViewModel.cancelPlacement()
+                        focusRequester.requestFocus()
+                    },
+                    onAccountClick = { showAccount = true },
+                    onArmyClick = { showArmy = true },
+                    onAttackClick = { pvpViewModel.findOpponent() },
+                    onSettingsClick = { showSettings = true },
+                    onCollectAllClick = { GameSocketClient.collectAll() },
+                    onWsLogClick = { showWsLog = !showWsLog },
+                    modifier = Modifier.align(Alignment.TopStart),
+                )
+            }
+
+            val currentBattle = pvpBattle
+            if (inBattle && currentBattle != null) {
+                PvpBattleHudView(
+                    battle = currentBattle,
+                    selectedTroop = selectedDeployTroop,
+                    onSelectTroop = { troopType -> selectedDeployTroop = troopType },
+                    onSurrender = { pvpViewModel.surrender() },
+                    modifier = Modifier.align(Alignment.TopStart),
+                )
+            }
 
             if (selectedBuilding != null && !placementViewModel.isPlacing && !showBuildMenu && !showAccount) {
                 BuildingInfoView(
@@ -277,17 +306,6 @@ fun GameView(
                 )
             }
 
-            if (showHero) {
-                HeroView(
-                    hero = hero,
-                    resources = resources,
-                    onDismiss = {
-                        showHero = false
-                        focusRequester.requestFocus()
-                    },
-                )
-            }
-
             if (showSettings) {
                 SettingsView(
                     showGrid = showGrid,
@@ -313,9 +331,36 @@ fun GameView(
                 )
             }
 
+            val currentMatch = pvpMatch
+            if ((pvpPhase == PvpPhase.Scouting || pvpPhase == PvpPhase.Searching) && currentMatch != null) {
+                PvpScoutView(
+                    match = currentMatch,
+                    searching = pvpPhase == PvpPhase.Searching,
+                    error = pvpError,
+                    onAttack = { pvpViewModel.startBattle() },
+                    onNext = { pvpViewModel.nextOpponent() },
+                    onDismiss = {
+                        pvpViewModel.dismiss()
+                        focusRequester.requestFocus()
+                    },
+                )
+            }
+
+            val currentResult = pvpResult
+            if (pvpPhase == PvpPhase.Results && currentResult != null) {
+                PvpResultView(
+                    result = currentResult,
+                    onDismiss = {
+                        pvpViewModel.dismiss()
+                        GameSocketClient.getVillage()
+                        focusRequester.requestFocus()
+                    },
+                )
+            }
+
             val hb = hoveredBuilding
             if (hb != null && selectedBuilding == null && !placementViewModel.isPlacing &&
-                !showBuildMenu && !showArmy && !showHero && !showSettings && !showAccount
+                !showBuildMenu && !showArmy && !showSettings && !showAccount
             ) {
                 BuildingTooltipView(
                     building = hb,
@@ -332,6 +377,15 @@ fun GameView(
                         villageViewModel.dismissOfflineSummary()
                         focusRequester.requestFocus()
                     },
+                )
+            }
+
+            val error = errorMessage
+            if (error != null) {
+                ErrorToastView(
+                    message = error,
+                    onDismiss = { villageViewModel.dismissError() },
+                    modifier = Modifier.align(Alignment.BottomCenter),
                 )
             }
         }

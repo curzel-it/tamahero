@@ -174,7 +174,7 @@ class CliClient(private val baseUrl: String) {
                 println("Building complete: ${msg.buildingType} level ${msg.level} (id: ${msg.buildingId})")
             }
             is ServerMessage.ResourcesUpdated -> {
-                println("Resources: gold=${msg.resources.gold} wood=${msg.resources.wood} metal=${msg.resources.metal} mana=${msg.resources.mana}")
+                println("Resources: credits=${msg.resources.credits} alloy=${msg.resources.alloy} crystal=${msg.resources.crystal} plasma=${msg.resources.plasma}")
             }
             is ServerMessage.EventStarted -> {
                 println("EVENT: ${msg.eventType} has started!")
@@ -182,19 +182,16 @@ class CliClient(private val baseUrl: String) {
             is ServerMessage.EventEnded -> {
                 val outcome = if (msg.success) "SUCCESS" else "FAILURE"
                 println("EVENT: ${msg.eventType} ended — $outcome")
-                println("  Rewards: gold=${msg.rewards.gold} wood=${msg.rewards.wood} metal=${msg.rewards.metal} mana=${msg.rewards.mana}")
+                println("  Rewards: credits=${msg.rewards.credits} alloy=${msg.rewards.alloy} crystal=${msg.rewards.crystal} plasma=${msg.rewards.plasma}")
                 println("  Use 'collectrewards' to claim.")
-            }
-            is ServerMessage.HeroLevelUp -> {
-                println("HERO LEVEL UP! Now level ${msg.level}")
             }
             is ServerMessage.OpponentFound -> {
                 val m = msg.match
                 println()
                 println("=== Opponent Found ===")
-                println("  ${m.targetName} (trophies: ${m.targetTrophies}, TH${m.targetTownHallLevel})")
+                println("  ${m.targetName} (trophies: ${m.targetTrophies}, CC${m.targetCommandCenterLevel})")
                 println("  Buildings: ${m.targetBase.buildings.size}")
-                println("  Loot available: gold=${m.lootAvailable.gold} wood=${m.lootAvailable.wood} metal=${m.lootAvailable.metal} mana=${m.lootAvailable.mana}")
+                println("  Loot available: credits=${m.lootAvailable.credits} alloy=${m.lootAvailable.alloy} crystal=${m.lootAvailable.crystal} plasma=${m.lootAvailable.plasma}")
                 println("  Use 'go' to attack or 'next' for another opponent")
                 lastMatchTarget = m.targetId
             }
@@ -217,7 +214,7 @@ class CliClient(private val baseUrl: String) {
                 println()
                 println("=== Leaderboard ===")
                 for (e in msg.entries) {
-                    println("  #${e.rank} ${e.playerName} — ${e.trophies} trophies (TH${e.townHallLevel})")
+                    println("  #${e.rank} ${e.playerName} — ${e.trophies} trophies (CC${e.commandCenterLevel})")
                 }
                 if (msg.yourRank > 0) {
                     println("  Your rank: #${msg.yourRank}")
@@ -231,7 +228,7 @@ class CliClient(private val baseUrl: String) {
                 println()
                 println("=== Battle Ended ===")
                 println("  Stars: ${"*".repeat(r.stars)}${"_".repeat(3 - r.stars)} (${r.destructionPercent}% destruction)")
-                println("  Loot: gold=${r.loot.gold} wood=${r.loot.wood} metal=${r.loot.metal} mana=${r.loot.mana}")
+                println("  Loot: credits=${r.loot.credits} alloy=${r.loot.alloy} crystal=${r.loot.crystal} plasma=${r.loot.plasma}")
                 println("  Trophies: ${if (r.attackerTrophyDelta >= 0) "+" else ""}${r.attackerTrophyDelta}")
             }
             is ServerMessage.DefenseResult -> {
@@ -240,7 +237,7 @@ class CliClient(private val baseUrl: String) {
                 println("=== You Were Attacked! ===")
                 println("  Attacker: ${e.attackerName}")
                 println("  Stars: ${"*".repeat(e.stars)}${"_".repeat(3 - e.stars)}")
-                println("  Lost: gold=${e.lootLost.gold} wood=${e.lootLost.wood} metal=${e.lootLost.metal}")
+                println("  Lost: credits=${e.lootLost.credits} alloy=${e.lootLost.alloy} crystal=${e.lootLost.crystal}")
                 println("  Trophies: ${e.trophyDelta}")
             }
             is ServerMessage.Error -> {
@@ -254,7 +251,7 @@ class CliClient(private val baseUrl: String) {
         println()
         println("=== Village (player ${state.playerId}) ===")
         println("Trophies: ${state.trophies}")
-        println("Resources: gold=${state.resources.gold} wood=${state.resources.wood} metal=${state.resources.metal} mana=${state.resources.mana}")
+        println("Resources: credits=${state.resources.credits} alloy=${state.resources.alloy} crystal=${state.resources.crystal} plasma=${state.resources.plasma}")
         println("Buildings (${state.village.buildings.size}):")
         for (b in state.village.buildings) {
             val status = if (b.constructionStartedAt != null) " [BUILDING]" else ""

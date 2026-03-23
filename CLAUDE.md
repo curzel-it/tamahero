@@ -190,12 +190,12 @@ The CLI is the primary tool for testing game features end-to-end. It connects to
 
 **Village management:**
 - `village` / `get` — load full village state
-- `build <Type> <x> <y>` — place building (e.g. `build LumberCamp 5 5`)
+- `build <Type> <x> <y>` — place building (e.g. `build AlloyRefinery 5 5`)
 - `upgrade <id>` — upgrade building by ID
 - `move <id> <x> <y>` — relocate building
 - `demolish <id>` — remove building (50% refund)
 - `cancel <id>` — cancel construction (full refund)
-- `speedup <id>` — instant finish with mana
+- `speedup <id>` — instant finish with plasma
 
 **Resources:**
 - `collect <id>` — collect from a producer
@@ -203,7 +203,7 @@ The CLI is the primary tool for testing game features end-to-end. It connects to
 - `storage` — show current vs max capacity
 
 **Troops:**
-- `train <Type> [count]` — queue training (e.g. `train HumanSoldier 5`)
+- `train <Type> [count]` — queue training (e.g. `train Marine 5`)
 - `canceltraining <index>` — cancel queued entry
 - `army` — show army + training queue
 - `troops` — list troop types with stats
@@ -223,11 +223,12 @@ The CLI is the primary tool for testing game features end-to-end. It connects to
 - `help` — full command list
 
 ### Building types
-TownHall, LumberCamp, GoldMine, Forge, WoodStorage, GoldStorage, MetalStorage,
-Barracks, ArmyCamp, Cannon, ArcherTower, Mortar, Wall, SpikeTrap, SpringTrap, ShieldDome
+CommandCenter, AlloyRefinery, CreditMint, Foundry, AlloySilo, CreditVault, CrystalSilo,
+Academy, Hangar, RailGun, LaserTurret, MissileBattery, TeslaTower, Barrier,
+MineTrap, GravityTrap, NovaBomb, ShieldDome, PlasmaReactor, PlasmaBank, DroneStation
 
 ### Troop types
-HumanSoldier, ElfArcher, DwarfSapper, OrcBerserker
+Marine, Sniper, Engineer, Juggernaut, Drone, Spectre, Gunship
 
 ## Rendering
 

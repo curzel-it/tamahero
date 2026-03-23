@@ -18,7 +18,7 @@ fun GameHudView(
     onCancelClick: () -> Unit,
     onAccountClick: () -> Unit,
     onArmyClick: () -> Unit = {},
-    onHeroClick: () -> Unit = {},
+    onAttackClick: () -> Unit = {},
     onSettingsClick: () -> Unit = {},
     onCollectAllClick: () -> Unit = {},
     onWsLogClick: () -> Unit = {},
@@ -33,10 +33,10 @@ fun GameHudView(
             horizontalArrangement = Arrangement.spacedBy(TamaSpacing.Small),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            Text("Gold: ${resources.gold}", color = TamaColors.Gold, fontSize = 14.sp)
-            Text("Wood: ${resources.wood}", color = TamaColors.Wood, fontSize = 14.sp)
-            Text("Metal: ${resources.metal}", color = TamaColors.Metal, fontSize = 14.sp)
-            Text("Mana: ${resources.mana}", color = TamaColors.Mana, fontSize = 14.sp)
+            Text("Credits: ${resources.credits}", color = TamaColors.Credits, fontSize = 14.sp)
+            Text("Alloy: ${resources.alloy}", color = TamaColors.Alloy, fontSize = 14.sp)
+            Text("Crystal: ${resources.crystal}", color = TamaColors.Crystal, fontSize = 14.sp)
+            Text("Plasma: ${resources.plasma}", color = TamaColors.Plasma, fontSize = 14.sp)
         }
         Spacer(Modifier.height(TamaSpacing.XXSmall))
         Row(
@@ -48,7 +48,7 @@ fun GameHudView(
                 TamaButton(text = "Build", onClick = onBuildClick, color = TamaColors.Success)
                 TamaSecondaryButton(text = "Collect", onClick = onCollectAllClick)
                 TamaSecondaryButton(text = "Army", onClick = onArmyClick)
-                TamaSecondaryButton(text = "Hero", onClick = onHeroClick)
+                TamaDangerButton(text = "Attack", onClick = onAttackClick)
             }
             TamaSecondaryButton(text = "Account", onClick = onAccountClick)
             TamaSecondaryButton(text = "Settings", onClick = onSettingsClick)

@@ -15,14 +15,14 @@ object LeaderboardService {
             val state = VillageRepository.getVillage(userId) ?: return@mapNotNull null
             val user = UserRepository.findById(userId) ?: return@mapNotNull null
             val thLevel = state.village.buildings
-                .filter { it.type == BuildingType.TownHall && it.constructionStartedAt == null }
+                .filter { it.type == BuildingType.CommandCenter && it.constructionStartedAt == null }
                 .maxOfOrNull { it.level } ?: 1
             LeaderboardEntry(
                 rank = 0,
                 playerId = userId,
                 playerName = user.username,
                 trophies = state.trophies,
-                townHallLevel = thLevel,
+                commandCenterLevel = thLevel,
             )
         }.sortedByDescending { it.trophies }
 

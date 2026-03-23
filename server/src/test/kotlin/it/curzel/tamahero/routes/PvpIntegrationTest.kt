@@ -80,9 +80,9 @@ class PvpIntegrationTest {
         adminToken: String,
         defenderId: Long,
     ) {
-        adminPost(client, adminToken, "place-building", """{"userId":$defenderId,"type":"Cannon","x":10,"y":10}""")
-        adminPost(client, adminToken, "place-building", """{"userId":$defenderId,"type":"GoldMine","x":5,"y":5}""")
-        adminPost(client, adminToken, "grant-resources", """{"userId":$defenderId,"gold":50000,"wood":50000}""")
+        adminPost(client, adminToken, "place-building", """{"userId":$defenderId,"type":"RailGun","x":10,"y":10}""")
+        adminPost(client, adminToken, "place-building", """{"userId":$defenderId,"type":"CreditMint","x":5,"y":5}""")
+        adminPost(client, adminToken, "grant-resources", """{"userId":$defenderId,"credits":50000,"alloy":50000}""")
     }
 
     private suspend fun setupAttackerWithArmy(
@@ -91,7 +91,7 @@ class PvpIntegrationTest {
         attackerId: Long,
         troopCount: Int = 5,
     ) {
-        adminPost(client, adminToken, "grant-army", """{"userId":$attackerId,"troopType":"HumanSoldier","count":$troopCount}""")
+        adminPost(client, adminToken, "grant-army", """{"userId":$attackerId,"troopType":"Marine","count":$troopCount}""")
     }
 
     private suspend fun getVillage(client: io.ktor.client.HttpClient, adminToken: String, userId: Long): GameState {
@@ -121,7 +121,7 @@ class PvpIntegrationTest {
             }
             assertTrue(findResult is ServerMessage.OpponentFound, "Expected opponent, got $findResult")
             assertEquals(defenderId, findResult.match.targetId)
-            assertTrue(findResult.match.lootAvailable.gold > 0)
+            assertTrue(findResult.match.lootAvailable.credits > 0)
 
             // Start battle
             val battleStart = sendAndRecv(ClientMessage.StartPvp(defenderId))
@@ -154,17 +154,17 @@ class PvpIntegrationTest {
             assertTrue(start is ServerMessage.PvpBattleStarted, "Got $start")
 
             // Valid edge deploy
-            val deploy1 = sendAndRecv(ClientMessage.DeployTroop(TroopType.HumanSoldier, 0f, 10f))
+            val deploy1 = sendAndRecv(ClientMessage.DeployTroop(TroopType.Marine, 0f, 10f))
             assertTrue(deploy1 is ServerMessage.PvpBattleTick, "Expected tick, got $deploy1")
             assertEquals(1, deploy1.battle.deployedTroops.size)
 
             // Another valid deploy
-            val deploy2 = sendAndRecv(ClientMessage.DeployTroop(TroopType.HumanSoldier, 0f, 12f))
+            val deploy2 = sendAndRecv(ClientMessage.DeployTroop(TroopType.Marine, 0f, 12f))
             assertTrue(deploy2 is ServerMessage.PvpBattleTick, "Expected tick, got $deploy2")
             assertEquals(2, deploy2.battle.deployedTroops.size)
 
             // Invalid: center deploy
-            val bad = sendAndRecv(ClientMessage.DeployTroop(TroopType.HumanSoldier, 20f, 20f))
+            val bad = sendAndRecv(ClientMessage.DeployTroop(TroopType.Marine, 20f, 20f))
             assertTrue(bad is ServerMessage.Error, "Center deploy should fail, got $bad")
 
             sendAndRecv(ClientMessage.EndBattle)
@@ -207,7 +207,7 @@ class PvpIntegrationTest {
             sendAndRecv(ClientMessage.GetVillage)
 
             sendAndRecv(ClientMessage.StartPvp(defenderId))
-            sendAndRecv(ClientMessage.DeployTroop(TroopType.HumanSoldier, 0f, 10f))
+            sendAndRecv(ClientMessage.DeployTroop(TroopType.Marine, 0f, 10f))
             sendAndRecv(ClientMessage.EndBattle)
         }
 
@@ -315,8 +315,8 @@ class PvpIntegrationTest {
         val (attackerToken, attackerId, _) = register(client, "attacker7")
         val (_, defenderId, _) = register(client, "defender7")
 
-        adminPost(client, adminToken, "place-building", """{"userId":$defenderId,"type":"Cannon","x":10,"y":10}""")
-        adminPost(client, adminToken, "grant-resources", """{"userId":$defenderId,"gold":100000,"wood":100000,"metal":50000}""")
+        adminPost(client, adminToken, "place-building", """{"userId":$defenderId,"type":"RailGun","x":10,"y":10}""")
+        adminPost(client, adminToken, "grant-resources", """{"userId":$defenderId,"credits":100000,"alloy":100000,"crystal":50000}""")
         setupAttackerWithArmy(client, adminToken, attackerId, 5)
 
         val attackerBefore = getVillage(client, adminToken, attackerId)
@@ -332,7 +332,7 @@ class PvpIntegrationTest {
 
             // Deploy troops
             for (i in 0 until 3) {
-                sendMsg(ClientMessage.DeployTroop(TroopType.HumanSoldier, 0f, (10 + i * 2).toFloat()))
+                sendMsg(ClientMessage.DeployTroop(TroopType.Marine, 0f, (10 + i * 2).toFloat()))
             }
             repeat(3) { recvTimeout() }
 
@@ -346,12 +346,12 @@ class PvpIntegrationTest {
         val defenderAfter = getVillage(client, adminToken, defenderId)
 
         assertTrue(
-            attackerAfter.resources.gold >= attackerBefore.resources.gold + loot.gold,
-            "Attacker should gain gold loot"
+            attackerAfter.resources.credits >= attackerBefore.resources.credits + loot.credits,
+            "Attacker should gain credits loot"
         )
         assertTrue(
-            defenderAfter.resources.gold <= defenderBefore.resources.gold,
-            "Defender should lose gold"
+            defenderAfter.resources.credits <= defenderBefore.resources.credits,
+            "Defender should lose credits"
         )
     }
 

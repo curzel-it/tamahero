@@ -21,10 +21,10 @@ object TamaColors {
     val Warning = Color(0xFFFF9800)
     val Info = Color(0xFF2196F3)
 
-    val Gold = Color(0xFFFFD700)
-    val Wood = Color(0xFF8B6914)
-    val Metal = Color(0xFFC0C0C0)
-    val Mana = Color(0xFF4169E1)
+    val Credits = Color(0xFFFFD700)
+    val Alloy = Color(0xFF8B6914)
+    val Crystal = Color(0xFFC0C0C0)
+    val Plasma = Color(0xFF4169E1)
     val Danger = Color(0xFFEF4444)
 }
 

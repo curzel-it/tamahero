@@ -25,7 +25,6 @@ object GameStateUpdateUseCase {
 
         current = TrainingUpdateUseCase.update(current, now)
         current = PveEventUpdateUseCase.update(current, now)
-        current = current.copy(hero = HeroUpdateUseCase.update(current.hero, now))
 
         return current
     }

@@ -87,9 +87,17 @@ object GameSocketClient {
 
     fun collectEventRewards() = send(ClientMessage.CollectEventRewards)
 
-    fun feedHero() = send(ClientMessage.FeedHero)
+    fun findOpponent() = send(ClientMessage.FindOpponent)
 
-    fun trainHero() = send(ClientMessage.TrainHero)
+    fun nextOpponent() = send(ClientMessage.NextOpponent)
+
+    fun startPvp(targetId: Long) = send(ClientMessage.StartPvp(targetId))
+
+    fun deployTroop(troopType: TroopType, x: Float, y: Float) = send(ClientMessage.DeployTroop(troopType, x, y))
+
+    fun endBattle() = send(ClientMessage.EndBattle)
+
+    fun getLeaderboard() = send(ClientMessage.GetLeaderboard)
 
     private fun send(message: ClientMessage) {
         val text = ProtocolJson.encodeToString(ClientMessage.serializer(), message)

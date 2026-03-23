@@ -55,12 +55,6 @@ sealed class ServerMessage {
     ) : ServerMessage()
 
     @Serializable
-    @SerialName("hero_level_up")
-    data class HeroLevelUp(
-        val level: Int,
-    ) : ServerMessage()
-
-    @Serializable
     @SerialName("opponent_found")
     data class OpponentFound(
         val match: MatchmakingResult,

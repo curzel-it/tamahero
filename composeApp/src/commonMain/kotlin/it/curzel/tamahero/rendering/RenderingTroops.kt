@@ -44,13 +44,13 @@ fun DrawScope.drawTroops(
             )
         } else {
             val color = when (troop.type) {
-                TroopType.HumanSoldier -> Color(0xFF4CAF50)
-                TroopType.ElfArcher -> Color(0xFF8BC34A)
-                TroopType.DwarfSapper -> Color(0xFF795548)
-                TroopType.OrcBerserker -> Color(0xFFF44336)
-                TroopType.Goblin -> Color(0xFF9C27B0)
-                TroopType.Wizard -> Color(0xFF3F51B5)
-                TroopType.Dragon -> Color(0xFFFF5722)
+                TroopType.Marine -> Color(0xFF4CAF50)
+                TroopType.Sniper -> Color(0xFF8BC34A)
+                TroopType.Engineer -> Color(0xFF795548)
+                TroopType.Juggernaut -> Color(0xFFF44336)
+                TroopType.Drone -> Color(0xFF9C27B0)
+                TroopType.Spectre -> Color(0xFF3F51B5)
+                TroopType.Gunship -> Color(0xFFFF5722)
             }
             val radius = tileSize * 0.3f
             drawCircle(

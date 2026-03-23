@@ -65,15 +65,15 @@ class MultiClientTest {
 
         wsClient1.webSocket("/ws?token=$token") {
             skipConnected()
-            send(Frame.Text(sendMessage(ClientMessage.Build(BuildingType.LumberCamp, 5, 5))))
+            send(Frame.Text(sendMessage(ClientMessage.Build(BuildingType.AlloyRefinery, 5, 5))))
             val msg1 = receiveServerMessage()
             assertTrue(msg1 is ServerMessage.GameStateUpdated)
-            assertTrue(msg1.state.village.buildings.any { it.type == BuildingType.LumberCamp })
+            assertTrue(msg1.state.village.buildings.any { it.type == BuildingType.AlloyRefinery })
         }
 
         val msg2 = withTimeout(5000) { client2Message.receive() }
         assertTrue(msg2 is ServerMessage.GameStateUpdated, "Client 2 should receive GameStateUpdated but got $msg2")
-        assertTrue(msg2.state.village.buildings.any { it.type == BuildingType.LumberCamp })
+        assertTrue(msg2.state.village.buildings.any { it.type == BuildingType.AlloyRefinery })
 
         client2Job.cancel()
         scope.cancel()
@@ -104,14 +104,14 @@ class MultiClientTest {
 
         wsClient1.webSocket("/ws?token=$token") {
             skipConnected()
-            // Use FeedHero twice to generate two state updates without worker constraints
-            send(Frame.Text(sendMessage(ClientMessage.FeedHero)))
+            // Use GetVillage twice to generate two state updates
+            send(Frame.Text(sendMessage(ClientMessage.GetVillage)))
             val msg1 = receiveServerMessage() as ServerMessage.GameStateUpdated
 
-            send(Frame.Text(sendMessage(ClientMessage.FeedHero)))
+            send(Frame.Text(sendMessage(ClientMessage.GetVillage)))
             val msg2 = receiveServerMessage() as ServerMessage.GameStateUpdated
 
-            assertTrue(msg2.state.hero.hunger > 0)
+            assertTrue(msg2.state.village.buildings.isNotEmpty())
         }
 
         val secondMsg = withTimeout(5000) {

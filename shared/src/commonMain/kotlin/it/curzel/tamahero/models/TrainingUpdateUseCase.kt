@@ -9,7 +9,7 @@ object TrainingUpdateUseCase {
         var army = state.army
         val queue = state.trainingQueue.entries.toMutableList()
         val barracksCount = state.village.buildings.count {
-            it.type == BuildingType.Barracks && it.isComplete(now)
+            it.type == BuildingType.Academy && it.isComplete(now)
         }
         if (barracksCount == 0) return state
 
@@ -58,7 +58,7 @@ object TrainingUpdateUseCase {
     private fun totalArmyCapacity(buildings: List<PlacedBuilding>, now: Long): Int {
         var capacity = 0
         for (building in buildings) {
-            if (building.type != BuildingType.ArmyCamp) continue
+            if (building.type != BuildingType.Hangar) continue
             if (building.isUnderConstruction(now)) continue
             val config = BuildingConfig.configFor(building.type, building.level) ?: continue
             capacity += config.troopCapacity

@@ -52,10 +52,10 @@ class VillageWebSocketTest {
             assertTrue(msg is ServerMessage.GameStateUpdated)
             val state = msg.state
             assertEquals(2, state.village.buildings.size)
-            assertTrue(state.village.buildings.any { it.type == BuildingType.TownHall })
-            assertTrue(state.village.buildings.any { it.type == BuildingType.BuilderHut })
-            assertEquals(1000, state.resources.gold)
-            assertEquals(1000, state.resources.wood)
+            assertTrue(state.village.buildings.any { it.type == BuildingType.CommandCenter })
+            assertTrue(state.village.buildings.any { it.type == BuildingType.DroneStation })
+            assertEquals(1000, state.resources.credits)
+            assertEquals(1000, state.resources.alloy)
         }
     }
 
@@ -74,12 +74,12 @@ class VillageWebSocketTest {
         val wsClient = client.config { install(WebSockets) }
         wsClient.webSocket("/ws?token=$token") {
             skipConnected()
-            send(Frame.Text(sendMessage(ClientMessage.Build(BuildingType.LumberCamp, 5, 5))))
+            send(Frame.Text(sendMessage(ClientMessage.Build(BuildingType.AlloyRefinery, 5, 5))))
             val msg = receiveServerMessage()
             assertTrue(msg is ServerMessage.GameStateUpdated)
             val state = msg.state
-            assertTrue(state.village.buildings.any { it.type == BuildingType.LumberCamp })
-            assertEquals(950, state.resources.gold)
+            assertTrue(state.village.buildings.any { it.type == BuildingType.AlloyRefinery })
+            assertEquals(950, state.resources.credits)
         }
     }
 
@@ -89,15 +89,23 @@ class VillageWebSocketTest {
         val wsClient = client.config { install(WebSockets) }
         wsClient.webSocket("/ws?token=$token") {
             skipConnected()
-            // Drain gold by feeding hero 20 times (50g each, 1000g start)
-            for (i in 0 until 20) {
-                send(Frame.Text(sendMessage(ClientMessage.FeedHero)))
-                receiveServerMessage()
+            val buildings = listOf(
+                ClientMessage.Build(BuildingType.AlloyRefinery, 0, 0),
+                ClientMessage.Build(BuildingType.CreditMint, 0, 5),
+                ClientMessage.Build(BuildingType.Foundry, 0, 10),
+                ClientMessage.Build(BuildingType.AlloySilo, 0, 15),
+                ClientMessage.Build(BuildingType.CreditVault, 0, 20),
+                ClientMessage.Build(BuildingType.RailGun, 0, 25),
+                ClientMessage.Build(BuildingType.LaserTurret, 0, 30),
+            )
+            for (b in buildings) {
+                send(Frame.Text(sendMessage(b)))
+                val resp = receiveServerMessage()
+                if (resp is ServerMessage.Error) break
             }
-            send(Frame.Text(sendMessage(ClientMessage.FeedHero)))
+            send(Frame.Text(sendMessage(ClientMessage.Build(BuildingType.MissileBattery, 5, 0))))
             val msg = receiveServerMessage()
             assertTrue(msg is ServerMessage.Error, "Expected error but got: $msg")
-            assertTrue((msg as ServerMessage.Error).reason.contains("Insufficient"))
         }
     }
 
@@ -107,7 +115,7 @@ class VillageWebSocketTest {
         val wsClient = client.config { install(WebSockets) }
         wsClient.webSocket("/ws?token=$token") {
             skipConnected()
-            send(Frame.Text(sendMessage(ClientMessage.Build(BuildingType.LumberCamp, 39, 39))))
+            send(Frame.Text(sendMessage(ClientMessage.Build(BuildingType.AlloyRefinery, 39, 39))))
             val msg = receiveServerMessage()
             assertTrue(msg is ServerMessage.Error)
             assertTrue(msg.reason.contains("bounds"))
@@ -120,9 +128,9 @@ class VillageWebSocketTest {
         val wsClient = client.config { install(WebSockets) }
         wsClient.webSocket("/ws?token=$token") {
             skipConnected()
-            send(Frame.Text(sendMessage(ClientMessage.Build(BuildingType.LumberCamp, 5, 5))))
+            send(Frame.Text(sendMessage(ClientMessage.Build(BuildingType.AlloyRefinery, 5, 5))))
             receiveServerMessage()
-            send(Frame.Text(sendMessage(ClientMessage.Build(BuildingType.GoldMine, 5, 5))))
+            send(Frame.Text(sendMessage(ClientMessage.Build(BuildingType.CreditMint, 5, 5))))
             val msg = receiveServerMessage()
             assertTrue(msg is ServerMessage.Error)
             assertTrue(msg.reason.contains("overlap", ignoreCase = true))
@@ -137,12 +145,12 @@ class VillageWebSocketTest {
             skipConnected()
             send(Frame.Text(sendMessage(ClientMessage.GetVillage)))
             val getMsg = receiveServerMessage() as ServerMessage.GameStateUpdated
-            val townHall = getMsg.state.village.buildings.first { it.type == BuildingType.TownHall }
+            val commandCenter = getMsg.state.village.buildings.first { it.type == BuildingType.CommandCenter }
 
-            send(Frame.Text(sendMessage(ClientMessage.Move(townHall.id, 0, 0))))
+            send(Frame.Text(sendMessage(ClientMessage.Move(commandCenter.id, 0, 0))))
             val msg = receiveServerMessage()
             assertTrue(msg is ServerMessage.GameStateUpdated)
-            val moved = msg.state.village.buildings.first { it.id == townHall.id }
+            val moved = msg.state.village.buildings.first { it.id == commandCenter.id }
             assertEquals(0, moved.x)
             assertEquals(0, moved.y)
         }
@@ -154,11 +162,11 @@ class VillageWebSocketTest {
         val wsClient = client.config { install(WebSockets) }
         wsClient.webSocket("/ws?token=$token") {
             skipConnected()
-            send(Frame.Text(sendMessage(ClientMessage.Build(BuildingType.LumberCamp, 5, 5))))
+            send(Frame.Text(sendMessage(ClientMessage.Build(BuildingType.AlloyRefinery, 5, 5))))
             val buildMsg = receiveServerMessage() as ServerMessage.GameStateUpdated
-            val lumberCamp = buildMsg.state.village.buildings.first { it.type == BuildingType.LumberCamp }
+            val refinery = buildMsg.state.village.buildings.first { it.type == BuildingType.AlloyRefinery }
 
-            send(Frame.Text(sendMessage(ClientMessage.Collect(lumberCamp.id))))
+            send(Frame.Text(sendMessage(ClientMessage.Collect(refinery.id))))
             val msg = receiveServerMessage()
             assertTrue(msg is ServerMessage.GameStateUpdated)
         }

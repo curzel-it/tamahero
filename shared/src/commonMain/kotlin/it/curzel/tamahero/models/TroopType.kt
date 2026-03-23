@@ -4,18 +4,18 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 enum class TroopType {
-    HumanSoldier,
-    ElfArcher,
-    DwarfSapper,
-    OrcBerserker,
-    Goblin,
-    Wizard,
-    Dragon;
+    Marine,
+    Sniper,
+    Engineer,
+    Juggernaut,
+    Drone,
+    Spectre,
+    Gunship;
 
     val targetPreference: TargetPreference get() = when (this) {
-        OrcBerserker -> TargetPreference.Defenses
-        DwarfSapper -> TargetPreference.Walls
-        Goblin -> TargetPreference.Resources
+        Juggernaut -> TargetPreference.Defenses
+        Engineer -> TargetPreference.Walls
+        Drone -> TargetPreference.Resources
         else -> TargetPreference.Nearest
     }
 }

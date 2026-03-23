@@ -5,13 +5,13 @@ import kotlin.test.*
 class BattleDefenseTest {
 
     private fun soldier(id: Long = 100, x: Float = 0f, y: Float = 0f, hp: Int = 45) =
-        Troop(id = id, type = TroopType.HumanSoldier, hp = hp, x = x, y = y)
+        Troop(id = id, type = TroopType.Marine, hp = hp, x = x, y = y)
 
     private fun archer(id: Long = 200, x: Float = 0f, y: Float = 0f, hp: Int = 20) =
-        Troop(id = id, type = TroopType.ElfArcher, hp = hp, x = x, y = y)
+        Troop(id = id, type = TroopType.Sniper, hp = hp, x = x, y = y)
 
     private fun orc(id: Long = 300, x: Float = 0f, y: Float = 0f, hp: Int = 300) =
-        Troop(id = id, type = TroopType.OrcBerserker, hp = hp, x = x, y = y)
+        Troop(id = id, type = TroopType.Juggernaut, hp = hp, x = x, y = y)
 
     private fun gameState(
         buildings: List<PlacedBuilding>,
@@ -29,8 +29,8 @@ class BattleDefenseTest {
 
     @Test
     fun wallBlocksTroopPath() {
-        val target = PlacedBuilding(id = 1, type = BuildingType.GoldStorage, level = 1, x = 10, y = 0, hp = 200)
-        val wall = PlacedBuilding(id = 2, type = BuildingType.Wall, level = 1, x = 5, y = 0, hp = 500)
+        val target = PlacedBuilding(id = 1, type = BuildingType.CreditVault, level = 1, x = 10, y = 0, hp = 200)
+        val wall = PlacedBuilding(id = 2, type = BuildingType.Barrier, level = 1, x = 5, y = 0, hp = 500)
         val troop = soldier(x = 0f, y = 0f)
         val state = gameState(listOf(target, wall), listOf(troop))
 
@@ -42,8 +42,8 @@ class BattleDefenseTest {
 
     @Test
     fun troopDestroysWallThenProceedsToTarget() {
-        val target = PlacedBuilding(id = 1, type = BuildingType.GoldStorage, level = 1, x = 20, y = 0, hp = 200)
-        val wall = PlacedBuilding(id = 2, type = BuildingType.Wall, level = 1, x = 5, y = 0, hp = 10)
+        val target = PlacedBuilding(id = 1, type = BuildingType.CreditVault, level = 1, x = 20, y = 0, hp = 200)
+        val wall = PlacedBuilding(id = 2, type = BuildingType.Barrier, level = 1, x = 5, y = 0, hp = 10)
         val troop = soldier(x = 5f, y = 0f, hp = 50)
         val state = gameState(listOf(target, wall), listOf(troop))
 
@@ -60,8 +60,8 @@ class BattleDefenseTest {
 
     @Test
     fun spikeTrapDamagesTroops() {
-        val trap = PlacedBuilding(id = 1, type = BuildingType.SpikeTrap, level = 1, x = 5, y = 0, hp = 1)
-        val target = PlacedBuilding(id = 2, type = BuildingType.GoldStorage, level = 1, x = 10, y = 0, hp = 200)
+        val trap = PlacedBuilding(id = 1, type = BuildingType.MineTrap, level = 1, x = 5, y = 0, hp = 1)
+        val target = PlacedBuilding(id = 2, type = BuildingType.CreditVault, level = 1, x = 10, y = 0, hp = 200)
         val troop = soldier(x = 5f, y = 0f)
         val state = gameState(listOf(trap, target), listOf(troop))
 
@@ -77,8 +77,8 @@ class BattleDefenseTest {
 
     @Test
     fun spikeTrapTriggersOnlyOnce() {
-        val trap = PlacedBuilding(id = 1, type = BuildingType.SpikeTrap, level = 1, x = 5, y = 0, hp = 1, triggered = true)
-        val target = PlacedBuilding(id = 2, type = BuildingType.GoldStorage, level = 1, x = 10, y = 0, hp = 200)
+        val trap = PlacedBuilding(id = 1, type = BuildingType.MineTrap, level = 1, x = 5, y = 0, hp = 1, triggered = true)
+        val target = PlacedBuilding(id = 2, type = BuildingType.CreditVault, level = 1, x = 10, y = 0, hp = 200)
         val troop = soldier(x = 5f, y = 0f)
         val state = gameState(listOf(trap, target), listOf(troop))
 
@@ -94,8 +94,8 @@ class BattleDefenseTest {
 
     @Test
     fun springTrapKillsLightTroop() {
-        val trap = PlacedBuilding(id = 1, type = BuildingType.SpringTrap, level = 1, x = 5, y = 0, hp = 1)
-        val target = PlacedBuilding(id = 2, type = BuildingType.GoldStorage, level = 1, x = 10, y = 0, hp = 200)
+        val trap = PlacedBuilding(id = 1, type = BuildingType.GravityTrap, level = 1, x = 5, y = 0, hp = 1)
+        val target = PlacedBuilding(id = 2, type = BuildingType.CreditVault, level = 1, x = 10, y = 0, hp = 200)
         val troop = archer(x = 5f, y = 0f)
         val state = gameState(listOf(trap, target), listOf(troop))
 
@@ -108,13 +108,13 @@ class BattleDefenseTest {
 
     @Test
     fun springTrapDoesNotKillHeavyTroop() {
-        val trap = PlacedBuilding(id = 1, type = BuildingType.SpringTrap, level = 1, x = 5, y = 0, hp = 1)
-        val target = PlacedBuilding(id = 2, type = BuildingType.GoldStorage, level = 1, x = 10, y = 0, hp = 200)
+        val trap = PlacedBuilding(id = 1, type = BuildingType.GravityTrap, level = 1, x = 5, y = 0, hp = 1)
+        val target = PlacedBuilding(id = 2, type = BuildingType.CreditVault, level = 1, x = 10, y = 0, hp = 200)
         val troop = orc(x = 5f, y = 0f)
         val state = gameState(listOf(trap, target), listOf(troop))
 
         val result = BattleUpdateUseCase.update(state, now = 100)
-        // Spring trap should not trigger for OrcBerserker
+        // Gravity trap should not trigger for Juggernaut
         val triggeredTrap = result.village.buildings.find { it.id == 1L }
         assertFalse(triggeredTrap?.triggered == true)
         assertTrue(result.troops.isNotEmpty())
@@ -124,7 +124,7 @@ class BattleDefenseTest {
 
     @Test
     fun shieldDomeAbsorbsDamage() {
-        val building = PlacedBuilding(id = 1, type = BuildingType.GoldStorage, level = 1, x = 5, y = 5, hp = 200)
+        val building = PlacedBuilding(id = 1, type = BuildingType.CreditVault, level = 1, x = 5, y = 5, hp = 200)
         val dome = PlacedBuilding(id = 2, type = BuildingType.ShieldDome, level = 1, x = 3, y = 3, hp = 100)
         val troop = soldier(x = 5f, y = 5f)
         val state = gameState(listOf(building, dome), listOf(troop), shieldHp = 500)
@@ -137,7 +137,7 @@ class BattleDefenseTest {
 
     @Test
     fun shieldDomeBreaksWhenDepleted() {
-        val building = PlacedBuilding(id = 1, type = BuildingType.GoldStorage, level = 1, x = 5, y = 5, hp = 200)
+        val building = PlacedBuilding(id = 1, type = BuildingType.CreditVault, level = 1, x = 5, y = 5, hp = 200)
         val dome = PlacedBuilding(id = 2, type = BuildingType.ShieldDome, level = 1, x = 3, y = 3, hp = 100)
         val troop = soldier(x = 5f, y = 5f, hp = 5000) // high HP to survive long
         val buildings = listOf(building, dome)
@@ -160,7 +160,7 @@ class BattleDefenseTest {
 
     @Test
     fun mortarDamagesMultipleTroops() {
-        val mortar = PlacedBuilding(id = 1, type = BuildingType.Mortar, level = 1, x = 10, y = 0, hp = 250)
+        val mortar = PlacedBuilding(id = 1, type = BuildingType.MissileBattery, level = 1, x = 10, y = 0, hp = 250)
         // Two troops close together within mortar range but beyond minRange
         val troop1 = soldier(id = 100, x = 7f, y = 0f)
         val troop2 = soldier(id = 101, x = 7.5f, y = 0f)
@@ -175,7 +175,7 @@ class BattleDefenseTest {
 
     @Test
     fun mortarMinRangeProtectsCloseTroops() {
-        val mortar = PlacedBuilding(id = 1, type = BuildingType.Mortar, level = 1, x = 5, y = 0, hp = 250)
+        val mortar = PlacedBuilding(id = 1, type = BuildingType.MissileBattery, level = 1, x = 5, y = 0, hp = 250)
         // Troop is within minRange (< 2 tiles)
         val troop = soldier(x = 5f, y = 0f)
         val state = gameState(listOf(mortar), listOf(troop))
@@ -191,8 +191,8 @@ class BattleDefenseTest {
 
     @Test
     fun defensesAutoRebuildAfterBattle() {
-        val cannon = PlacedBuilding(id = 1, type = BuildingType.Cannon, level = 1, x = 5, y = 5, hp = 10)
-        val storage = PlacedBuilding(id = 2, type = BuildingType.GoldStorage, level = 1, x = 10, y = 10, hp = 200)
+        val cannon = PlacedBuilding(id = 1, type = BuildingType.RailGun, level = 1, x = 5, y = 5, hp = 10)
+        val storage = PlacedBuilding(id = 2, type = BuildingType.CreditVault, level = 1, x = 10, y = 10, hp = 200)
         val troop = soldier(x = 5f, y = 5f, hp = 500) // beefy troop to destroy cannon
         val state = gameState(listOf(cannon, storage), listOf(troop))
 
@@ -205,15 +205,15 @@ class BattleDefenseTest {
 
     @Test
     fun trapsNotRebuiltAfterBattle() {
-        val trap = PlacedBuilding(id = 1, type = BuildingType.SpikeTrap, level = 1, x = 5, y = 0, hp = 1)
-        val target = PlacedBuilding(id = 2, type = BuildingType.GoldStorage, level = 1, x = 10, y = 0, hp = 200)
+        val trap = PlacedBuilding(id = 1, type = BuildingType.MineTrap, level = 1, x = 5, y = 0, hp = 1)
+        val target = PlacedBuilding(id = 2, type = BuildingType.CreditVault, level = 1, x = 10, y = 0, hp = 200)
         val troop = soldier(x = 5f, y = 0f, hp = 15) // will die after trap + some damage
 
         val state = gameState(listOf(trap, target), listOf(troop))
         val result = BattleUpdateUseCase.update(state, now = 60_000)
 
         // Trap should be triggered, not rebuilt
-        val resultTrap = result.village.buildings.find { it.type == BuildingType.SpikeTrap }
+        val resultTrap = result.village.buildings.find { it.type == BuildingType.MineTrap }
         if (resultTrap != null) {
             assertTrue(resultTrap.triggered)
         }
@@ -224,8 +224,8 @@ class BattleDefenseTest {
     @Test
     fun shieldGrantedAfterBattle() {
         val buildings = listOf(
-            PlacedBuilding(id = 1, type = BuildingType.GoldStorage, level = 1, x = 5, y = 5, hp = 10),
-            PlacedBuilding(id = 2, type = BuildingType.WoodStorage, level = 1, x = 10, y = 10, hp = 200),
+            PlacedBuilding(id = 1, type = BuildingType.CreditVault, level = 1, x = 5, y = 5, hp = 10),
+            PlacedBuilding(id = 2, type = BuildingType.AlloySilo, level = 1, x = 10, y = 10, hp = 200),
         )
         val troop = soldier(x = 5f, y = 5f, hp = 5) // weak, will die after destroying one building
         val state = gameState(buildings, listOf(troop))

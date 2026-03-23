@@ -4,39 +4,39 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 data class Resources(
-    val gold: Long = 0,
-    val wood: Long = 0,
-    val metal: Long = 0,
-    val mana: Long = 0,
+    val credits: Long = 0,
+    val alloy: Long = 0,
+    val crystal: Long = 0,
+    val plasma: Long = 0,
 ) {
     operator fun plus(other: Resources) = Resources(
-        gold = gold + other.gold,
-        wood = wood + other.wood,
-        metal = metal + other.metal,
-        mana = mana + other.mana,
+        credits = credits + other.credits,
+        alloy = alloy + other.alloy,
+        crystal = crystal + other.crystal,
+        plasma = plasma + other.plasma,
     )
 
     operator fun minus(other: Resources) = Resources(
-        gold = gold - other.gold,
-        wood = wood - other.wood,
-        metal = metal - other.metal,
-        mana = mana - other.mana,
+        credits = credits - other.credits,
+        alloy = alloy - other.alloy,
+        crystal = crystal - other.crystal,
+        plasma = plasma - other.plasma,
     )
 
     operator fun times(factor: Double) = Resources(
-        gold = (gold * factor).toLong(),
-        wood = (wood * factor).toLong(),
-        metal = (metal * factor).toLong(),
-        mana = (mana * factor).toLong(),
+        credits = (credits * factor).toLong(),
+        alloy = (alloy * factor).toLong(),
+        crystal = (crystal * factor).toLong(),
+        plasma = (plasma * factor).toLong(),
     )
 
     fun hasEnough(cost: Resources): Boolean =
-        gold >= cost.gold && wood >= cost.wood && metal >= cost.metal && mana >= cost.mana
+        credits >= cost.credits && alloy >= cost.alloy && crystal >= cost.crystal && plasma >= cost.plasma
 
     fun capAt(cap: Resources) = Resources(
-        gold = if (cap.gold > 0) gold.coerceAtMost(cap.gold) else gold,
-        wood = if (cap.wood > 0) wood.coerceAtMost(cap.wood) else wood,
-        metal = if (cap.metal > 0) metal.coerceAtMost(cap.metal) else metal,
-        mana = if (cap.mana > 0) mana.coerceAtMost(cap.mana) else mana,
+        credits = if (cap.credits > 0) credits.coerceAtMost(cap.credits) else credits,
+        alloy = if (cap.alloy > 0) alloy.coerceAtMost(cap.alloy) else alloy,
+        crystal = if (cap.crystal > 0) crystal.coerceAtMost(cap.crystal) else crystal,
+        plasma = if (cap.plasma > 0) plasma.coerceAtMost(cap.plasma) else plasma,
     )
 }

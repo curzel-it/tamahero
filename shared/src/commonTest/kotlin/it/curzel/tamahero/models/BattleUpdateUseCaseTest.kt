@@ -6,7 +6,7 @@ class BattleUpdateUseCaseTest {
 
     private fun baseState(): GameState {
         val building = PlacedBuilding(
-            id = 1, type = BuildingType.GoldStorage, level = 1,
+            id = 1, type = BuildingType.CreditVault, level = 1,
             x = 10, y = 10, constructionStartedAt = null, hp = 200,
         )
         return GameState(
@@ -27,7 +27,7 @@ class BattleUpdateUseCaseTest {
 
     @Test
     fun troopMovesTowardBuilding() {
-        val troop = Troop(id = 100, type = TroopType.HumanSoldier, hp = 50, x = 0f, y = 0f)
+        val troop = Troop(id = 100, type = TroopType.Marine, hp = 50, x = 0f, y = 0f)
         val state = baseState().copy(troops = listOf(troop))
         val result = BattleUpdateUseCase.update(state, now = 100) // one tick
         val movedTroop = result.troops.first()
@@ -37,17 +37,17 @@ class BattleUpdateUseCaseTest {
     @Test
     fun troopDamagesBuilding() {
         val building = PlacedBuilding(
-            id = 1, type = BuildingType.GoldStorage, level = 1,
+            id = 1, type = BuildingType.CreditVault, level = 1,
             x = 5, y = 5, constructionStartedAt = null, hp = 200,
         )
         // Place troop right next to the building (within range 1)
-        val troop = Troop(id = 100, type = TroopType.HumanSoldier, hp = 50, x = 5f, y = 5f)
+        val troop = Troop(id = 100, type = TroopType.Marine, hp = 50, x = 5f, y = 5f)
         val state = GameState(
             playerId = 1, resources = Resources(),
             village = Village(playerId = 1, buildings = listOf(building)),
             troops = listOf(troop), lastUpdatedAt = 0,
         )
-        // Run for 1 second (10 ticks) — HumanSoldier does 10 dps
+        // Run for 1 second (10 ticks) — Marine does 10 dps
         val result = BattleUpdateUseCase.update(state, now = 1000)
         val damagedBuilding = result.village.buildings.firstOrNull { it.id == 1L }
         assertNotNull(damagedBuilding)
@@ -58,10 +58,10 @@ class BattleUpdateUseCaseTest {
     fun buildingDestroyedWhenHpReachesZero() {
         // Use GoldStorage (non-defense) so it won't be auto-rebuilt in post-battle
         val building = PlacedBuilding(
-            id = 1, type = BuildingType.GoldStorage, level = 1,
+            id = 1, type = BuildingType.CreditVault, level = 1,
             x = 5, y = 5, constructionStartedAt = null, hp = 10,
         )
-        val troop = Troop(id = 100, type = TroopType.HumanSoldier, hp = 50, x = 5f, y = 5f)
+        val troop = Troop(id = 100, type = TroopType.Marine, hp = 50, x = 5f, y = 5f)
         val state = GameState(
             playerId = 1, resources = Resources(),
             village = Village(playerId = 1, buildings = listOf(building)),
@@ -74,11 +74,11 @@ class BattleUpdateUseCaseTest {
     @Test
     fun defensesDamageTroops() {
         val cannon = PlacedBuilding(
-            id = 1, type = BuildingType.Cannon, level = 1,
+            id = 1, type = BuildingType.RailGun, level = 1,
             x = 5, y = 5, constructionStartedAt = null, hp = 300,
         )
         // Troop within cannon range (3 tiles)
-        val troop = Troop(id = 100, type = TroopType.HumanSoldier, hp = 50, x = 5f, y = 5f)
+        val troop = Troop(id = 100, type = TroopType.Marine, hp = 50, x = 5f, y = 5f)
         val state = GameState(
             playerId = 1, resources = Resources(),
             village = Village(playerId = 1, buildings = listOf(cannon)),
@@ -91,16 +91,16 @@ class BattleUpdateUseCaseTest {
     }
 
     @Test
-    fun orcBerserkerTargetsStrongestBuilding() {
-        val weak = PlacedBuilding(id = 1, type = BuildingType.Wall, level = 1, x = 3, y = 0, hp = 100)
-        val strong = PlacedBuilding(id = 2, type = BuildingType.TownHall, level = 1, x = 10, y = 0, hp = 1000)
-        val troop = Troop(id = 100, type = TroopType.OrcBerserker, hp = 60, x = 0f, y = 0f)
+    fun juggernautTargetsStrongestBuilding() {
+        val weak = PlacedBuilding(id = 1, type = BuildingType.Barrier, level = 1, x = 3, y = 0, hp = 100)
+        val strong = PlacedBuilding(id = 2, type = BuildingType.CommandCenter, level = 1, x = 10, y = 0, hp = 1000)
+        val troop = Troop(id = 100, type = TroopType.Juggernaut, hp = 60, x = 0f, y = 0f)
         val state = GameState(
             playerId = 1, resources = Resources(),
             village = Village(playerId = 1, buildings = listOf(weak, strong)),
             troops = listOf(troop), lastUpdatedAt = 0,
         )
-        // After one tick the orc should move toward the TownHall (x=10), not the Wall (x=3)
+        // After one tick the juggernaut should move toward the CommandCenter (x=10), not the Barrier (x=3)
         val result = BattleUpdateUseCase.update(state, now = 100)
         val movedTroop = result.troops.first()
         // Moving toward x=10 means x should increase
@@ -108,10 +108,10 @@ class BattleUpdateUseCaseTest {
     }
 
     @Test
-    fun dwarfSapperTargetsDefensesFirst() {
-        val storage = PlacedBuilding(id = 1, type = BuildingType.GoldStorage, level = 1, x = 3, y = 0, hp = 200)
-        val cannon = PlacedBuilding(id = 2, type = BuildingType.Cannon, level = 1, x = 10, y = 0, hp = 300)
-        val troop = Troop(id = 100, type = TroopType.DwarfSapper, hp = 80, x = 0f, y = 0f)
+    fun engineerTargetsDefensesFirst() {
+        val storage = PlacedBuilding(id = 1, type = BuildingType.CreditVault, level = 1, x = 3, y = 0, hp = 200)
+        val cannon = PlacedBuilding(id = 2, type = BuildingType.RailGun, level = 1, x = 10, y = 0, hp = 300)
+        val troop = Troop(id = 100, type = TroopType.Engineer, hp = 80, x = 0f, y = 0f)
         val state = GameState(
             playerId = 1, resources = Resources(),
             village = Village(playerId = 1, buildings = listOf(storage, cannon)),
@@ -119,7 +119,7 @@ class BattleUpdateUseCaseTest {
         )
         val result = BattleUpdateUseCase.update(state, now = 100)
         val movedTroop = result.troops.first()
-        // Should target cannon at x=10 even though storage at x=3 is closer
+        // Should target rail gun at x=10 even though storage at x=3 is closer
         assertTrue(movedTroop.x > 0f)
     }
 
@@ -127,9 +127,9 @@ class BattleUpdateUseCaseTest {
     fun troopNavigatesAroundObstacle() {
         // Place a large obstacle (4x4) between troop and target
         // Troop at (5, 10), obstacle at (10, 8) occupying 10-13 x 8-11, target at (18, 10)
-        val target = PlacedBuilding(id = 1, type = BuildingType.GoldStorage, level = 1, x = 18, y = 10, hp = 200)
-        val obstacle = PlacedBuilding(id = 2, type = BuildingType.TownHall, level = 1, x = 10, y = 8, hp = 1000)
-        val troop = Troop(id = 100, type = TroopType.HumanSoldier, hp = 50, x = 5f, y = 10.5f)
+        val target = PlacedBuilding(id = 1, type = BuildingType.CreditVault, level = 1, x = 18, y = 10, hp = 200)
+        val obstacle = PlacedBuilding(id = 2, type = BuildingType.CommandCenter, level = 1, x = 10, y = 8, hp = 1000)
+        val troop = Troop(id = 100, type = TroopType.Marine, hp = 50, x = 5f, y = 10.5f)
         val state = GameState(
             playerId = 1, resources = Resources(),
             village = Village(playerId = 1, buildings = listOf(target, obstacle)),
@@ -154,9 +154,9 @@ class BattleUpdateUseCaseTest {
     @Test
     fun troopWalksOverTrapAndTriggersIt() {
         // Target beyond a spike trap
-        val target = PlacedBuilding(id = 1, type = BuildingType.GoldStorage, level = 1, x = 10, y = 5, hp = 200)
-        val trap = PlacedBuilding(id = 2, type = BuildingType.SpikeTrap, level = 1, x = 7, y = 5, hp = 1)
-        val troop = Troop(id = 100, type = TroopType.HumanSoldier, hp = 50, x = 5f, y = 5.5f)
+        val target = PlacedBuilding(id = 1, type = BuildingType.CreditVault, level = 1, x = 10, y = 5, hp = 200)
+        val trap = PlacedBuilding(id = 2, type = BuildingType.MineTrap, level = 1, x = 7, y = 5, hp = 1)
+        val troop = Troop(id = 100, type = TroopType.Marine, hp = 50, x = 5f, y = 5.5f)
         val state = GameState(
             playerId = 1, resources = Resources(),
             village = Village(playerId = 1, buildings = listOf(target, trap)),

@@ -27,9 +27,9 @@ fun ArmyOverviewView(
     modifier: Modifier = Modifier,
 ) {
     val capacity = buildings
-        .filter { it.type == BuildingType.ArmyCamp && it.constructionStartedAt == null }
+        .filter { it.type == BuildingType.Hangar && it.constructionStartedAt == null }
         .sumOf { BuildingConfig.configFor(it.type, it.level)?.troopCapacity ?: 0 }
-    val hasBarracks = buildings.any { it.type == BuildingType.Barracks && it.constructionStartedAt == null }
+    val hasBarracks = buildings.any { it.type == BuildingType.Academy && it.constructionStartedAt == null }
 
     Box(
         modifier = modifier
