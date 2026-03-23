@@ -62,6 +62,39 @@ fun DrawScope.drawBuildings(
                 style = Stroke(width = 2f * renderingScale),
             )
         }
+
+        // HP bar (when damaged)
+        if (config != null && !isUnderConstruction && building.hp > 0 && building.hp < config.hp) {
+            val barWidth = w * 0.8f
+            val barHeight = 3f * renderingScale
+            val barX = screenX + (w - barWidth) * 0.5f
+            val barY = screenY + h + 2f
+            val hpRatio = building.hp.toFloat() / config.hp
+            val hpColor = when {
+                hpRatio > 0.5f -> Color(0xFF22C55E)
+                hpRatio > 0.25f -> Color(0xFFFF9800)
+                else -> Color(0xFFEF4444)
+            }
+            drawRect(Color(0x80000000), Offset(barX, barY), Size(barWidth, barHeight))
+            drawRect(hpColor, Offset(barX, barY), Size(barWidth * hpRatio, barHeight))
+        }
+
+        // Production indicator (small dot above producer buildings with accumulated resources)
+        if (config != null && !isUnderConstruction && building.type.isProducer) {
+            val now = System.currentTimeMillis()
+            val elapsed = now - building.lastCollectedAt
+            if (elapsed > 10 * 60 * 1000) {
+                val dotRadius = 3f * renderingScale
+                val dotColor = when {
+                    config.productionPerHour.gold > 0 -> Color(0xFFFFD700)
+                    config.productionPerHour.wood > 0 -> Color(0xFF4CAF50)
+                    config.productionPerHour.metal > 0 -> Color(0xFF9E9E9E)
+                    config.productionPerHour.mana > 0 -> Color(0xFF7B1FA2)
+                    else -> Color.White
+                }
+                drawCircle(dotColor, dotRadius, Offset(screenX + w * 0.5f, screenY - dotRadius - 2f))
+            }
+        }
     }
 }
 

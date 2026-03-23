@@ -115,6 +115,9 @@ class GameViewModel : ViewModel(), GameTimerItem {
         _camera.value = _camera.value.offset(tileDragX, tileDragY)
     }
 
+    fun setShowGrid(show: Boolean) { _showGrid.value = show }
+    fun setShowFps(show: Boolean) { _showFps.value = show }
+
     fun onZoom(zoomFactor: Float) {
         val oldScale = _renderingScale.value
         val newScale = (oldScale * zoomFactor).coerceIn(0.5f, 8f)

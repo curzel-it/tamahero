@@ -5,6 +5,7 @@ import it.curzel.tamahero.models.BuildingType
 import it.curzel.tamahero.models.ClientMessage
 import it.curzel.tamahero.models.ProtocolJson
 import it.curzel.tamahero.models.ServerMessage
+import it.curzel.tamahero.models.TroopType
 import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
 import kotlinx.coroutines.*
@@ -76,15 +77,13 @@ object GameSocketClient {
 
     fun speedUp(buildingId: Long) = send(ClientMessage.SpeedUp(buildingId))
 
-    fun train(troopType: it.curzel.tamahero.models.TroopType, count: Int = 1) = send(ClientMessage.Train(troopType, count))
+    fun train(troopType: TroopType, count: Int = 1) = send(ClientMessage.Train(troopType, count))
 
     fun cancelTraining(index: Int) = send(ClientMessage.CancelTraining(index))
 
     fun rearmTrap(buildingId: Long) = send(ClientMessage.RearmTrap(buildingId))
 
     fun rearmAllTraps() = send(ClientMessage.RearmAllTraps)
-
-    fun collectAll() = send(ClientMessage.CollectAll)
 
     fun collectEventRewards() = send(ClientMessage.CollectEventRewards)
 

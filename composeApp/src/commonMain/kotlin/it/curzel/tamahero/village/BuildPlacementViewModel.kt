@@ -27,16 +27,24 @@ class BuildPlacementViewModel : ViewModel() {
     val isValidPlacement = _isValidPlacement.asStateFlow()
 
     private var currentBuildings: List<PlacedBuilding> = emptyList()
+    private var movingBuildingId: Long? = null
 
     val isPlacing: Boolean get() = _selectedType.value != null
 
     fun startPlacement(type: BuildingType) {
+        movingBuildingId = null
         _selectedType.value = type
+    }
+
+    fun startMove(building: PlacedBuilding) {
+        movingBuildingId = building.id
+        _selectedType.value = building.type
     }
 
     fun cancelPlacement() {
         _selectedType.value = null
         _isValidPlacement.value = false
+        movingBuildingId = null
     }
 
     fun updateBuildings(buildings: List<PlacedBuilding>) {
@@ -57,9 +65,15 @@ class BuildPlacementViewModel : ViewModel() {
     fun confirmPlacement() {
         val type = _selectedType.value ?: return
         if (!_isValidPlacement.value) return
-        GameSocketClient.build(type, _ghostGridX.value, _ghostGridY.value)
+        val moveId = movingBuildingId
+        if (moveId != null) {
+            GameSocketClient.move(moveId, _ghostGridX.value, _ghostGridY.value)
+        } else {
+            GameSocketClient.build(type, _ghostGridX.value, _ghostGridY.value)
+        }
         _selectedType.value = null
         _isValidPlacement.value = false
+        movingBuildingId = null
     }
 
     fun canAfford(type: BuildingType, resources: Resources): Boolean {
@@ -89,6 +103,7 @@ class BuildPlacementViewModel : ViewModel() {
         }
 
         for (building in currentBuildings) {
+            if (building.id == movingBuildingId) continue
             val bConfig = BuildingConfig.configFor(building.type, building.level)
             val bw = bConfig?.width ?: 2
             val bh = bConfig?.height ?: 2

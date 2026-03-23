@@ -25,6 +25,11 @@ object TamaColors {
     val Wood = Color(0xFF8B6914)
     val Metal = Color(0xFFC0C0C0)
     val Mana = Color(0xFF4169E1)
+    val Danger = Color(0xFFEF4444)
+}
+
+object TamaSizes {
+    val ModalMaxWidth = 400.dp
 }
 
 object TamaSpacing {

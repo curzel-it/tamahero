@@ -9,7 +9,6 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
-import it.curzel.tamahero.ui.theme.TamaSpacing
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
@@ -29,13 +28,8 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.input.pointer.positionChanged
 import it.curzel.tamahero.auth.AccountView
 import it.curzel.tamahero.game.GameTimer
-import it.curzel.tamahero.village.BuildMenuView
-import it.curzel.tamahero.village.BuildPlacementViewModel
-import it.curzel.tamahero.village.BuildingInfoView
-import it.curzel.tamahero.village.BuildingSelectionViewModel
-import it.curzel.tamahero.village.GameHudView
-import it.curzel.tamahero.village.VillageViewModel
-import it.curzel.tamahero.village.WsDebugPanel
+import it.curzel.tamahero.network.GameSocketClient
+import it.curzel.tamahero.village.*
 import kotlin.math.abs
 
 @OptIn(ExperimentalComposeUiApi::class)
@@ -54,14 +48,27 @@ fun GameView(
     val renderingScale by viewModel.renderingScale.collectAsState()
     val buildings by villageViewModel.buildings.collectAsState()
     val resources by villageViewModel.resources.collectAsState()
+    val army by villageViewModel.army.collectAsState()
+    val trainingQueue by villageViewModel.trainingQueue.collectAsState()
+    val troops by villageViewModel.troops.collectAsState()
+    val hero by villageViewModel.hero.collectAsState()
+    val floatingTexts by villageViewModel.floatingTexts.collectAsState()
+    val offlineSummary by villageViewModel.offlineSummary.collectAsState()
     val selectedType by placementViewModel.selectedType.collectAsState()
     val ghostX by placementViewModel.ghostGridX.collectAsState()
     val ghostY by placementViewModel.ghostGridY.collectAsState()
     val isValidPlacement by placementViewModel.isValidPlacement.collectAsState()
     val selectedBuilding by selectionViewModel.selectedBuilding.collectAsState()
+    val showGrid by viewModel.showGrid.collectAsState()
+    val showFps by viewModel.showFps.collectAsState()
     var showBuildMenu by remember { mutableStateOf(false) }
     var showAccount by remember { mutableStateOf(false) }
     var showWsLog by remember { mutableStateOf(false) }
+    var showArmy by remember { mutableStateOf(false) }
+    var showHero by remember { mutableStateOf(false) }
+    var showSettings by remember { mutableStateOf(false) }
+    var hoverPos by remember { mutableStateOf<Offset?>(null) }
+    var hoveredBuilding by remember { mutableStateOf<it.curzel.tamahero.models.PlacedBuilding?>(null) }
 
     LaunchedEffect(buildings) {
         placementViewModel.updateBuildings(buildings)
@@ -94,17 +101,14 @@ fun GameView(
                 .focusable()
                 .onPreviewKeyEvent { event ->
                     if (event.type == KeyEventType.KeyDown && event.key == Key.Escape) {
-                        if (showAccount) {
-                            showAccount = false
-                            true
-                        } else if (placementViewModel.isPlacing) {
-                            placementViewModel.cancelPlacement()
-                            true
-                        } else if (selectedBuilding != null) {
-                            selectionViewModel.deselect()
-                            true
-                        } else {
-                            false
+                        when {
+                            showAccount -> { showAccount = false; true }
+                            showArmy -> { showArmy = false; true }
+                            showHero -> { showHero = false; true }
+                            showSettings -> { showSettings = false; true }
+                            placementViewModel.isPlacing -> { placementViewModel.cancelPlacement(); true }
+                            selectedBuilding != null -> { selectionViewModel.deselect(); true }
+                            else -> false
                         }
                     } else {
                         viewModel.handleKeyEvent(event)
@@ -114,9 +118,19 @@ fun GameView(
                     viewModel.handleKeyEvent(event)
                 }
                 .onPointerEvent(PointerEventType.Move) { event ->
+                    val pos = event.changes.firstOrNull()?.position ?: return@onPointerEvent
                     if (placementViewModel.isPlacing) {
-                        val pos = event.changes.firstOrNull()?.position ?: return@onPointerEvent
                         placementViewModel.updateGhostPosition(pos.x, pos.y, viewModel.camera.value, renderingScale)
+                    }
+                    hoverPos = pos
+                    val tileSize = it.curzel.tamahero.game.TILE_SIZE * renderingScale
+                    val gridX = kotlin.math.floor(pos.x / tileSize + viewModel.camera.value.x).toInt()
+                    val gridY = kotlin.math.floor(pos.y / tileSize + viewModel.camera.value.y).toInt()
+                    hoveredBuilding = buildings.find { b ->
+                        val bConfig = it.curzel.tamahero.models.BuildingConfig.configFor(b.type, b.level)
+                        val bw = bConfig?.width ?: 2
+                        val bh = bConfig?.height ?: 2
+                        gridX >= b.x && gridX < b.x + bw && gridY >= b.y && gridY < b.y + bh
                     }
                 }
                 .pointerInput(selectedType) {
@@ -191,8 +205,10 @@ fun GameView(
             RenderingView(
                 viewModel = viewModel,
                 buildings = buildings,
+                troops = troops,
                 ghost = ghost,
                 selectedBuildingId = selectedBuilding?.id,
+                floatingTexts = floatingTexts,
             )
             GameHudView(
                 resources = resources,
@@ -206,12 +222,12 @@ fun GameView(
                     placementViewModel.cancelPlacement()
                     focusRequester.requestFocus()
                 },
-                onAccountClick = {
-                    showAccount = true
-                },
-                onWsLogClick = {
-                    showWsLog = !showWsLog
-                },
+                onAccountClick = { showAccount = true },
+                onArmyClick = { showArmy = true },
+                onHeroClick = { showHero = true },
+                onSettingsClick = { showSettings = true },
+                onCollectAllClick = { GameSocketClient.collectAll() },
+                onWsLogClick = { showWsLog = !showWsLog },
                 modifier = Modifier.align(Alignment.TopStart),
             )
 
@@ -221,6 +237,11 @@ fun GameView(
                     resources = resources,
                     onDismiss = {
                         selectionViewModel.deselect()
+                        focusRequester.requestFocus()
+                    },
+                    onMove = { building ->
+                        selectionViewModel.deselect()
+                        placementViewModel.startMove(building)
                         focusRequester.requestFocus()
                     },
                     modifier = Modifier.align(Alignment.BottomCenter),
@@ -243,6 +264,43 @@ fun GameView(
                 )
             }
 
+            if (showArmy) {
+                ArmyOverviewView(
+                    army = army,
+                    trainingQueue = trainingQueue,
+                    resources = resources,
+                    buildings = buildings,
+                    onDismiss = {
+                        showArmy = false
+                        focusRequester.requestFocus()
+                    },
+                )
+            }
+
+            if (showHero) {
+                HeroView(
+                    hero = hero,
+                    resources = resources,
+                    onDismiss = {
+                        showHero = false
+                        focusRequester.requestFocus()
+                    },
+                )
+            }
+
+            if (showSettings) {
+                SettingsView(
+                    showGrid = showGrid,
+                    showFps = showFps,
+                    onToggleGrid = { viewModel.setShowGrid(it) },
+                    onToggleFps = { viewModel.setShowFps(it) },
+                    onDismiss = {
+                        showSettings = false
+                        focusRequester.requestFocus()
+                    },
+                )
+            }
+
             if (showAccount) {
                 AccountView(
                     username = username,
@@ -250,6 +308,28 @@ fun GameView(
                     onDeleteAccount = onDeleteAccount,
                     onDismiss = {
                         showAccount = false
+                        focusRequester.requestFocus()
+                    },
+                )
+            }
+
+            val hb = hoveredBuilding
+            if (hb != null && selectedBuilding == null && !placementViewModel.isPlacing &&
+                !showBuildMenu && !showArmy && !showHero && !showSettings && !showAccount
+            ) {
+                BuildingTooltipView(
+                    building = hb,
+                    modifier = Modifier.align(Alignment.TopEnd)
+                        .padding(top = it.curzel.tamahero.ui.theme.TamaSpacing.XLarge),
+                )
+            }
+
+            val summary = offlineSummary
+            if (summary != null) {
+                OfflineSummaryView(
+                    summary = summary,
+                    onDismiss = {
+                        villageViewModel.dismissOfflineSummary()
                         focusRequester.requestFocus()
                     },
                 )

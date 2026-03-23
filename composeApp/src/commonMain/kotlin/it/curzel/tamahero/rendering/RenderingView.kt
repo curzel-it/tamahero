@@ -11,6 +11,8 @@ import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.text.rememberTextMeasurer
 import it.curzel.tamahero.models.BuildingType
 import it.curzel.tamahero.models.PlacedBuilding
+import it.curzel.tamahero.models.Troop
+import it.curzel.tamahero.village.FloatingText
 
 data class GhostBuilding(
     val type: BuildingType,
@@ -23,8 +25,10 @@ data class GhostBuilding(
 fun RenderingView(
     viewModel: GameViewModel,
     buildings: List<PlacedBuilding>,
+    troops: List<Troop> = emptyList(),
     ghost: GhostBuilding? = null,
     selectedBuildingId: Long? = null,
+    floatingTexts: List<FloatingText> = emptyList(),
 ) {
     val camera by viewModel.camera.collectAsState()
     val renderingScale by viewModel.renderingScale.collectAsState()
@@ -49,8 +53,16 @@ fun RenderingView(
 
         drawBuildings(buildings, camera, renderingScale, selectedBuildingId)
 
+        if (troops.isNotEmpty()) {
+            drawTroops(troops, camera, renderingScale)
+        }
+
         if (ghost != null) {
             drawBuildingGhost(ghost.type, ghost.gridX, ghost.gridY, ghost.isValid, camera, renderingScale)
+        }
+
+        if (floatingTexts.isNotEmpty()) {
+            drawFloatingTexts(floatingTexts, textMeasurer, size)
         }
 
         if (showFps) {

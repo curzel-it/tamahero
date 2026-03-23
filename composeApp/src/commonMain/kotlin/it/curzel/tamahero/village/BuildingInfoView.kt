@@ -23,6 +23,7 @@ fun BuildingInfoView(
     building: PlacedBuilding,
     resources: Resources,
     onDismiss: () -> Unit,
+    onMove: (PlacedBuilding) -> Unit = {},
     modifier: Modifier = Modifier,
 ) {
     val config = BuildingConfig.configFor(building.type, building.level)
@@ -96,6 +97,20 @@ fun BuildingInfoView(
                     modifier = Modifier.weight(1f),
                 )
             }
+            if (building.type.isTrap && building.triggered) {
+                TamaButton(
+                    text = "Rearm",
+                    color = TamaColors.Warning,
+                    onClick = { GameSocketClient.rearmTrap(building.id) },
+                    modifier = Modifier.weight(1f),
+                )
+                TamaButton(
+                    text = "Rearm All",
+                    color = TamaColors.Warning,
+                    onClick = { GameSocketClient.rearmAllTraps() },
+                    modifier = Modifier.weight(1f),
+                )
+            }
             if (nextConfig != null && building.level < maxLevel && !isUnderConstruction) {
                 val canAfford = resources.hasEnough(nextConfig.cost)
                 val costText = formatCost(nextConfig.cost)
@@ -124,6 +139,12 @@ fun BuildingInfoView(
                 )
             }
             if (!isUnderConstruction) {
+                TamaButton(
+                    text = "Move",
+                    color = TamaColors.Info,
+                    onClick = { onMove(building) },
+                    modifier = Modifier.weight(1f),
+                )
                 TamaDangerButton(
                     text = "Demolish",
                     onClick = {

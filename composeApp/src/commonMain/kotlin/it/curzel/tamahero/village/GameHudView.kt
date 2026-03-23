@@ -17,6 +17,10 @@ fun GameHudView(
     onBuildClick: () -> Unit,
     onCancelClick: () -> Unit,
     onAccountClick: () -> Unit,
+    onArmyClick: () -> Unit = {},
+    onHeroClick: () -> Unit = {},
+    onSettingsClick: () -> Unit = {},
+    onCollectAllClick: () -> Unit = {},
     onWsLogClick: () -> Unit = {},
     modifier: Modifier = Modifier,
 ) {
@@ -42,8 +46,12 @@ fun GameHudView(
                 TamaDangerButton(text = "Cancel", onClick = onCancelClick)
             } else {
                 TamaButton(text = "Build", onClick = onBuildClick, color = TamaColors.Success)
+                TamaSecondaryButton(text = "Collect", onClick = onCollectAllClick)
+                TamaSecondaryButton(text = "Army", onClick = onArmyClick)
+                TamaSecondaryButton(text = "Hero", onClick = onHeroClick)
             }
             TamaSecondaryButton(text = "Account", onClick = onAccountClick)
+            TamaSecondaryButton(text = "Settings", onClick = onSettingsClick)
             TamaSecondaryButton(text = "WS", onClick = onWsLogClick)
         }
     }
