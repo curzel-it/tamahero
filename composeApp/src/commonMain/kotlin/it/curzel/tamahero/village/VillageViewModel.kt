@@ -31,6 +31,12 @@ class VillageViewModel : ViewModel() {
     private val _troops = MutableStateFlow<List<Troop>>(emptyList())
     val troops = _troops.asStateFlow()
 
+    private val _activeEvent = MutableStateFlow<ActiveEvent?>(null)
+    val activeEvent = _activeEvent.asStateFlow()
+
+    private val _eventResult = MutableStateFlow<ServerMessage.EventEnded?>(null)
+    val eventResult = _eventResult.asStateFlow()
+
     private val _floatingTexts = MutableStateFlow<List<FloatingText>>(emptyList())
     val floatingTexts = _floatingTexts.asStateFlow()
 
@@ -59,14 +65,18 @@ class VillageViewModel : ViewModel() {
                         _army.value = state.army
                         _trainingQueue.value = state.trainingQueue
                         _troops.value = state.troops
+                        _activeEvent.value = state.activeEvent
                     }
                     is ServerMessage.ResourcesUpdated -> {
                         trackResourceChanges(message.resources)
                         _resources.value = message.resources
                     }
                     is ServerMessage.BuildingComplete,
-                    is ServerMessage.TrainingComplete,
+                    is ServerMessage.TrainingComplete -> {
+                        GameSocketClient.getVillage()
+                    }
                     is ServerMessage.EventEnded -> {
+                        _eventResult.value = message
                         GameSocketClient.getVillage()
                     }
                     is ServerMessage.Error -> {
@@ -84,6 +94,15 @@ class VillageViewModel : ViewModel() {
 
     fun dismissError() {
         _errorMessage.value = null
+    }
+
+    fun collectEventRewards() {
+        GameSocketClient.collectEventRewards()
+        _eventResult.value = null
+    }
+
+    fun dismissEventResult() {
+        _eventResult.value = null
     }
 
     private fun trackResourceChanges(newResources: Resources) {

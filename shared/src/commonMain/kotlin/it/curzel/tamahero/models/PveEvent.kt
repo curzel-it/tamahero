@@ -8,13 +8,18 @@ enum class EventType {
     Quake,
     IonStorm,
     ScoutParty,
-    Battle;
+    Battle,
+    Raid,
+    Siege,
+    Invasion;
 
     val isBattle: Boolean get() = this !in setOf(Quake, IonStorm)
     val isDisaster: Boolean get() = this in setOf(Quake, IonStorm)
     val requiredTownHallLevel: Int get() = when (this) {
-        Quake, IonStorm, ScoutParty -> 1
-        Battle -> 1
+        Quake, IonStorm, ScoutParty, Battle -> 1
+        Raid -> 3
+        Siege -> 5
+        Invasion -> 7
     }
 }
 

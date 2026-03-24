@@ -9,6 +9,8 @@ import it.curzel.tamahero.auth.SocialAuthProviderHolder
 import it.curzel.tamahero.auth.TokenStorageDesktop
 import it.curzel.tamahero.auth.TokenStorageProvider
 import it.curzel.tamahero.network.GameSocketManager
+import it.curzel.tamahero.notifications.PushNotificationDesktop
+import it.curzel.tamahero.notifications.PushNotificationProvider
 import it.curzel.tamahero.rendering.RenderingScaleProviderHolder
 
 fun main(args: Array<String>) {
@@ -17,6 +19,7 @@ fun main(args: Array<String>) {
     RenderingScaleProviderHolder.setProvider(RenderingScaleDesktop())
     TokenStorageProvider.setProvider(TokenStorageDesktop(parsedArgs.user ?: "default"))
     SocialAuthProviderHolder.setProvider(SocialAuthDesktop())
+    PushNotificationProvider.setProvider(PushNotificationDesktop())
     GameSocketManager.initialize(HttpClient { install(WebSockets) })
 
     if (parsedArgs.server != null) {

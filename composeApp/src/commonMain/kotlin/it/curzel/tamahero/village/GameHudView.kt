@@ -21,6 +21,7 @@ fun GameHudView(
     onAttackClick: () -> Unit = {},
     onSettingsClick: () -> Unit = {},
     onCollectAllClick: () -> Unit = {},
+    onLeaderboardClick: () -> Unit = {},
     onWsLogClick: () -> Unit = {},
     modifier: Modifier = Modifier,
 ) {
@@ -49,6 +50,7 @@ fun GameHudView(
                 TamaSecondaryButton(text = "Collect", onClick = onCollectAllClick)
                 TamaSecondaryButton(text = "Army", onClick = onArmyClick)
                 TamaDangerButton(text = "Attack", onClick = onAttackClick)
+                TamaSecondaryButton(text = "Ranks", onClick = onLeaderboardClick)
             }
             TamaSecondaryButton(text = "Account", onClick = onAccountClick)
             TamaSecondaryButton(text = "Settings", onClick = onSettingsClick)

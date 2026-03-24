@@ -52,6 +52,8 @@ fun GameView(
     val trainingQueue by villageViewModel.trainingQueue.collectAsState()
     val troops by villageViewModel.troops.collectAsState()
 
+    val activeEvent by villageViewModel.activeEvent.collectAsState()
+    val eventResult by villageViewModel.eventResult.collectAsState()
     val floatingTexts by villageViewModel.floatingTexts.collectAsState()
     val offlineSummary by villageViewModel.offlineSummary.collectAsState()
     val errorMessage by villageViewModel.errorMessage.collectAsState()
@@ -66,6 +68,11 @@ fun GameView(
     var showAccount by remember { mutableStateOf(false) }
     var showWsLog by remember { mutableStateOf(false) }
     var showArmy by remember { mutableStateOf(false) }
+
+    var showLeaderboard by remember { mutableStateOf(false) }
+    val leaderboardViewModel = remember { LeaderboardViewModel() }
+    val leaderboardEntries by leaderboardViewModel.entries.collectAsState()
+    val leaderboardYourRank by leaderboardViewModel.yourRank.collectAsState()
 
     var showSettings by remember { mutableStateOf(false) }
     var hoverPos by remember { mutableStateOf<Offset?>(null) }
@@ -114,6 +121,7 @@ fun GameView(
                         when {
                             showAccount -> { showAccount = false; true }
                             showArmy -> { showArmy = false; true }
+                            showLeaderboard -> { showLeaderboard = false; true }
                             showSettings -> { showSettings = false; true }
                             placementViewModel.isPlacing -> { placementViewModel.cancelPlacement(); true }
                             selectedBuilding != null -> { selectionViewModel.deselect(); true }
@@ -242,6 +250,10 @@ fun GameView(
                     onAccountClick = { showAccount = true },
                     onArmyClick = { showArmy = true },
                     onAttackClick = { pvpViewModel.findOpponent() },
+                    onLeaderboardClick = {
+                        showLeaderboard = true
+                        leaderboardViewModel.refresh()
+                    },
                     onSettingsClick = { showSettings = true },
                     onCollectAllClick = { GameSocketClient.collectAll() },
                     onWsLogClick = { showWsLog = !showWsLog },
@@ -257,6 +269,14 @@ fun GameView(
                     onSelectTroop = { troopType -> selectedDeployTroop = troopType },
                     onSurrender = { pvpViewModel.surrender() },
                     modifier = Modifier.align(Alignment.TopStart),
+                )
+            }
+
+            val currentEvent = activeEvent
+            if (currentEvent != null && !currentEvent.completed && !inBattle) {
+                PveEventHudView(
+                    event = currentEvent,
+                    modifier = Modifier.align(Alignment.TopCenter),
                 )
             }
 
@@ -301,6 +321,17 @@ fun GameView(
                     buildings = buildings,
                     onDismiss = {
                         showArmy = false
+                        focusRequester.requestFocus()
+                    },
+                )
+            }
+
+            if (showLeaderboard) {
+                LeaderboardView(
+                    entries = leaderboardEntries,
+                    yourRank = leaderboardYourRank,
+                    onDismiss = {
+                        showLeaderboard = false
                         focusRequester.requestFocus()
                     },
                 )
@@ -358,9 +389,24 @@ fun GameView(
                 )
             }
 
+            val currentEventResult = eventResult
+            if (currentEventResult != null) {
+                PveEventResultView(
+                    result = currentEventResult,
+                    onCollect = {
+                        villageViewModel.collectEventRewards()
+                        focusRequester.requestFocus()
+                    },
+                    onDismiss = {
+                        villageViewModel.dismissEventResult()
+                        focusRequester.requestFocus()
+                    },
+                )
+            }
+
             val hb = hoveredBuilding
             if (hb != null && selectedBuilding == null && !placementViewModel.isPlacing &&
-                !showBuildMenu && !showArmy && !showSettings && !showAccount
+                !showBuildMenu && !showArmy && !showLeaderboard && !showSettings && !showAccount
             ) {
                 BuildingTooltipView(
                     building = hb,

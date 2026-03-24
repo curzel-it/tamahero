@@ -6,6 +6,7 @@ import it.curzel.tamahero.models.ClientMessage
 import it.curzel.tamahero.models.ProtocolJson
 import it.curzel.tamahero.models.ServerMessage
 import it.curzel.tamahero.models.TroopType
+import it.curzel.tamahero.notifications.PushNotificationProvider
 import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
 import kotlinx.coroutines.*
@@ -99,6 +100,10 @@ object GameSocketClient {
 
     fun getLeaderboard() = send(ClientMessage.GetLeaderboard)
 
+    fun registerDevice(token: String, platform: String) = send(ClientMessage.RegisterDevice(token, platform))
+
+    fun unregisterDevice(token: String) = send(ClientMessage.UnregisterDevice(token))
+
     private fun send(message: ClientMessage) {
         val text = ProtocolJson.encodeToString(ClientMessage.serializer(), message)
         addLog("SENT", text)
@@ -112,6 +117,11 @@ object GameSocketClient {
             if (message is ServerMessage.Connected) {
                 connected = true
                 startKeepAlive()
+                try {
+                    if (PushNotificationProvider.isInitialized()) {
+                        PushNotificationProvider.instance.requestPermissionAndRegister()
+                    }
+                } catch (_: Exception) {}
             }
             _events.emit(message)
         } catch (_: Exception) {}

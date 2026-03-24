@@ -10,6 +10,8 @@ import it.curzel.tamahero.auth.SocialAuthAndroid
 import it.curzel.tamahero.auth.SocialAuthProviderHolder
 import it.curzel.tamahero.auth.TokenStorageAndroid
 import it.curzel.tamahero.auth.TokenStorageProvider
+import it.curzel.tamahero.notifications.PushNotificationAndroid
+import it.curzel.tamahero.notifications.PushNotificationProvider
 import it.curzel.tamahero.rendering.RenderingScaleProviderHolder
 
 class MainActivity : ComponentActivity() {
@@ -20,6 +22,7 @@ class MainActivity : ComponentActivity() {
         RenderingScaleProviderHolder.setProvider(RenderingScaleAndroid(this))
         TokenStorageProvider.setProvider(TokenStorageAndroid(this))
         SocialAuthProviderHolder.setProvider(SocialAuthAndroid(this))
+        PushNotificationProvider.setProvider(PushNotificationAndroid())
 
         setContent {
             App()

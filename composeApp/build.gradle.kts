@@ -8,6 +8,7 @@ plugins {
     alias(libs.plugins.composeCompiler)
     alias(libs.plugins.composeHotReload)
     alias(libs.plugins.kotlinx.serialization)
+    id("com.google.gms.google-services")
 }
 
 kotlin {
@@ -107,6 +108,8 @@ android {
 
 dependencies {
     debugImplementation(libs.compose.uiTooling)
+    implementation(platform("com.google.firebase:firebase-bom:33.7.0"))
+    implementation("com.google.firebase:firebase-messaging-ktx")
 }
 
 compose.desktop {
