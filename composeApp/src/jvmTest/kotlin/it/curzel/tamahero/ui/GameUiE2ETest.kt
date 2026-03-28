@@ -386,4 +386,70 @@ class GameUiE2ETest {
         onNodeWithText("Builders:", substring = true).assertIsDisplayed()
         onNodeWithText("Trophies:", substring = true).assertIsDisplayed()
     }
+
+    // ========================================================================
+    // Full E2E: register new user and verify game state is correct
+    // ========================================================================
+
+    @Test
+    fun newUserSeesCorrectStartingResources() = runComposeUiTest {
+        registerAndWaitForGame()
+
+        // New user: 1000 credits, 1000 alloy, 500 crystal, 0 plasma
+        // No storage buildings → format is "Label: value"
+        onNodeWithText("Credits: 1000").assertIsDisplayed()
+        onNodeWithText("Alloy: 1000").assertIsDisplayed()
+        onNodeWithText("Crystal: 500").assertIsDisplayed()
+        onNodeWithText("Plasma: 0").assertIsDisplayed()
+    }
+
+    @Test
+    fun newUserSeesBuilders() = runComposeUiTest {
+        registerAndWaitForGame()
+
+        // Default village has 1 DroneStation = 1 worker, 0 active constructions
+        onNodeWithText("Builders: 0/1").assertIsDisplayed()
+    }
+
+    @Test
+    fun newUserCanOpenBuildMenuAndSeeAffordableBuildings() = runComposeUiTest {
+        registerAndWaitForGame()
+
+        onNodeWithTag("build").performClick()
+        waitForIdle()
+
+        // AlloyRefinery costs 50 credits — should be visible and affordable
+        onNodeWithTag("building_AlloyRefinery").assertIsDisplayed()
+        // Multiple buildings cost 50cr — just verify at least one exists
+        onAllNodesWithText("50cr", substring = true).fetchSemanticsNodes().let {
+            assertTrue(it.isNotEmpty(), "Should see at least one building costing 50cr")
+        }
+    }
+
+    @Test
+    fun newUserBuildMenuShowsCorrectBuildingCounts() = runComposeUiTest {
+        registerAndWaitForGame()
+
+        onNodeWithTag("build").performClick()
+        waitForIdle()
+
+        // New user has 0 of each type. Multiple buildings show "0 / 2" at TH1.
+        onAllNodesWithText("0 / 2", substring = true).fetchSemanticsNodes().let {
+            assertTrue(it.isNotEmpty(), "Should see building count '0 / 2' for TH1 buildings")
+        }
+    }
+
+    @Test
+    fun newUserAccountShowsCorrectStats() = runComposeUiTest {
+        registerAndWaitForGame()
+
+        onNodeWithTag("account").performClick()
+        waitForIdle()
+
+        // Account view shows stat labels
+        onNodeWithText("CC Level").assertIsDisplayed()
+        onNodeWithText("Trophies").assertIsDisplayed()
+        onNodeWithText("Buildings").assertIsDisplayed()
+        onNodeWithText("Troops").assertIsDisplayed()
+    }
 }

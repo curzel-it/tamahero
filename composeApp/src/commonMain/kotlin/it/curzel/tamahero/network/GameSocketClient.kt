@@ -22,7 +22,7 @@ object GameSocketClient {
     private val scope = CoroutineScope(Dispatchers.Default + SupervisorJob())
     private var keepAliveJob: Job? = null
 
-    private val _events = MutableSharedFlow<ServerMessage>(extraBufferCapacity = 64)
+    private val _events = MutableSharedFlow<ServerMessage>(replay = 1, extraBufferCapacity = 64)
     val events: SharedFlow<ServerMessage> = _events
 
     private val _messageLog = MutableStateFlow<List<WsLogEntry>>(emptyList())
