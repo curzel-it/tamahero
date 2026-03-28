@@ -3,9 +3,6 @@ package it.curzel.tamahero.village
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
@@ -29,7 +26,13 @@ fun ArmyOverviewView(
     val capacity = buildings
         .filter { it.type == BuildingType.Hangar && it.constructionStartedAt == null }
         .sumOf { BuildingConfig.configFor(it.type, it.level)?.troopCapacity ?: 0 }
-    val hasBarracks = buildings.any { it.type == BuildingType.Academy && it.constructionStartedAt == null }
+    val academyLevel = buildings
+        .filter { it.type == BuildingType.Academy && it.constructionStartedAt == null }
+        .maxOfOrNull { it.level } ?: 0
+    val hasBarracks = academyLevel > 0
+    val maxTrainLevel = TroopConfig.maxLevelForAcademy(academyLevel)
+
+    var selectedTroopInfo by remember { mutableStateOf<TroopType?>(null) }
 
     Box(
         modifier = modifier
@@ -53,7 +56,12 @@ fun ArmyOverviewView(
                 Text("No troops", color = TamaColors.TextMuted, fontSize = 14.sp)
             } else {
                 for (t in army.troops) {
-                    Text("${t.type.name} Lv${t.level} x${t.count}", color = TamaColors.Text, fontSize = 14.sp)
+                    Text(
+                        "${t.type.name} Lv${t.level} x${t.count}",
+                        color = TamaColors.Accent,
+                        fontSize = 14.sp,
+                        modifier = Modifier.clickable { selectedTroopInfo = t.type },
+                    )
                 }
             }
 
@@ -62,12 +70,20 @@ fun ArmyOverviewView(
                 Text("Training Queue", color = TamaColors.Text, fontSize = 16.sp)
                 Spacer(Modifier.height(TamaSpacing.XXSmall))
                 for ((i, entry) in trainingQueue.entries.withIndex()) {
-                    val status = if (entry.startedAt != null) "Training" else "Queued"
+                    val status = if (entry.startedAt != null) {
+                        val config = TroopConfig.configFor(entry.troopType, entry.level)
+                        if (config != null) {
+                            val elapsed = (kotlinx.datetime.Clock.System.now().toEpochMilliseconds() - entry.startedAt!!).coerceAtLeast(0)
+                            val remainingMs = (config.trainingTimeSeconds * 1000 - elapsed).coerceAtLeast(0)
+                            val remainingSec = remainingMs / 1000
+                            "Training ${remainingSec}s"
+                        } else "Training"
+                    } else "Queued"
                     Row(
                         horizontalArrangement = Arrangement.SpaceBetween,
                         modifier = Modifier.fillMaxWidth(),
                     ) {
-                        Text("${entry.troopType.name} [$status]", color = TamaColors.TextMuted, fontSize = 14.sp)
+                        Text("${entry.troopType.name} Lv${entry.level} [$status]", color = TamaColors.TextMuted, fontSize = 14.sp)
                         if (entry.startedAt == null) {
                             TamaGhostButton(text = "X", onClick = { GameSocketClient.cancelTraining(i) })
                         }
@@ -79,23 +95,45 @@ fun ArmyOverviewView(
                 Spacer(Modifier.height(TamaSpacing.Small))
                 Text("Train", color = TamaColors.Text, fontSize = 16.sp)
                 Spacer(Modifier.height(TamaSpacing.XXSmall))
-                Row(
-                    horizontalArrangement = Arrangement.spacedBy(TamaSpacing.XXSmall),
-                    modifier = Modifier.fillMaxWidth(),
-                ) {
-                    for (type in TroopType.entries) {
-                        val config = TroopConfig.configFor(type, 1) ?: continue
-                        val canAfford = resources.hasEnough(config.trainingCost)
-                        val atCapacity = army.totalCount >= capacity
+                for (type in TroopType.entries) {
+                    val config = TroopConfig.configFor(type, maxTrainLevel) ?: continue
+                    val canAfford1 = resources.hasEnough(config.trainingCost)
+                    val canAfford5 = resources.hasEnough(config.trainingCost * 5.0)
+                    val atCapacity = army.totalCount >= capacity
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(TamaSpacing.XXSmall),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        Text(
+                            "${type.name} L$maxTrainLevel",
+                            color = TamaColors.Accent,
+                            fontSize = 13.sp,
+                            modifier = Modifier.weight(1f).clickable { selectedTroopInfo = type },
+                        )
                         TamaButton(
-                            text = type.name.take(6),
-                            color = if (canAfford && !atCapacity) TamaColors.Success else TamaColors.SurfaceElevated,
-                            enabled = canAfford && !atCapacity,
-                            onClick = { GameSocketClient.train(type) },
+                            text = "+1",
+                            color = if (canAfford1 && !atCapacity) TamaColors.Success else TamaColors.SurfaceElevated,
+                            enabled = canAfford1 && !atCapacity,
+                            onClick = { GameSocketClient.train(type, count = 1, level = maxTrainLevel) },
+                        )
+                        TamaButton(
+                            text = "+5",
+                            color = if (canAfford5 && !atCapacity) TamaColors.Success else TamaColors.SurfaceElevated,
+                            enabled = canAfford5 && !atCapacity,
+                            onClick = { GameSocketClient.train(type, count = 5, level = maxTrainLevel) },
                         )
                     }
                 }
             }
+        }
+
+        val infoType = selectedTroopInfo
+        if (infoType != null) {
+            TroopInfoView(
+                troopType = infoType,
+                maxLevel = maxTrainLevel,
+                onDismiss = { selectedTroopInfo = null },
+            )
         }
     }
 }

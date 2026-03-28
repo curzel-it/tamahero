@@ -45,7 +45,7 @@ fun BuildMenuView(
         .filter { it.type == BuildingType.CommandCenter && it.constructionStartedAt == null }
         .maxOfOrNull { it.level } ?: 1
 
-    val now = System.currentTimeMillis()
+    val now = kotlinx.datetime.Clock.System.now().toEpochMilliseconds()
     val workerCount = buildings
         .count { it.type == BuildingType.DroneStation && it.isComplete(now) }
         .coerceAtLeast(1)

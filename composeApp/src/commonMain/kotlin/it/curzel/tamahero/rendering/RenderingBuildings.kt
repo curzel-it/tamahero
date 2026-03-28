@@ -81,7 +81,7 @@ fun DrawScope.drawBuildings(
 
         // Production indicator (small dot above producer buildings with accumulated resources)
         if (config != null && !isUnderConstruction && building.type.isProducer) {
-            val now = System.currentTimeMillis()
+            val now = kotlinx.datetime.Clock.System.now().toEpochMilliseconds()
             val elapsed = now - building.lastCollectedAt
             if (elapsed > 10 * 60 * 1000) {
                 val dotRadius = 3f * renderingScale

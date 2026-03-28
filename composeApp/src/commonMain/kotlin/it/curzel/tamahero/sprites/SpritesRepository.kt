@@ -8,7 +8,9 @@ import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.IntSize
 import it.curzel.tamahero.game.TILE_SIZE
 import it.curzel.tamahero.utils.IntRect
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.ExperimentalResourceApi
 import org.jetbrains.compose.resources.decodeToImageBitmap
 import tamahero.composeapp.generated.resources.Res
@@ -20,26 +22,43 @@ object SpritesRepository {
 
     private val spriteSheetMapping: MutableMap<UInt, String> = mutableMapOf()
 
+    private val placeholder = ImageBitmap(16, 16, ImageBitmapConfig.Argb8888, false, ColorSpaces.Srgb)
+    private val loadingSheets = mutableSetOf<UInt>()
+
     fun registerSheet(sheetId: UInt, name: String) {
         spriteSheetMapping[sheetId] = name
+    }
+
+    suspend fun preloadSheet(sheetId: UInt) {
+        if (sprites.containsKey(sheetId)) return
+        val sheetName = spriteSheetMapping[sheetId] ?: return
+        try {
+            val image = Res.readBytes("drawable/$sheetName.png").decodeToImageBitmap()
+            sprites[sheetId] = image
+        } catch (e: Exception) {
+            println("Failed to preload sprite sheet: $sheetName - ${e.message}")
+        }
     }
 
     fun imageBitmap(sheetId: UInt): ImageBitmap {
         sprites[sheetId]?.let { return it }
 
-        val sheetName = spriteSheetMapping[sheetId] ?: "blank"
-
-        val image = runBlocking {
-            try {
-                Res.readBytes("drawable/$sheetName.png").decodeToImageBitmap()
-            } catch (e: Exception) {
-                println("Failed to load sprite sheet: $sheetName - ${e.message}")
-                ImageBitmap(16, 16, ImageBitmapConfig.Argb8888, false, ColorSpaces.Srgb)
+        if (!loadingSheets.contains(sheetId)) {
+            loadingSheets.add(sheetId)
+            val sheetName = spriteSheetMapping[sheetId] ?: "blank"
+            CoroutineScope(Dispatchers.Default).launch {
+                try {
+                    val image = Res.readBytes("drawable/$sheetName.png").decodeToImageBitmap()
+                    sprites[sheetId] = image
+                    val keysToRemove = extractedSprites.keys.filter { it.startsWith("$sheetId:") }
+                    keysToRemove.forEach { extractedSprites.remove(it) }
+                } catch (e: Exception) {
+                    println("Failed to load sprite sheet: $sheetName - ${e.message}")
+                }
             }
         }
 
-        sprites[sheetId] = image
-        return image
+        return placeholder
     }
 
     fun imageBitmap(sprite: AnimatedSprite): ImageBitmap {
@@ -50,12 +69,15 @@ object SpritesRepository {
             spriteSheetId = sprite.spriteSheet,
             frame = sprite.frame
         )
-        extractedSprites[key] = image
+        if (image !== placeholder) {
+            extractedSprites[key] = image
+        }
         return image
     }
 
     private fun buildSprite(spriteSheetId: UInt, frame: IntRect): ImageBitmap {
         val bitmap = imageBitmap(spriteSheetId)
+        if (bitmap === placeholder) return placeholder
         val tileSize = TILE_SIZE.toInt()
 
         val targetBitmap = ImageBitmap(
@@ -88,15 +110,15 @@ object SpritesRepository {
     }
 
     fun registerCustomSheet(sheetId: UInt, pngBytes: ByteArray) {
-        try {
-            val image = runBlocking {
-                pngBytes.decodeToImageBitmap()
+        CoroutineScope(Dispatchers.Default).launch {
+            try {
+                val image = pngBytes.decodeToImageBitmap()
+                sprites[sheetId] = image
+                val keysToRemove = extractedSprites.keys.filter { it.startsWith("$sheetId:") }
+                keysToRemove.forEach { extractedSprites.remove(it) }
+            } catch (e: Exception) {
+                println("Failed to register custom sprite sheet: ${e.message}")
             }
-            sprites[sheetId] = image
-            val keysToRemove = extractedSprites.keys.filter { it.startsWith("$sheetId:") }
-            keysToRemove.forEach { extractedSprites.remove(it) }
-        } catch (e: Exception) {
-            println("Failed to register custom sprite sheet: ${e.message}")
         }
     }
 
@@ -109,5 +131,6 @@ object SpritesRepository {
     fun clear() {
         sprites.clear()
         extractedSprites.clear()
+        loadingSheets.clear()
     }
 }

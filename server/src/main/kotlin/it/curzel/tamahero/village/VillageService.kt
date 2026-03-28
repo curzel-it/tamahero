@@ -91,20 +91,25 @@ object VillageService {
     fun collectAll(userId: Long): GameState =
         loadAndUpdate(userId) { it }
 
-    fun trainTroops(userId: Long, type: TroopType, count: Int): GameState =
+    fun trainTroops(userId: Long, type: TroopType, count: Int, level: Int): GameState =
         loadAndUpdate(userId) { state ->
             val now = state.lastUpdatedAt
-            val hasAcademy = state.village.buildings.any {
-                it.type == BuildingType.Academy && it.isComplete(now)
-            }
-            if (!hasAcademy) throw VillageException("No completed Academy")
+            val academyLevel = state.village.buildings
+                .filter { it.type == BuildingType.Academy && it.isComplete(now) }
+                .maxOfOrNull { it.level } ?: 0
+            if (academyLevel == 0) throw VillageException("No completed Academy")
 
-            val config = TroopConfig.configFor(type, 1)
-                ?: throw VillageException("Unknown troop type")
+            val maxLevel = TroopConfig.maxLevelForAcademy(academyLevel)
+            if (level < 1 || level > maxLevel) {
+                throw VillageException("Academy level $academyLevel allows max troop level $maxLevel")
+            }
+
+            val config = TroopConfig.configFor(type, level)
+                ?: throw VillageException("Unknown troop type or level")
             val totalCost = config.trainingCost * count.toDouble()
             requireResources(state, totalCost)
 
-            val newEntries = (1..count).map { TrainingQueueEntry(troopType = type) }
+            val newEntries = (1..count).map { TrainingQueueEntry(troopType = type, level = level) }
             state.copy(
                 resources = state.resources - totalCost,
                 trainingQueue = TrainingQueue(state.trainingQueue.entries + newEntries),

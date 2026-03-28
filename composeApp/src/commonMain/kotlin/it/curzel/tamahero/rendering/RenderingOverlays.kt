@@ -15,7 +15,7 @@ fun DrawScope.drawFloatingTexts(
     textMeasurer: TextMeasurer,
     canvasSize: Size,
 ) {
-    val now = System.currentTimeMillis()
+    val now = kotlinx.datetime.Clock.System.now().toEpochMilliseconds()
     var yOffset = 60f
 
     for (ft in texts) {

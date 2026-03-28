@@ -124,10 +124,11 @@ fun main(args: Array<String>) {
 
                     "train" -> {
                         if (!connected) { println("Connect first."); continue }
-                        if (parts.size < 2) { println("Usage: train <troopType> [count]"); continue }
+                        if (parts.size < 2) { println("Usage: train <troopType> [count] [level]"); continue }
                         val type = parseTroopType(parts[1]) ?: continue
                         val count = if (parts.size >= 3) parts[2].toInt() else 1
-                        client.sendAndReceive(ClientMessage.Train(type, count))
+                        val level = if (parts.size >= 4) parts[3].toInt() else 1
+                        client.sendAndReceive(ClientMessage.Train(type, count, level))
                     }
 
                     "canceltraining" -> {

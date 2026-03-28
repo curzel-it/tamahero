@@ -26,6 +26,7 @@ fun BuildingInfoView(
     onMove: (PlacedBuilding) -> Unit = {},
     modifier: Modifier = Modifier,
 ) {
+    var confirmDemolish by remember { mutableStateOf(false) }
     val config = BuildingConfig.configFor(building.type, building.level)
     val nextConfig = BuildingConfig.configFor(building.type, building.level + 1)
     val maxLevel = BuildingConfig.maxLevel(building.type)
@@ -145,15 +146,52 @@ fun BuildingInfoView(
                     onClick = { onMove(building) },
                     modifier = Modifier.weight(1f),
                 )
-                TamaDangerButton(
-                    text = "Demolish",
-                    onClick = {
-                        GameSocketClient.demolish(building.id)
-                        onDismiss()
-                    },
-                    modifier = Modifier.weight(1f),
-                )
+                if (confirmDemolish) {
+                    TamaDangerButton(
+                        text = "Confirm",
+                        onClick = {
+                            GameSocketClient.demolish(building.id)
+                            onDismiss()
+                        },
+                        modifier = Modifier.weight(1f),
+                    )
+                    TamaSecondaryButton(
+                        text = "Cancel",
+                        onClick = { confirmDemolish = false },
+                        modifier = Modifier.weight(1f),
+                    )
+                } else {
+                    TamaDangerButton(
+                        text = "Demolish",
+                        onClick = { confirmDemolish = true },
+                        modifier = Modifier.weight(1f),
+                    )
+                }
             }
+        }
+
+        if (config != null && nextConfig != null && !isUnderConstruction && building.level < maxLevel) {
+            Spacer(Modifier.height(TamaSpacing.XXSmall))
+            Text("Lv${building.level} \u2192 Lv${building.level + 1}", color = TamaColors.TextMuted, fontSize = 13.sp)
+            UpgradeStatDiff("HP", config.hp.toLong(), nextConfig.hp.toLong())
+            if (config.productionPerHour.credits > 0 || nextConfig.productionPerHour.credits > 0)
+                UpgradeStatDiff("Credits/hr", config.productionPerHour.credits, nextConfig.productionPerHour.credits)
+            if (config.productionPerHour.alloy > 0 || nextConfig.productionPerHour.alloy > 0)
+                UpgradeStatDiff("Alloy/hr", config.productionPerHour.alloy, nextConfig.productionPerHour.alloy)
+            if (config.productionPerHour.crystal > 0 || nextConfig.productionPerHour.crystal > 0)
+                UpgradeStatDiff("Crystal/hr", config.productionPerHour.crystal, nextConfig.productionPerHour.crystal)
+            if (config.storageCapacity.credits > 0 || nextConfig.storageCapacity.credits > 0)
+                UpgradeStatDiff("Credit storage", config.storageCapacity.credits, nextConfig.storageCapacity.credits)
+            if (config.storageCapacity.alloy > 0 || nextConfig.storageCapacity.alloy > 0)
+                UpgradeStatDiff("Alloy storage", config.storageCapacity.alloy, nextConfig.storageCapacity.alloy)
+            if (config.storageCapacity.crystal > 0 || nextConfig.storageCapacity.crystal > 0)
+                UpgradeStatDiff("Crystal storage", config.storageCapacity.crystal, nextConfig.storageCapacity.crystal)
+            if (config.damage > 0 || nextConfig.damage > 0)
+                UpgradeStatDiff("Damage", config.damage.toLong(), nextConfig.damage.toLong())
+            if (config.range > 0f || nextConfig.range > 0f)
+                UpgradeStatDiffFloat("Range", config.range, nextConfig.range)
+            if (config.troopCapacity > 0 || nextConfig.troopCapacity > 0)
+                UpgradeStatDiff("Troop capacity", config.troopCapacity.toLong(), nextConfig.troopCapacity.toLong())
         }
     }
 }
@@ -162,12 +200,12 @@ fun BuildingInfoView(
 private fun ConstructionProgress(building: PlacedBuilding, buildTimeSeconds: Long) {
     val startedAt = building.constructionStartedAt ?: return
     val totalMs = buildTimeSeconds * 1000L
-    var now by remember { mutableStateOf(System.currentTimeMillis()) }
+    var now by remember { mutableStateOf(kotlinx.datetime.Clock.System.now().toEpochMilliseconds()) }
 
     LaunchedEffect(building.id) {
         while (true) {
             delay(500)
-            now = System.currentTimeMillis()
+            now = kotlinx.datetime.Clock.System.now().toEpochMilliseconds()
         }
     }
 
@@ -198,4 +236,28 @@ private fun formatCost(cost: Resources): String {
         if (cost.alloy > 0) add("${cost.alloy}al")
         if (cost.crystal > 0) add("${cost.crystal}xy")
     }.joinToString(" ")
+}
+
+@Composable
+private fun UpgradeStatDiff(label: String, current: Long, next: Long) {
+    if (current == next) return
+    val delta = next - current
+    val sign = if (delta > 0) "+" else ""
+    Text(
+        "$label: $current \u2192 $next ($sign$delta)",
+        color = if (delta > 0) TamaColors.Success else TamaColors.Error,
+        fontSize = 12.sp,
+    )
+}
+
+@Composable
+private fun UpgradeStatDiffFloat(label: String, current: Float, next: Float) {
+    if (current == next) return
+    val delta = next - current
+    val sign = if (delta > 0) "+" else ""
+    Text(
+        "$label: ${formatOneDecimal(current)} \u2192 ${formatOneDecimal(next)} ($sign${formatOneDecimal(delta)})",
+        color = if (delta > 0) TamaColors.Success else TamaColors.Error,
+        fontSize = 12.sp,
+    )
 }

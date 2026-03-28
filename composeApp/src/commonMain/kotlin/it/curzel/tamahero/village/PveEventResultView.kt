@@ -12,11 +12,14 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import it.curzel.tamahero.models.ServerMessage
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import it.curzel.tamahero.ui.theme.*
 
 @Composable
 fun PveEventResultView(
     result: ServerMessage.EventEnded,
+    damageSummary: List<DamagedBuildingInfo>?,
     onCollect: () -> Unit,
     onDismiss: () -> Unit,
     modifier: Modifier = Modifier,
@@ -66,6 +69,16 @@ fun PveEventResultView(
                     if (rewards.alloy > 0) RewardColumn("Alloy", rewards.alloy, TamaColors.Alloy)
                     if (rewards.crystal > 0) RewardColumn("Crystal", rewards.crystal, TamaColors.Crystal)
                     if (rewards.plasma > 0) RewardColumn("Plasma", rewards.plasma, TamaColors.Plasma)
+                }
+            }
+
+            if (damageSummary != null) {
+                Spacer(Modifier.height(TamaSpacing.Medium))
+                Text("Damage Report", color = TamaColors.Text, fontSize = 16.sp)
+                Spacer(Modifier.height(TamaSpacing.XXSmall))
+                for (d in damageSummary) {
+                    val text = if (d.destroyed) "${d.name}: Destroyed" else "${d.name}: ${d.hpBefore} \u2192 ${d.hpAfter} HP"
+                    Text(text, color = if (d.destroyed) TamaColors.Error else TamaColors.Warning, fontSize = 13.sp)
                 }
             }
 

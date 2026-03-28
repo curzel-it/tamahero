@@ -11,7 +11,14 @@ import kotlinx.coroutines.launch
 data class FloatingText(
     val text: String,
     val color: androidx.compose.ui.graphics.Color,
-    val createdAt: Long = System.currentTimeMillis(),
+    val createdAt: Long = kotlinx.datetime.Clock.System.now().toEpochMilliseconds(),
+)
+
+data class DamagedBuildingInfo(
+    val name: String,
+    val destroyed: Boolean,
+    val hpBefore: Int,
+    val hpAfter: Int,
 )
 
 class VillageViewModel : ViewModel() {
@@ -37,6 +44,12 @@ class VillageViewModel : ViewModel() {
     private val _eventResult = MutableStateFlow<ServerMessage.EventEnded?>(null)
     val eventResult = _eventResult.asStateFlow()
 
+    private val _shieldExpiresAt = MutableStateFlow(0L)
+    val shieldExpiresAt = _shieldExpiresAt.asStateFlow()
+
+    private val _defenseLog = MutableStateFlow<List<DefenseLogEntry>>(emptyList())
+    val defenseLog = _defenseLog.asStateFlow()
+
     private val _floatingTexts = MutableStateFlow<List<FloatingText>>(emptyList())
     val floatingTexts = _floatingTexts.asStateFlow()
 
@@ -46,6 +59,16 @@ class VillageViewModel : ViewModel() {
     private val _errorMessage = MutableStateFlow<String?>(null)
     val errorMessage = _errorMessage.asStateFlow()
 
+    private val _bannerMessage = MutableStateFlow<String?>(null)
+    val bannerMessage = _bannerMessage.asStateFlow()
+
+    private val _trophies = MutableStateFlow(0)
+    val trophies = _trophies.asStateFlow()
+
+    private val _eventDamageSummary = MutableStateFlow<List<DamagedBuildingInfo>?>(null)
+    val eventDamageSummary = _eventDamageSummary.asStateFlow()
+
+    private var preEventBuildings: List<PlacedBuilding>? = null
     private var firstUpdate = true
     private var previousResources: Resources? = null
 
@@ -66,17 +89,31 @@ class VillageViewModel : ViewModel() {
                         _trainingQueue.value = state.trainingQueue
                         _troops.value = state.troops
                         _activeEvent.value = state.activeEvent
+                        _shieldExpiresAt.value = state.shieldExpiresAt
+                        _defenseLog.value = state.defenseLog
+                        _trophies.value = state.trophies
                     }
                     is ServerMessage.ResourcesUpdated -> {
                         trackResourceChanges(message.resources)
                         _resources.value = message.resources
                     }
-                    is ServerMessage.BuildingComplete,
+                    is ServerMessage.BuildingComplete -> {
+                        _bannerMessage.value = "${message.buildingType.name} Lv${message.level} complete!"
+                        GameSocketClient.getVillage()
+                    }
                     is ServerMessage.TrainingComplete -> {
+                        _bannerMessage.value = "${message.troopType.name} Lv${message.level} trained!"
+                        GameSocketClient.getVillage()
+                    }
+                    is ServerMessage.EventStarted -> {
+                        _bannerMessage.value = "Incoming ${message.eventType.name}!"
+                        preEventBuildings = _buildings.value.toList()
                         GameSocketClient.getVillage()
                     }
                     is ServerMessage.EventEnded -> {
                         _eventResult.value = message
+                        _eventDamageSummary.value = computeEventDamage()
+                        preEventBuildings = null
                         GameSocketClient.getVillage()
                     }
                     is ServerMessage.Error -> {
@@ -96,6 +133,10 @@ class VillageViewModel : ViewModel() {
         _errorMessage.value = null
     }
 
+    fun dismissBanner() {
+        _bannerMessage.value = null
+    }
+
     fun collectEventRewards() {
         GameSocketClient.collectEventRewards()
         _eventResult.value = null
@@ -103,6 +144,22 @@ class VillageViewModel : ViewModel() {
 
     fun dismissEventResult() {
         _eventResult.value = null
+        _eventDamageSummary.value = null
+    }
+
+    private fun computeEventDamage(): List<DamagedBuildingInfo>? {
+        val before = preEventBuildings ?: return null
+        val after = _buildings.value
+        val damage = mutableListOf<DamagedBuildingInfo>()
+        for (b in before) {
+            val current = after.find { it.id == b.id }
+            if (current == null) {
+                damage.add(DamagedBuildingInfo("${b.type.name} Lv${b.level}", destroyed = true, hpBefore = b.hp, hpAfter = 0))
+            } else if (current.hp < b.hp) {
+                damage.add(DamagedBuildingInfo("${b.type.name} Lv${b.level}", destroyed = false, hpBefore = b.hp, hpAfter = current.hp))
+            }
+        }
+        return damage.ifEmpty { null }
     }
 
     private fun trackResourceChanges(newResources: Resources) {
@@ -124,7 +181,7 @@ class VillageViewModel : ViewModel() {
     }
 
     private fun checkOfflineProgress(state: GameState) {
-        val now = System.currentTimeMillis()
+        val now = kotlinx.datetime.Clock.System.now().toEpochMilliseconds()
         val gap = now - state.lastUpdatedAt
         if (gap < 5 * 60 * 1000) return
         val minutes = gap / 60_000

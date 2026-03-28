@@ -119,6 +119,29 @@ def get_server_version(domain):
         return None
 
 
+def build_wasm_client():
+    """Build the WASM web client locally."""
+    print(f"\n{'='*60}")
+    print("Building WASM Web Client")
+    print(f"{'='*60}")
+
+    project_root = Path(__file__).parent.resolve()
+    gradlew = project_root / ("gradlew.bat" if IS_WINDOWS else "gradlew")
+
+    run_command(
+        f'"{gradlew}" :composeApp:wasmJsBrowserDistribution --no-daemon',
+        "Building WASM client (this may take a few minutes)",
+        cwd=str(project_root)
+    )
+
+    wasm_src = project_root / "composeApp" / "build" / "dist" / "wasmJs" / "productionExecutable"
+    if not wasm_src.exists():
+        print(f"Error: WASM build output not found at {wasm_src}")
+        sys.exit(1)
+
+    print(f"WASM client built: {wasm_src}")
+
+
 def build_server():
     """Build the server distribution locally."""
     print(f"\n{'='*60}")
@@ -150,16 +173,25 @@ def build_server():
 
 
 def copy_artifacts_to_deploy_repo(server_dist):
-    """Copy built server artifacts into the deploy repo."""
+    """Copy built server and WASM artifacts into the deploy repo."""
     print(f"\n{'='*60}")
     print("Copying Artifacts to Deploy Repo")
     print(f"{'='*60}")
+
+    project_root = Path(__file__).parent.resolve()
 
     deploy_server = DEPLOY_REPO / "server-dist"
     if deploy_server.exists():
         shutil.rmtree(deploy_server)
     shutil.copytree(server_dist, deploy_server)
     print(f"Copied server-dist to {deploy_server}")
+
+    wasm_src = project_root / "composeApp" / "build" / "dist" / "wasmJs" / "productionExecutable"
+    deploy_web = DEPLOY_REPO / "web-dist"
+    if deploy_web.exists():
+        shutil.rmtree(deploy_web)
+    shutil.copytree(wasm_src, deploy_web)
+    print(f"Copied web-dist to {deploy_web}")
 
 
 def push_deploy_repo(message):
@@ -366,22 +398,25 @@ def main():
     else:
         print("\nSkipping git push (DEPLOY_SKIP_PUSH set)")
 
-    # Step 2: Build server locally
+    # Step 2: Build WASM client locally
+    build_wasm_client()
+
+    # Step 3: Build server locally
     server_dist = build_server()
 
-    # Step 3: Copy artifacts to deploy repo
+    # Step 4: Copy artifacts to deploy repo
     copy_artifacts_to_deploy_repo(server_dist)
 
-    # Step 4: Commit and push deploy repo
+    # Step 5: Commit and push deploy repo
     if not skip_push:
         push_deploy_repo(args.message)
     else:
         print("\nSkipping deploy repo push (DEPLOY_SKIP_PUSH set)")
 
-    # Step 5: SSH to server — trigger deploy detached
+    # Step 6: SSH to server — trigger deploy detached
     trigger_remote_deploy(ssh_host, ssh_password)
 
-    # Step 6: Optionally drop the database for a clean start
+    # Step 7: Optionally drop the database for a clean start
     if args.clean_db:
         clean_database(ssh_host, ssh_password)
 

@@ -11,12 +11,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import it.curzel.tamahero.models.Army
 import it.curzel.tamahero.models.MatchmakingResult
 import it.curzel.tamahero.ui.theme.*
 
 @Composable
 fun PvpScoutView(
     match: MatchmakingResult,
+    army: Army,
     searching: Boolean,
     error: String?,
     onAttack: () -> Unit,
@@ -78,6 +80,23 @@ fun PvpScoutView(
                 Text("Plasma: ${match.lootAvailable.plasma}", color = TamaColors.Plasma, fontSize = 14.sp)
             }
 
+            if (army.troops.isNotEmpty()) {
+                Spacer(Modifier.height(TamaSpacing.Medium))
+                Text("Your Army", color = TamaColors.Text, fontSize = 16.sp)
+                Spacer(Modifier.height(TamaSpacing.XXSmall))
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(TamaSpacing.Small),
+                ) {
+                    for (t in army.troops) {
+                        Text("${t.type.name.take(4)} x${t.count}", color = TamaColors.TextMuted, fontSize = 13.sp)
+                    }
+                }
+            } else {
+                Spacer(Modifier.height(TamaSpacing.Medium))
+                Text("No troops available!", color = TamaColors.Error, fontSize = 14.sp)
+            }
+
             if (error != null) {
                 Spacer(Modifier.height(TamaSpacing.Small))
                 Text(error, color = TamaColors.Error, fontSize = 13.sp)
@@ -95,7 +114,7 @@ fun PvpScoutView(
                     modifier = Modifier.weight(1f),
                 )
                 TamaSecondaryButton(
-                    text = if (searching) "..." else "Next",
+                    text = if (searching) "..." else "Next (100 plasma)",
                     onClick = onNext,
                     enabled = !searching,
                     modifier = Modifier.weight(1f),

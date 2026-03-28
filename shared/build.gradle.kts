@@ -15,8 +15,11 @@ kotlin {
     
     iosArm64()
     iosSimulatorArm64()
-    
+
     jvm()
+
+    @OptIn(org.jetbrains.kotlin.gradle.ExperimentalWasmDsl::class)
+    wasmJs()
     
     sourceSets {
         commonMain.dependencies {

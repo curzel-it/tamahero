@@ -12,11 +12,19 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import it.curzel.tamahero.models.Army
+import it.curzel.tamahero.models.BuildingType
+import it.curzel.tamahero.models.DefenseLogEntry
+import it.curzel.tamahero.models.PlacedBuilding
 import it.curzel.tamahero.ui.theme.*
 
 @Composable
 fun AccountView(
     username: String,
+    buildings: List<PlacedBuilding> = emptyList(),
+    trophies: Int = 0,
+    army: Army = Army(),
+    defenseLog: List<DefenseLogEntry> = emptyList(),
     onLogout: () -> Unit,
     onDeleteAccount: () -> Unit,
     onDismiss: () -> Unit,
@@ -44,6 +52,33 @@ fun AccountView(
             Text("Account", color = TamaColors.Text, fontSize = 20.sp)
             Spacer(Modifier.height(TamaSpacing.Medium))
             Text(username, color = TamaColors.TextMuted, fontSize = 16.sp)
+            Spacer(Modifier.height(TamaSpacing.Medium))
+
+            val ccLevel = buildings
+                .filter { it.type == BuildingType.CommandCenter && it.constructionStartedAt == null }
+                .maxOfOrNull { it.level } ?: 0
+            val defenseWins = defenseLog.count { it.stars < 2 }
+            val defenseLosses = defenseLog.count { it.stars >= 2 }
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceEvenly,
+            ) {
+                StatItem("CC Level", "$ccLevel")
+                StatItem("Trophies", "$trophies")
+                StatItem("Troops", "${army.totalCount}")
+                StatItem("Buildings", "${buildings.count { it.constructionStartedAt == null }}")
+            }
+            Spacer(Modifier.height(TamaSpacing.XSmall))
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceEvenly,
+            ) {
+                StatItem("Defenses", "${defenseLog.size}")
+                StatItem("Defended", "$defenseWins")
+                StatItem("Breached", "$defenseLosses")
+            }
+
             Spacer(Modifier.height(TamaSpacing.Large))
 
             TamaSecondaryButton(
@@ -98,5 +133,13 @@ fun AccountView(
                 }
             },
         )
+    }
+}
+
+@Composable
+private fun StatItem(label: String, value: String) {
+    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+        Text(value, color = TamaColors.Text, fontSize = 16.sp)
+        Text(label, color = TamaColors.TextMuted, fontSize = 11.sp)
     }
 }

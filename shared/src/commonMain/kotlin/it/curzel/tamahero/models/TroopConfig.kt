@@ -77,4 +77,12 @@ object TroopConfig {
 
     fun configFor(type: TroopType, level: Int): TroopLevelConfig? =
         configs[type]?.find { it.level == level }
+
+    fun maxLevelForAcademy(academyLevel: Int): Int = when (academyLevel) {
+        1 -> 2
+        2 -> 3
+        3 -> 5
+        4 -> 6
+        else -> 1
+    }
 }

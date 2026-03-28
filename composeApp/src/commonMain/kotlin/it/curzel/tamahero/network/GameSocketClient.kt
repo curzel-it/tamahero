@@ -29,6 +29,9 @@ object GameSocketClient {
     val messageLog = _messageLog.asStateFlow()
 
     private var connected = false
+    private var autoReconnectToken: String? = null
+    private var reconnectJob: Job? = null
+    private var reconnectDelayMs = 1000L
 
     fun connect(token: String) {
         val wsUrl = ServerConfig.BASE_URL
@@ -45,19 +48,44 @@ object GameSocketClient {
             onError = {
                 println("[GameSocketClient] Error: $it")
                 connected = false
+                scheduleReconnect()
             },
             onClose = {
                 println("[GameSocketClient] Connection closed")
                 connected = false
                 keepAliveJob?.cancel()
+                scheduleReconnect()
             },
         )
     }
 
     fun disconnect() {
+        disableAutoReconnect()
         keepAliveJob?.cancel()
         GameSocketManager.close()
         connected = false
+    }
+
+    fun enableAutoReconnect(token: String) {
+        autoReconnectToken = token
+        reconnectDelayMs = 1000L
+    }
+
+    fun disableAutoReconnect() {
+        autoReconnectToken = null
+        reconnectJob?.cancel()
+        reconnectJob = null
+    }
+
+    private fun scheduleReconnect() {
+        val token = autoReconnectToken ?: return
+        reconnectJob?.cancel()
+        reconnectJob = scope.launch {
+            println("[GameSocketClient] Reconnecting in ${reconnectDelayMs}ms...")
+            delay(reconnectDelayMs)
+            reconnectDelayMs = (reconnectDelayMs * 2).coerceAtMost(30_000L)
+            connect(token)
+        }
     }
 
     fun getVillage() = send(ClientMessage.GetVillage)
@@ -78,7 +106,7 @@ object GameSocketClient {
 
     fun speedUp(buildingId: Long) = send(ClientMessage.SpeedUp(buildingId))
 
-    fun train(troopType: TroopType, count: Int = 1) = send(ClientMessage.Train(troopType, count))
+    fun train(troopType: TroopType, count: Int = 1, level: Int = 1) = send(ClientMessage.Train(troopType, count, level))
 
     fun cancelTraining(index: Int) = send(ClientMessage.CancelTraining(index))
 
@@ -116,6 +144,8 @@ object GameSocketClient {
             val message = ProtocolJson.decodeFromString(ServerMessage.serializer(), text)
             if (message is ServerMessage.Connected) {
                 connected = true
+                reconnectDelayMs = 1000L
+                reconnectJob?.cancel()
                 startKeepAlive()
                 try {
                     if (PushNotificationProvider.isInitialized()) {

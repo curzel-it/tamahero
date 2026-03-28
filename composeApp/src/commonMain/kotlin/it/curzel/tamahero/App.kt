@@ -62,6 +62,7 @@ fun App(autoLoginUser: String? = null, autoLoginPass: String? = null) {
                     val connected = withTimeoutOrNull(10_000) { connectedDeferred.await() }
                     if (connected != null) {
                         println("[App] Connected! Requesting village...")
+                        GameSocketClient.enableAutoReconnect(state.token)
                         GameSocketClient.getVillage()
                     } else {
                         println("[App] Connection timed out after 10s")
@@ -73,11 +74,20 @@ fun App(autoLoginUser: String? = null, autoLoginPass: String? = null) {
                     onDispose { GameSocketClient.disconnect() }
                 }
 
+                var connected by remember { mutableStateOf(false) }
+                LaunchedEffect(state.token, retryTrigger) {
+                    connected = false
+                    GameSocketClient.events.filterIsInstance<ServerMessage.GameStateUpdated>().first()
+                    connected = true
+                }
+
                 if (connectionFailed) {
                     ConnectionErrorView(
                         onRetry = { retryTrigger++ },
                         onLogout = { authViewModel.logout() },
                     )
+                } else if (!connected) {
+                    ConnectingView()
                 } else {
                     GameView(
                         username = state.username,
@@ -87,6 +97,22 @@ fun App(autoLoginUser: String? = null, autoLoginPass: String? = null) {
                 }
             }
             else -> AuthScreenView(authViewModel)
+        }
+    }
+}
+
+@Composable
+private fun ConnectingView() {
+    Surface(modifier = androidx.compose.ui.Modifier.fillMaxSize()) {
+        Box(
+            modifier = androidx.compose.ui.Modifier.fillMaxSize(),
+            contentAlignment = androidx.compose.ui.Alignment.Center,
+        ) {
+            Column(horizontalAlignment = androidx.compose.ui.Alignment.CenterHorizontally) {
+                CircularProgressIndicator()
+                Spacer(modifier = androidx.compose.ui.Modifier.height(TamaSpacing.Medium))
+                Text("Connecting...", style = MaterialTheme.typography.titleMedium)
+            }
         }
     }
 }

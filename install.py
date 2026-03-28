@@ -43,7 +43,9 @@ SERVICE_USER = os.environ.get("SUDO_USER", os.environ.get("USER", "root"))
 PROJECT_ROOT = Path("/root/tamahero")
 DEPLOY_REPO = Path("/root/tamahero-deploy")
 SERVER_DIST = DEPLOY_REPO / "server-dist"
+WEB_DIST = DEPLOY_REPO / "web-dist"
 INSTALL_DIR = Path(f"/opt/{SERVICE_NAME}")
+WEB_DIR = Path(f"/var/www/{DOMAIN}/play")
 SYSTEMD_SERVICE_PATH = Path(f"/etc/systemd/system/{SERVICE_NAME}.service")
 LOG_DIR = Path(f"/var/log/{SERVICE_NAME}")
 ENV_FILE = Path(f"/etc/{SERVICE_NAME}/env")
@@ -150,6 +152,20 @@ def install_distribution():
         os.chmod(script, 0o755)
 
     print(f"Distribution installed: {INSTALL_DIR}")
+
+
+def install_web_distribution():
+    """Copy the WASM web client to the web directory."""
+    print("\n=== Installing Web Distribution ===")
+    if not WEB_DIST.exists():
+        print(f"No web distribution found at {WEB_DIST}, skipping")
+        return
+
+    if WEB_DIR.exists():
+        shutil.rmtree(WEB_DIR)
+    WEB_DIR.mkdir(parents=True, exist_ok=True)
+    shutil.copytree(WEB_DIST, WEB_DIR, dirs_exist_ok=True)
+    print(f"Web distribution installed: {WEB_DIR}")
 
 
 def create_directories():
@@ -378,6 +394,25 @@ server {{
     add_header X-Content-Type-Options "nosniff" always;
     add_header Referrer-Policy "strict-origin-when-cross-origin" always;
 
+    location ^~ /play {{
+        alias /var/www/{DOMAIN}/play;
+        index index.html;
+        try_files $uri $uri/ /play/index.html;
+
+        types {{
+            application/wasm wasm;
+            application/javascript js mjs;
+            text/html html;
+            text/css css;
+            image/png png;
+            image/svg+xml svg;
+            application/json json;
+        }}
+
+        add_header Cross-Origin-Opener-Policy "same-origin";
+        add_header Cross-Origin-Embedder-Policy "require-corp";
+    }}
+
     location / {{
         proxy_pass http://127.0.0.1:{SERVER_PORT};
         proxy_http_version 1.1;
@@ -399,6 +434,25 @@ server {{
     listen 80;
     listen [::]:80;
     server_name {DOMAIN};
+
+    location ^~ /play {{
+        alias /var/www/{DOMAIN}/play;
+        index index.html;
+        try_files $uri $uri/ /play/index.html;
+
+        types {{
+            application/wasm wasm;
+            application/javascript js mjs;
+            text/html html;
+            text/css css;
+            image/png png;
+            image/svg+xml svg;
+            application/json json;
+        }}
+
+        add_header Cross-Origin-Opener-Policy "same-origin";
+        add_header Cross-Origin-Embedder-Policy "require-corp";
+    }}
 
     location / {{
         proxy_pass http://127.0.0.1:{SERVER_PORT};
@@ -635,6 +689,7 @@ def main():
         install_java()
         validate_server_dist()
         install_distribution()
+        install_web_distribution()
         create_directories()
         create_env_file()
         create_systemd_service()

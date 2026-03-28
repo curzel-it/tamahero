@@ -56,7 +56,7 @@ object WebSocketHandler {
                 is ClientMessage.Demolish -> handleVillageAction(userId) { VillageService.demolishBuilding(userId, message.buildingId) }
                 is ClientMessage.CancelConstruction -> handleVillageAction(userId) { VillageService.cancelConstruction(userId, message.buildingId) }
                 is ClientMessage.SpeedUp -> handleVillageAction(userId) { VillageService.speedUpConstruction(userId, message.buildingId) }
-                is ClientMessage.Train -> handleVillageAction(userId) { VillageService.trainTroops(userId, message.troopType, message.count) }
+                is ClientMessage.Train -> handleVillageAction(userId) { VillageService.trainTroops(userId, message.troopType, message.count, message.level) }
                 is ClientMessage.CancelTraining -> handleVillageAction(userId) { VillageService.cancelTraining(userId, message.index) }
                 is ClientMessage.RearmTrap -> handleVillageAction(userId) { VillageService.rearmTrap(userId, message.buildingId) }
                 is ClientMessage.RearmAllTraps -> handleVillageAction(userId) { VillageService.rearmAllTraps(userId) }

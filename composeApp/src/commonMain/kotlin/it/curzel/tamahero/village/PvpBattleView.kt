@@ -13,6 +13,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import it.curzel.tamahero.models.*
 import it.curzel.tamahero.ui.theme.*
+import kotlinx.coroutines.delay
 
 @Composable
 fun PvpBattleHudView(
@@ -27,6 +28,18 @@ fun PvpBattleHudView(
             .background(TamaColors.Background.copy(alpha = 0.85f))
             .padding(horizontal = TamaSpacing.Small, vertical = TamaSpacing.XSmall),
     ) {
+        var now by remember { mutableStateOf(kotlinx.datetime.Clock.System.now().toEpochMilliseconds()) }
+        LaunchedEffect(Unit) {
+            while (true) {
+                delay(500)
+                now = kotlinx.datetime.Clock.System.now().toEpochMilliseconds()
+            }
+        }
+        val remainingMs = battle.timeRemainingMs(now)
+        val timerMin = remainingMs / 60_000
+        val timerSec = (remainingMs % 60_000) / 1000
+        val timerColor = if (remainingMs < 30_000) TamaColors.Error else TamaColors.Text
+
         Row(
             horizontalArrangement = Arrangement.spacedBy(TamaSpacing.Medium),
             verticalAlignment = Alignment.CenterVertically,
@@ -36,6 +49,7 @@ fun PvpBattleHudView(
                 color = TamaColors.Text,
                 fontSize = 14.sp,
             )
+            Text("$timerMin:${timerSec.toString().padStart(2, '0')}", color = timerColor, fontSize = 14.sp)
             val stars = "\u2B50".repeat(battle.currentStars) + "\u2606".repeat(3 - battle.currentStars)
             Text(stars, fontSize = 16.sp)
             Text(
@@ -43,6 +57,15 @@ fun PvpBattleHudView(
                 color = if (battle.destructionPercent >= 50) TamaColors.Success else TamaColors.Text,
                 fontSize = 14.sp,
             )
+        }
+
+        val loot = battle.loot
+        if (loot.credits > 0 || loot.alloy > 0 || loot.crystal > 0) {
+            Row(horizontalArrangement = Arrangement.spacedBy(TamaSpacing.Small)) {
+                if (loot.credits > 0) Text("+${loot.credits}cr", color = TamaColors.Credits, fontSize = 12.sp)
+                if (loot.alloy > 0) Text("+${loot.alloy}al", color = TamaColors.Alloy, fontSize = 12.sp)
+                if (loot.crystal > 0) Text("+${loot.crystal}xy", color = TamaColors.Crystal, fontSize = 12.sp)
+            }
         }
 
         Spacer(Modifier.height(TamaSpacing.XXSmall))
@@ -78,6 +101,7 @@ fun PvpBattleHudView(
 fun PvpResultView(
     result: PvpResult,
     onDismiss: () -> Unit,
+    onAttackAgain: () -> Unit = {},
     modifier: Modifier = Modifier,
 ) {
     Box(
@@ -139,7 +163,13 @@ fun PvpResultView(
 
             Spacer(Modifier.height(TamaSpacing.Large))
 
-            TamaButton(text = "Return Home", onClick = onDismiss, modifier = Modifier.fillMaxWidth())
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(TamaSpacing.Small),
+                modifier = Modifier.fillMaxWidth(),
+            ) {
+                TamaButton(text = "Return Home", onClick = onDismiss, modifier = Modifier.weight(1f))
+                TamaDangerButton(text = "Attack Again", onClick = onAttackAgain, modifier = Modifier.weight(1f))
+            }
         }
     }
 }

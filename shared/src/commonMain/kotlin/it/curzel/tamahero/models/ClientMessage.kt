@@ -69,6 +69,7 @@ sealed class ClientMessage {
     data class Train(
         val troopType: TroopType,
         val count: Int = 1,
+        val level: Int = 1,
     ) : ClientMessage()
 
     @Serializable

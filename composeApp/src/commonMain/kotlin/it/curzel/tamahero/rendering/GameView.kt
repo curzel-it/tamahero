@@ -54,6 +54,11 @@ fun GameView(
 
     val activeEvent by villageViewModel.activeEvent.collectAsState()
     val eventResult by villageViewModel.eventResult.collectAsState()
+    val shieldExpiresAt by villageViewModel.shieldExpiresAt.collectAsState()
+    val defenseLog by villageViewModel.defenseLog.collectAsState()
+    val bannerMessage by villageViewModel.bannerMessage.collectAsState()
+    val trophies by villageViewModel.trophies.collectAsState()
+    val eventDamageSummary by villageViewModel.eventDamageSummary.collectAsState()
     val floatingTexts by villageViewModel.floatingTexts.collectAsState()
     val offlineSummary by villageViewModel.offlineSummary.collectAsState()
     val errorMessage by villageViewModel.errorMessage.collectAsState()
@@ -68,6 +73,7 @@ fun GameView(
     var showAccount by remember { mutableStateOf(false) }
     var showWsLog by remember { mutableStateOf(false) }
     var showArmy by remember { mutableStateOf(false) }
+    var showDefenseLog by remember { mutableStateOf(false) }
 
     var showLeaderboard by remember { mutableStateOf(false) }
     val leaderboardViewModel = remember { LeaderboardViewModel() }
@@ -121,6 +127,7 @@ fun GameView(
                         when {
                             showAccount -> { showAccount = false; true }
                             showArmy -> { showArmy = false; true }
+                            showDefenseLog -> { showDefenseLog = false; true }
                             showLeaderboard -> { showLeaderboard = false; true }
                             showSettings -> { showSettings = false; true }
                             placementViewModel.isPlacing -> { placementViewModel.cancelPlacement(); true }
@@ -237,6 +244,8 @@ fun GameView(
             if (!inBattle) {
                 GameHudView(
                     resources = resources,
+                    buildings = buildings,
+                    shieldExpiresAt = shieldExpiresAt,
                     isPlacing = placementViewModel.isPlacing,
                     onBuildClick = {
                         selectionViewModel.deselect()
@@ -254,9 +263,11 @@ fun GameView(
                         showLeaderboard = true
                         leaderboardViewModel.refresh()
                     },
+                    onDefenseLogClick = { showDefenseLog = true },
                     onSettingsClick = { showSettings = true },
                     onCollectAllClick = { GameSocketClient.collectAll() },
                     onWsLogClick = { showWsLog = !showWsLog },
+                    trophies = trophies,
                     modifier = Modifier.align(Alignment.TopStart),
                 )
             }
@@ -337,6 +348,16 @@ fun GameView(
                 )
             }
 
+            if (showDefenseLog) {
+                DefenseLogView(
+                    entries = defenseLog,
+                    onDismiss = {
+                        showDefenseLog = false
+                        focusRequester.requestFocus()
+                    },
+                )
+            }
+
             if (showSettings) {
                 SettingsView(
                     showGrid = showGrid,
@@ -353,6 +374,10 @@ fun GameView(
             if (showAccount) {
                 AccountView(
                     username = username,
+                    buildings = buildings,
+                    trophies = trophies,
+                    army = army,
+                    defenseLog = defenseLog,
                     onLogout = onLogout,
                     onDeleteAccount = onDeleteAccount,
                     onDismiss = {
@@ -366,6 +391,7 @@ fun GameView(
             if ((pvpPhase == PvpPhase.Scouting || pvpPhase == PvpPhase.Searching) && currentMatch != null) {
                 PvpScoutView(
                     match = currentMatch,
+                    army = army,
                     searching = pvpPhase == PvpPhase.Searching,
                     error = pvpError,
                     onAttack = { pvpViewModel.startBattle() },
@@ -386,6 +412,11 @@ fun GameView(
                         GameSocketClient.getVillage()
                         focusRequester.requestFocus()
                     },
+                    onAttackAgain = {
+                        pvpViewModel.dismiss()
+                        GameSocketClient.getVillage()
+                        pvpViewModel.findOpponent()
+                    },
                 )
             }
 
@@ -393,6 +424,7 @@ fun GameView(
             if (currentEventResult != null) {
                 PveEventResultView(
                     result = currentEventResult,
+                    damageSummary = eventDamageSummary,
                     onCollect = {
                         villageViewModel.collectEventRewards()
                         focusRequester.requestFocus()
@@ -432,6 +464,15 @@ fun GameView(
                     message = error,
                     onDismiss = { villageViewModel.dismissError() },
                     modifier = Modifier.align(Alignment.BottomCenter),
+                )
+            }
+
+            val banner = bannerMessage
+            if (banner != null) {
+                BannerToastView(
+                    message = banner,
+                    onDismiss = { villageViewModel.dismissBanner() },
+                    modifier = Modifier.align(Alignment.TopCenter),
                 )
             }
         }
