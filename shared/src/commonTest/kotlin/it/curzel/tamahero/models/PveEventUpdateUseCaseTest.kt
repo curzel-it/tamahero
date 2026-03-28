@@ -10,10 +10,10 @@ class PveEventUpdateUseCaseTest {
         village = Village(
             playerId = 1,
             buildings = listOf(
-                PlacedBuilding(id = 1, type = BuildingType.CommandCenter, level = 1, x = 19, y = 19, hp = 1000),
-                PlacedBuilding(id = 2, type = BuildingType.CreditVault, level = 1, x = 16, y = 19, hp = 200),
-                PlacedBuilding(id = 3, type = BuildingType.AlloySilo, level = 1, x = 22, y = 19, hp = 200),
-                PlacedBuilding(id = 4, type = BuildingType.RailGun, level = 1, x = 15, y = 15, hp = 300),
+                PlacedBuilding(id = 1, type = BuildingType.CommandCenter, level = 1, x = 8, y = 8, hp = 1000),
+                PlacedBuilding(id = 2, type = BuildingType.CreditVault, level = 1, x = 5, y = 8, hp = 200),
+                PlacedBuilding(id = 3, type = BuildingType.AlloySilo, level = 1, x = 12, y = 8, hp = 200),
+                PlacedBuilding(id = 4, type = BuildingType.RailGun, level = 1, x = 5, y = 5, hp = 300),
             ),
         ),
         lastUpdatedAt = 0,
@@ -46,7 +46,7 @@ class PveEventUpdateUseCaseTest {
             village = Village(
                 playerId = 1,
                 buildings = listOf(
-                    PlacedBuilding(id = 1, type = BuildingType.CommandCenter, level = 1, x = 19, y = 19, hp = 1000),
+                    PlacedBuilding(id = 1, type = BuildingType.CommandCenter, level = 1, x = 8, y = 8, hp = 1000),
                     PlacedBuilding(id = 2, type = BuildingType.CreditVault, level = 1, x = 0, y = 0, hp = 200),
                 ),
             ),

@@ -5,7 +5,7 @@ import it.curzel.tamahero.models.*
 
 object VillageService {
 
-    private const val GRID_SIZE = 40
+    private const val GRID_SIZE = 20
 
     fun getOrCreateVillage(userId: Long): GameState =
         loadAndUpdate(userId) { it }
@@ -355,8 +355,8 @@ object VillageService {
             village = Village(
                 playerId = userId,
                 buildings = listOf(
-                    PlacedBuilding(id = 1, type = BuildingType.CommandCenter, level = 1, x = 18, y = 18, hp = 1000, lastCollectedAt = now),
-                    PlacedBuilding(id = 2, type = BuildingType.DroneStation, level = 1, x = 16, y = 18, hp = 150, lastCollectedAt = now),
+                    PlacedBuilding(id = 1, type = BuildingType.CommandCenter, level = 1, x = 8, y = 8, hp = 1000, lastCollectedAt = now),
+                    PlacedBuilding(id = 2, type = BuildingType.DroneStation, level = 1, x = 6, y = 8, hp = 150, lastCollectedAt = now),
                 ),
             ),
             lastUpdatedAt = now,

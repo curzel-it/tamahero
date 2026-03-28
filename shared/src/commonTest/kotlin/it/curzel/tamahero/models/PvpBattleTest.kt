@@ -76,7 +76,7 @@ class PvpBattleTest {
     @Test
     fun `star calculation based on destruction and command center`() {
         val base = listOf(
-            PlacedBuilding(id = 1, type = BuildingType.CommandCenter, level = 1, x = 18, y = 18, hp = 1000),
+            PlacedBuilding(id = 1, type = BuildingType.CommandCenter, level = 1, x = 8, y = 8, hp = 1000),
             PlacedBuilding(id = 2, type = BuildingType.RailGun, level = 1, x = 10, y = 10, hp = 500),
             PlacedBuilding(id = 3, type = BuildingType.CreditMint, level = 1, x = 5, y = 5, hp = 500),
         )

@@ -126,9 +126,9 @@ class BattleUpdateUseCaseTest {
     @Test
     fun troopNavigatesAroundObstacle() {
         // Place a large obstacle (4x4) between troop and target
-        // Troop at (5, 10), obstacle at (10, 8) occupying 10-13 x 8-11, target at (18, 10)
-        val target = PlacedBuilding(id = 1, type = BuildingType.CreditVault, level = 1, x = 18, y = 10, hp = 200)
-        val obstacle = PlacedBuilding(id = 2, type = BuildingType.CommandCenter, level = 1, x = 10, y = 8, hp = 1000)
+        // Troop at (2, 10), obstacle at (6, 8) occupying 6-9 x 8-11, target at (14, 10)
+        val target = PlacedBuilding(id = 1, type = BuildingType.CreditVault, level = 1, x = 14, y = 10, hp = 200)
+        val obstacle = PlacedBuilding(id = 2, type = BuildingType.CommandCenter, level = 1, x = 6, y = 8, hp = 1000)
         val troop = Troop(id = 100, type = TroopType.Marine, hp = 50, x = 5f, y = 10.5f)
         val state = GameState(
             playerId = 1, resources = Resources(),
@@ -140,7 +140,7 @@ class BattleUpdateUseCaseTest {
         val path = Pathfinding.findPath(5f, 10.5f, target, listOf(target, obstacle))
         assertNotNull(path, "Pathfinding should find a path around obstacle")
         for (pos in path) {
-            val inObstacle = pos.x in 10..13 && pos.y in 8..11
+            val inObstacle = pos.x in 6..9 && pos.y in 8..11
             assertFalse(inObstacle, "Path should not go through obstacle at ${pos.x},${pos.y}")
         }
 

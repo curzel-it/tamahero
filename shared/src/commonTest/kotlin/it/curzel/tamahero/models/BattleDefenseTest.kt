@@ -42,7 +42,7 @@ class BattleDefenseTest {
 
     @Test
     fun troopDestroysWallThenProceedsToTarget() {
-        val target = PlacedBuilding(id = 1, type = BuildingType.CreditVault, level = 1, x = 20, y = 0, hp = 200)
+        val target = PlacedBuilding(id = 1, type = BuildingType.CreditVault, level = 1, x = 15, y = 0, hp = 200)
         val wall = PlacedBuilding(id = 2, type = BuildingType.Barrier, level = 1, x = 5, y = 0, hp = 10)
         val troop = soldier(x = 5f, y = 0f, hp = 50)
         val state = gameState(listOf(target, wall), listOf(troop))

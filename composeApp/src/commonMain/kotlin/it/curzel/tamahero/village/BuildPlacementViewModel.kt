@@ -118,6 +118,6 @@ class BuildPlacementViewModel : ViewModel() {
     }
 
     companion object {
-        private const val GRID_SIZE = 40
+        private const val GRID_SIZE = 20
     }
 }

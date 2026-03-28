@@ -9,7 +9,7 @@ data class GridPos(val x: Int, val y: Int)
 
 object Pathfinding {
 
-    private const val GRID_SIZE = 40
+    private const val GRID_SIZE = 20
     private val SQRT2 = sqrt(2.0).toFloat()
 
     private val DIRECTIONS = listOf(

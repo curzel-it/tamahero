@@ -81,7 +81,7 @@ class CombatSystemTest {
     @Test
     fun engineerDealsExtraDamageToBarriers() {
         val barrier = building(1, BuildingType.Barrier, x = 5, y = 5, hp = 500)
-        val storage = building(2, BuildingType.CreditVault, x = 20, y = 20, hp = 200)
+        val storage = building(2, BuildingType.CreditVault, x = 15, y = 15, hp = 200)
         val engineer = troop(100, TroopType.Engineer, x = 5.5f, y = 5.5f, hp = 1000)
 
         val result = battle(listOf(barrier, storage), listOf(engineer), 10_000)
@@ -211,7 +211,7 @@ class CombatSystemTest {
     @Test
     fun mixedArmyWithTargeting() {
         val storage = building(1, BuildingType.CreditVault, x = 10, y = 10, hp = 200)
-        val railGun = building(2, BuildingType.RailGun, x = 20, y = 10)
+        val railGun = building(2, BuildingType.RailGun, x = 15, y = 10)
         val barrier = building(3, BuildingType.Barrier, x = 15, y = 10)
 
         val marine = troop(100, TroopType.Marine, x = 5f, y = 10.5f)

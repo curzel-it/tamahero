@@ -131,8 +131,8 @@ class BattleSimulationTest {
         val (adminToken, _) = registerAdmin(client)
         val (_, userId) = registerUser(client)
 
-        placeBuilding(client, adminToken, userId, "RailGun", x = 16, y = 18)
-        placeBuilding(client, adminToken, userId, "RailGun", x = 22, y = 18)
+        placeBuilding(client, adminToken, userId, "RailGun", x = 14, y = 14)
+        placeBuilding(client, adminToken, userId, "RailGun", x = 14, y = 4)
 
         triggerEvent(client, adminToken, userId, "ScoutParty", listOf(
             TriggerEventTroop(type = "Marine", count = 1, level = 1),
