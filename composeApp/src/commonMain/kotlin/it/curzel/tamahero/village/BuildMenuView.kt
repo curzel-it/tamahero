@@ -14,6 +14,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -63,6 +64,7 @@ fun BuildMenuView(
         modifier = modifier
             .fillMaxSize()
             .background(TamaColors.Background.copy(alpha = 0.5f))
+            .testTag("build_menu_dismiss")
             .clickable(onClick = onDismiss),
     ) {
         Column(
@@ -102,6 +104,7 @@ fun BuildMenuView(
                         fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
                         fontSize = 14.sp,
                         modifier = Modifier
+                            .testTag("tab_${tab.name.lowercase()}")
                             .clip(RoundedCornerShape(TamaRadius.Small))
                             .background(if (isSelected) TamaColors.SurfaceElevated else TamaColors.Surface)
                             .clickable { selectedTab = tab }
@@ -173,6 +176,7 @@ private fun BuildMenuItem(
 
     Column(
         modifier = Modifier
+            .testTag("building_${type.name}")
             .clip(RoundedCornerShape(TamaRadius.Medium))
             .border(1.dp, borderColor.copy(alpha = alpha), RoundedCornerShape(TamaRadius.Medium))
             .background(TamaColors.SurfaceElevated)

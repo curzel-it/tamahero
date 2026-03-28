@@ -15,6 +15,7 @@ import it.curzel.tamahero.routes.*
 import it.curzel.tamahero.notifications.FirebasePushNotificationService
 import it.curzel.tamahero.notifications.PushNotificationServiceProvider
 import it.curzel.tamahero.village.PvpBattleRunner
+import it.curzel.tamahero.village.PvpService
 import it.curzel.tamahero.websocket.TimerMonitor
 import it.curzel.tamahero.websocket.WebSocketHandler
 import kotlinx.serialization.json.buildJsonObject
@@ -39,6 +40,7 @@ fun Application.module() {
 
 fun Application.testModule() {
     Database.initInMemory()
+    PvpService.reset()
     configureModule()
 }
 

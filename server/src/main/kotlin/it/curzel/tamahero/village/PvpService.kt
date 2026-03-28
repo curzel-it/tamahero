@@ -16,7 +16,7 @@ object PvpService {
     private val activeBattles = ConcurrentHashMap<Long, PvpBattle>()
     private val lockedDefenders = ConcurrentHashMap.newKeySet<Long>()
 
-    private const val GRID_SIZE = 40
+    private const val GRID_SIZE = 20
     private const val EDGE_MARGIN = 2
     private const val MATCHMAKING_TROPHY_RANGE = 200
     private const val NEXT_OPPONENT_COST = 100L
@@ -366,6 +366,11 @@ object PvpService {
                 building.copy(hp = afterBattle.hp)
             }
         }
+    }
+
+    fun reset() {
+        activeBattles.clear()
+        lockedDefenders.clear()
     }
 
     fun getActiveBattle(attackerId: Long): PvpBattle? = activeBattles[attackerId]

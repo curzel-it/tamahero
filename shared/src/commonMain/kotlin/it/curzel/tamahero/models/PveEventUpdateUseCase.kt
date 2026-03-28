@@ -139,7 +139,7 @@ object PveEventUpdateUseCase {
     }
 
     private fun spawnWave(state: GameState, wave: EventWave, now: Long): GameState {
-        val gridSize = 40
+        val gridSize = 20
         var nextId = (state.troops.maxOfOrNull { it.id } ?: 0) + 1
         val newTroops = mutableListOf<Troop>()
 
@@ -151,10 +151,10 @@ object PveEventUpdateUseCase {
                 val edge = ((nextId * 7 + i) % 4).toInt()
                 val pos = ((nextId * 13 + i * 3) % (gridSize - 2) + 1).toFloat()
                 val (x, y) = when (edge) {
-                    0 -> 0f to pos           // left
-                    1 -> gridSize.toFloat() to pos  // right
-                    2 -> pos to 0f           // top
-                    else -> pos to gridSize.toFloat() // bottom
+                    0 -> 0f to pos                         // left
+                    1 -> (gridSize - 1).toFloat() to pos   // right
+                    2 -> pos to 0f                         // top
+                    else -> pos to (gridSize - 1).toFloat() // bottom
                 }
                 newTroops.add(Troop(
                     id = nextId++,
@@ -175,7 +175,7 @@ object PveEventUpdateUseCase {
         val w = config?.width ?: 2
         val h = config?.height ?: 2
         return building.x <= 2 || building.y <= 2 ||
-            building.x + w >= 38 || building.y + h >= 38
+            building.x + w >= 18 || building.y + h >= 18
     }
 
     private fun pseudoRandom(id: Long, seed: Long, salt: Int): Double {

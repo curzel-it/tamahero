@@ -8,6 +8,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
@@ -63,7 +64,7 @@ private fun LoginForm(viewModel: AuthViewModel) {
             onValueChange = { username = it },
             label = { Text("Username or email") },
             singleLine = true,
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier.fillMaxWidth().testTag("input_username"),
             keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
         )
         Spacer(Modifier.height(TamaSpacing.XSmall))
@@ -73,7 +74,7 @@ private fun LoginForm(viewModel: AuthViewModel) {
             label = { Text("Password") },
             singleLine = true,
             visualTransformation = PasswordVisualTransformation(),
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier.fillMaxWidth().testTag("input_password"),
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password, imeAction = ImeAction.Done),
             keyboardActions = KeyboardActions(onDone = { if (username.isNotBlank() && password.isNotBlank()) viewModel.login(username, password) }),
         )
@@ -81,7 +82,7 @@ private fun LoginForm(viewModel: AuthViewModel) {
         Button(
             onClick = { viewModel.login(username, password) },
             enabled = username.isNotBlank() && password.isNotBlank(),
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier.fillMaxWidth().testTag("btn_login"),
         ) { Text("Log in") }
 
         Spacer(Modifier.height(TamaSpacing.XSmall))
@@ -89,7 +90,7 @@ private fun LoginForm(viewModel: AuthViewModel) {
 
         Spacer(Modifier.height(TamaSpacing.Medium))
         TextButton(onClick = { showForgotPassword = true }) { Text("Forgot password?") }
-        TextButton(onClick = { viewModel.showSignup() }) { Text("Don't have an account? Sign up") }
+        TextButton(onClick = { viewModel.showSignup() }, modifier = Modifier.testTag("link_signup")) { Text("Don't have an account? Sign up") }
         Spacer(Modifier.height(TamaSpacing.XSmall))
         LegalLinks()
     }
@@ -111,7 +112,7 @@ private fun SignupForm(viewModel: AuthViewModel) {
             onValueChange = { username = it },
             label = { Text("Username") },
             singleLine = true,
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier.fillMaxWidth().testTag("input_signup_username"),
             keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
         )
         Spacer(Modifier.height(TamaSpacing.XSmall))
@@ -120,7 +121,7 @@ private fun SignupForm(viewModel: AuthViewModel) {
             onValueChange = { email = it },
             label = { Text("Email (optional)") },
             singleLine = true,
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier.fillMaxWidth().testTag("input_signup_email"),
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email, imeAction = ImeAction.Next),
         )
         Spacer(Modifier.height(TamaSpacing.XSmall))
@@ -130,7 +131,7 @@ private fun SignupForm(viewModel: AuthViewModel) {
             label = { Text("Password") },
             singleLine = true,
             visualTransformation = PasswordVisualTransformation(),
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier.fillMaxWidth().testTag("input_signup_password"),
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password, imeAction = ImeAction.Done),
             keyboardActions = KeyboardActions(onDone = { if (username.isNotBlank() && password.isNotBlank()) viewModel.register(username, password, email.ifBlank { null }) }),
         )
@@ -138,14 +139,14 @@ private fun SignupForm(viewModel: AuthViewModel) {
         Button(
             onClick = { viewModel.register(username, password, email.ifBlank { null }) },
             enabled = username.isNotBlank() && password.isNotBlank(),
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier.fillMaxWidth().testTag("btn_signup"),
         ) { Text("Sign up") }
 
         Spacer(Modifier.height(TamaSpacing.XSmall))
         SocialLoginButtons(viewModel)
 
         Spacer(Modifier.height(TamaSpacing.Medium))
-        TextButton(onClick = { viewModel.showLogin() }) { Text("Already have an account? Log in") }
+        TextButton(onClick = { viewModel.showLogin() }, modifier = Modifier.testTag("link_login")) { Text("Already have an account? Log in") }
         Spacer(Modifier.height(TamaSpacing.XSmall))
         LegalLinks()
     }

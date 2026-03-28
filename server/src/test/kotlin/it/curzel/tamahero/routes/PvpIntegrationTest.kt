@@ -164,7 +164,7 @@ class PvpIntegrationTest {
             assertEquals(2, deploy2.battle.deployedTroops.size)
 
             // Invalid: center deploy
-            val bad = sendAndRecv(ClientMessage.DeployTroop(TroopType.Marine, 20f, 20f))
+            val bad = sendAndRecv(ClientMessage.DeployTroop(TroopType.Marine, 10f, 10f))
             assertTrue(bad is ServerMessage.Error, "Center deploy should fail, got $bad")
 
             sendAndRecv(ClientMessage.EndBattle)

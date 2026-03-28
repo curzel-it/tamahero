@@ -86,6 +86,8 @@ kotlin {
                 implementation(libs.ktor.serverCore)
                 implementation(libs.ktor.serverNetty)
                 implementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.10.2")
+                @OptIn(org.jetbrains.compose.ExperimentalComposeLibrary::class)
+                implementation(compose.uiTest)
             }
         }
     }
