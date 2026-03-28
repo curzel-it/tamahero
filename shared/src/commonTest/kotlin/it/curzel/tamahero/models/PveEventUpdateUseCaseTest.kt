@@ -6,14 +6,14 @@ class PveEventUpdateUseCaseTest {
 
     private fun baseState() = GameState(
         playerId = 1,
-        resources = Resources(credits = 500, alloy = 500),
+        resources = Resources(credits = 500, metal = 500),
         village = Village(
             playerId = 1,
             buildings = listOf(
                 PlacedBuilding(id = 1, type = BuildingType.CommandCenter, level = 1, x = 8, y = 8, hp = 1000),
-                PlacedBuilding(id = 2, type = BuildingType.CreditVault, level = 1, x = 5, y = 8, hp = 200),
-                PlacedBuilding(id = 3, type = BuildingType.AlloySilo, level = 1, x = 12, y = 8, hp = 200),
-                PlacedBuilding(id = 4, type = BuildingType.RailGun, level = 1, x = 5, y = 5, hp = 300),
+                PlacedBuilding(id = 2, type = BuildingType.CrystalStorage, level = 1, x = 5, y = 8, hp = 200),
+                PlacedBuilding(id = 3, type = BuildingType.MetalStorage, level = 1, x = 12, y = 8, hp = 200),
+                PlacedBuilding(id = 4, type = BuildingType.GaussCannon, level = 1, x = 5, y = 5, hp = 300),
             ),
         ),
         lastUpdatedAt = 0,
@@ -47,7 +47,7 @@ class PveEventUpdateUseCaseTest {
                 playerId = 1,
                 buildings = listOf(
                     PlacedBuilding(id = 1, type = BuildingType.CommandCenter, level = 1, x = 8, y = 8, hp = 1000),
-                    PlacedBuilding(id = 2, type = BuildingType.CreditVault, level = 1, x = 0, y = 0, hp = 200),
+                    PlacedBuilding(id = 2, type = BuildingType.CrystalStorage, level = 1, x = 0, y = 0, hp = 200),
                 ),
             ),
         )
@@ -105,7 +105,7 @@ class PveEventUpdateUseCaseTest {
         assertTrue(event.completed)
         assertNotNull(event.pendingRewards)
         val rewards = event.pendingRewards!!
-        assertTrue(rewards.credits > 0 || rewards.alloy > 0)
+        assertTrue(rewards.credits > 0 || rewards.metal > 0)
     }
 
     @Test

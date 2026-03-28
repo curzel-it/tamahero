@@ -88,9 +88,9 @@ object PvpCalculations {
     fun calculateLootAvailable(defenderResources: Resources): Resources {
         return Resources(
             credits = (defenderResources.credits * 0.2).toLong().coerceAtLeast(0),
-            alloy = (defenderResources.alloy * 0.2).toLong().coerceAtLeast(0),
+            metal = (defenderResources.metal * 0.2).toLong().coerceAtLeast(0),
             crystal = (defenderResources.crystal * 0.2).toLong().coerceAtLeast(0),
-            plasma = (defenderResources.plasma * 0.1).toLong().coerceAtLeast(0),
+            deuterium = (defenderResources.deuterium * 0.1).toLong().coerceAtLeast(0),
         )
     }
 
@@ -98,9 +98,9 @@ object PvpCalculations {
         val factor = destructionPercent / 100.0
         return Resources(
             credits = (availableLoot.credits * factor).toLong(),
-            alloy = (availableLoot.alloy * factor).toLong(),
+            metal = (availableLoot.metal * factor).toLong(),
             crystal = (availableLoot.crystal * factor).toLong(),
-            plasma = (availableLoot.plasma * factor).toLong(),
+            deuterium = (availableLoot.deuterium * factor).toLong(),
         )
     }
 

@@ -18,9 +18,9 @@ object ResourceProductionUpdateUseCase {
             val elapsedHours = elapsedMs / 3_600_000.0
             val amount = Resources(
                 credits = (config.productionPerHour.credits * elapsedHours).toLong(),
-                alloy = (config.productionPerHour.alloy * elapsedHours).toLong(),
+                metal = (config.productionPerHour.metal * elapsedHours).toLong(),
                 crystal = (config.productionPerHour.crystal * elapsedHours).toLong(),
-                plasma = (config.productionPerHour.plasma * elapsedHours).toLong(),
+                deuterium = (config.productionPerHour.deuterium * elapsedHours).toLong(),
             )
             produced = produced + amount
             building.copy(lastCollectedAt = now)

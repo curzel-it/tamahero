@@ -37,7 +37,7 @@ fun GameHudView(
     val maxResources = remember(buildings) { totalStorageCapacity(buildings) }
     val activeConstructions = remember(buildings) { buildings.count { it.constructionStartedAt != null } }
     val workerCount = remember(buildings) {
-        buildings.count { it.type == BuildingType.DroneStation && it.constructionStartedAt == null }.coerceAtLeast(1)
+        buildings.count { it.type == BuildingType.RoboticsFactory && it.constructionStartedAt == null }.coerceAtLeast(1)
     }
 
     Column(
@@ -49,10 +49,10 @@ fun GameHudView(
             horizontalArrangement = Arrangement.spacedBy(TamaSpacing.Small),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            ResourceText("Credits", resources.credits, maxResources.credits, TamaColors.Credits)
-            ResourceText("Alloy", resources.alloy, maxResources.alloy, TamaColors.Alloy)
+            ResourceText("Metal", resources.metal, maxResources.metal, TamaColors.Alloy)
             ResourceText("Crystal", resources.crystal, maxResources.crystal, TamaColors.Crystal)
-            ResourceText("Plasma", resources.plasma, maxResources.plasma, TamaColors.Plasma)
+            ResourceText("Deuterium", resources.deuterium, maxResources.deuterium, TamaColors.Plasma)
+            ResourceText("Credits", resources.credits, 0, TamaColors.Credits)
         }
         Spacer(Modifier.height(TamaSpacing.XXSmall))
         Row(

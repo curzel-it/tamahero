@@ -67,7 +67,7 @@ object PveEventUpdateUseCase {
         } else {
             Resources(
                 credits = (totalDamage * event.rewards.debrisRecoveryRate * 0.5).toLong(),
-                alloy = (totalDamage * event.rewards.debrisRecoveryRate * 0.5).toLong(),
+                metal = (totalDamage * event.rewards.debrisRecoveryRate * 0.5).toLong(),
             )
         }
 
@@ -128,7 +128,7 @@ object PveEventUpdateUseCase {
             val recoveryValue = (destroyedHp * event.rewards.debrisRecoveryRate).toLong()
             Resources(
                 credits = recoveryValue / 3,
-                alloy = recoveryValue / 3,
+                metal = recoveryValue / 3,
                 crystal = recoveryValue / 6,
             )
         }

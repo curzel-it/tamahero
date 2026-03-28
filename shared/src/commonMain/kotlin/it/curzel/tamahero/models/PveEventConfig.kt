@@ -66,13 +66,13 @@ object PveEventConfig {
     }
 
     fun rewardsFor(type: EventType): EventRewards = when (type) {
-        EventType.Quake -> EventRewards(success = Resources(credits = 50, alloy = 50))
-        EventType.IonStorm -> EventRewards(success = Resources(credits = 30, alloy = 30))
-        EventType.ScoutParty -> EventRewards(success = Resources(credits = 100, alloy = 100))
-        EventType.Battle -> EventRewards(success = Resources(credits = 200, alloy = 200, crystal = 50))
-        EventType.Raid -> EventRewards(success = Resources(credits = 500, alloy = 500, crystal = 150))
-        EventType.Siege -> EventRewards(success = Resources(credits = 1500, alloy = 1500, crystal = 500, plasma = 100))
-        EventType.Invasion -> EventRewards(success = Resources(credits = 5000, alloy = 5000, crystal = 2000, plasma = 500))
+        EventType.Quake -> EventRewards(success = Resources(credits = 50, metal = 50))
+        EventType.IonStorm -> EventRewards(success = Resources(credits = 30, metal = 30))
+        EventType.ScoutParty -> EventRewards(success = Resources(credits = 100, metal = 100))
+        EventType.Battle -> EventRewards(success = Resources(credits = 200, metal = 200, crystal = 50))
+        EventType.Raid -> EventRewards(success = Resources(credits = 500, metal = 500, crystal = 150))
+        EventType.Siege -> EventRewards(success = Resources(credits = 1500, metal = 1500, crystal = 500, deuterium = 100))
+        EventType.Invasion -> EventRewards(success = Resources(credits = 5000, metal = 5000, crystal = 2000, deuterium = 500))
     }
 
     fun disasterDamagePercent(type: EventType): IntRange = when (type) {

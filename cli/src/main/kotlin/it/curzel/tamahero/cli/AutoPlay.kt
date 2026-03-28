@@ -127,30 +127,30 @@ class AutoPlay(private val client: CliClient) {
         state: GameState
     ): Action? {
         fun count(type: BuildingType) = buildings.count { it.type == type }
-        fun canAfford(cost: Resources) = resources.credits >= cost.credits && resources.alloy >= cost.alloy && resources.crystal >= cost.crystal
+        fun canAfford(cost: Resources) = resources.credits >= cost.credits && resources.metal >= cost.metal && resources.crystal >= cost.crystal
 
         val buildOrder = listOf(
             // Phase 1: basic economy
-            BuildRequest(BuildingType.CreditVault, maxCount = 1),
-            BuildRequest(BuildingType.AlloySilo, maxCount = 1),
-            BuildRequest(BuildingType.AlloyRefinery, maxCount = 1),
-            BuildRequest(BuildingType.CreditMint, maxCount = 1),
-            BuildRequest(BuildingType.AlloyRefinery, maxCount = 2),
-            BuildRequest(BuildingType.CreditMint, maxCount = 2),
+            BuildRequest(BuildingType.CrystalStorage, maxCount = 1),
+            BuildRequest(BuildingType.MetalStorage, maxCount = 1),
+            BuildRequest(BuildingType.MetalMine, maxCount = 1),
+            BuildRequest(BuildingType.CrystalMine, maxCount = 1),
+            BuildRequest(BuildingType.MetalMine, maxCount = 2),
+            BuildRequest(BuildingType.CrystalMine, maxCount = 2),
             // Phase 2: military
-            BuildRequest(BuildingType.Academy, maxCount = 1),
+            BuildRequest(BuildingType.Barracks, maxCount = 1),
             BuildRequest(BuildingType.Hangar, maxCount = 1),
             // Phase 3: more economy
-            BuildRequest(BuildingType.AlloyRefinery, maxCount = 3),
-            BuildRequest(BuildingType.CreditMint, maxCount = 3),
-            BuildRequest(BuildingType.CreditVault, maxCount = 2),
-            BuildRequest(BuildingType.AlloySilo, maxCount = 2),
+            BuildRequest(BuildingType.MetalMine, maxCount = 3),
+            BuildRequest(BuildingType.CrystalMine, maxCount = 3),
+            BuildRequest(BuildingType.CrystalStorage, maxCount = 2),
+            BuildRequest(BuildingType.MetalStorage, maxCount = 2),
             // Phase 4: defenses
-            BuildRequest(BuildingType.RailGun, maxCount = 1),
-            BuildRequest(BuildingType.LaserTurret, maxCount = 1),
-            BuildRequest(BuildingType.RailGun, maxCount = 2),
-            BuildRequest(BuildingType.LaserTurret, maxCount = 2),
-            BuildRequest(BuildingType.MissileBattery, maxCount = 1),
+            BuildRequest(BuildingType.GaussCannon, maxCount = 1),
+            BuildRequest(BuildingType.LightLaser, maxCount = 1),
+            BuildRequest(BuildingType.GaussCannon, maxCount = 2),
+            BuildRequest(BuildingType.LightLaser, maxCount = 2),
+            BuildRequest(BuildingType.MissileLauncher, maxCount = 1),
         )
 
         // Try to build next thing in build order
@@ -186,7 +186,7 @@ class AutoPlay(private val client: CliClient) {
         }
 
         // Try to train troops
-        val hasBarracks = buildings.any { it.type == BuildingType.Academy && it.constructionStartedAt == null }
+        val hasBarracks = buildings.any { it.type == BuildingType.Barracks && it.constructionStartedAt == null }
         val armyCapacity = buildings
             .filter { it.type == BuildingType.Hangar && it.constructionStartedAt == null }
             .sumOf { BuildingConfig.configFor(it.type, it.level)?.troopCapacity ?: 0 }

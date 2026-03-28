@@ -52,7 +52,7 @@ fun PveEventResultView(
             )
 
             val rewards = result.rewards
-            val hasRewards = rewards.credits > 0 || rewards.alloy > 0 || rewards.crystal > 0 || rewards.plasma > 0
+            val hasRewards = rewards.credits > 0 || rewards.metal > 0 || rewards.crystal > 0 || rewards.deuterium > 0
             if (hasRewards) {
                 Spacer(Modifier.height(TamaSpacing.Medium))
                 Text(
@@ -66,9 +66,9 @@ fun PveEventResultView(
                     horizontalArrangement = Arrangement.SpaceEvenly,
                 ) {
                     if (rewards.credits > 0) RewardColumn("Credits", rewards.credits, TamaColors.Credits)
-                    if (rewards.alloy > 0) RewardColumn("Alloy", rewards.alloy, TamaColors.Alloy)
+                    if (rewards.metal > 0) RewardColumn("Alloy", rewards.metal, TamaColors.Alloy)
                     if (rewards.crystal > 0) RewardColumn("Crystal", rewards.crystal, TamaColors.Crystal)
-                    if (rewards.plasma > 0) RewardColumn("Plasma", rewards.plasma, TamaColors.Plasma)
+                    if (rewards.deuterium > 0) RewardColumn("Plasma", rewards.deuterium, TamaColors.Plasma)
                 }
             }
 

@@ -6,7 +6,7 @@ class BattleUpdateUseCaseTest {
 
     private fun baseState(): GameState {
         val building = PlacedBuilding(
-            id = 1, type = BuildingType.CreditVault, level = 1,
+            id = 1, type = BuildingType.CrystalStorage, level = 1,
             x = 10, y = 10, constructionStartedAt = null, hp = 200,
         )
         return GameState(
@@ -37,7 +37,7 @@ class BattleUpdateUseCaseTest {
     @Test
     fun troopDamagesBuilding() {
         val building = PlacedBuilding(
-            id = 1, type = BuildingType.CreditVault, level = 1,
+            id = 1, type = BuildingType.CrystalStorage, level = 1,
             x = 5, y = 5, constructionStartedAt = null, hp = 200,
         )
         // Place troop right next to the building (within range 1)
@@ -58,7 +58,7 @@ class BattleUpdateUseCaseTest {
     fun buildingDestroyedWhenHpReachesZero() {
         // Use GoldStorage (non-defense) so it won't be auto-rebuilt in post-battle
         val building = PlacedBuilding(
-            id = 1, type = BuildingType.CreditVault, level = 1,
+            id = 1, type = BuildingType.CrystalStorage, level = 1,
             x = 5, y = 5, constructionStartedAt = null, hp = 10,
         )
         val troop = Troop(id = 100, type = TroopType.Marine, hp = 50, x = 5f, y = 5f)
@@ -74,7 +74,7 @@ class BattleUpdateUseCaseTest {
     @Test
     fun defensesDamageTroops() {
         val cannon = PlacedBuilding(
-            id = 1, type = BuildingType.RailGun, level = 1,
+            id = 1, type = BuildingType.GaussCannon, level = 1,
             x = 5, y = 5, constructionStartedAt = null, hp = 300,
         )
         // Troop within cannon range (3 tiles)
@@ -92,7 +92,7 @@ class BattleUpdateUseCaseTest {
 
     @Test
     fun juggernautTargetsStrongestBuilding() {
-        val weak = PlacedBuilding(id = 1, type = BuildingType.Barrier, level = 1, x = 3, y = 0, hp = 100)
+        val weak = PlacedBuilding(id = 1, type = BuildingType.Wall, level = 1, x = 3, y = 0, hp = 100)
         val strong = PlacedBuilding(id = 2, type = BuildingType.CommandCenter, level = 1, x = 10, y = 0, hp = 1000)
         val troop = Troop(id = 100, type = TroopType.Juggernaut, hp = 60, x = 0f, y = 0f)
         val state = GameState(
@@ -109,8 +109,8 @@ class BattleUpdateUseCaseTest {
 
     @Test
     fun engineerTargetsDefensesFirst() {
-        val storage = PlacedBuilding(id = 1, type = BuildingType.CreditVault, level = 1, x = 3, y = 0, hp = 200)
-        val cannon = PlacedBuilding(id = 2, type = BuildingType.RailGun, level = 1, x = 10, y = 0, hp = 300)
+        val storage = PlacedBuilding(id = 1, type = BuildingType.CrystalStorage, level = 1, x = 3, y = 0, hp = 200)
+        val cannon = PlacedBuilding(id = 2, type = BuildingType.GaussCannon, level = 1, x = 10, y = 0, hp = 300)
         val troop = Troop(id = 100, type = TroopType.Engineer, hp = 80, x = 0f, y = 0f)
         val state = GameState(
             playerId = 1, resources = Resources(),
@@ -127,7 +127,7 @@ class BattleUpdateUseCaseTest {
     fun troopNavigatesAroundObstacle() {
         // Place a large obstacle (4x4) between troop and target
         // Troop at (2, 10), obstacle at (6, 8) occupying 6-9 x 8-11, target at (14, 10)
-        val target = PlacedBuilding(id = 1, type = BuildingType.CreditVault, level = 1, x = 14, y = 10, hp = 200)
+        val target = PlacedBuilding(id = 1, type = BuildingType.CrystalStorage, level = 1, x = 14, y = 10, hp = 200)
         val obstacle = PlacedBuilding(id = 2, type = BuildingType.CommandCenter, level = 1, x = 6, y = 8, hp = 1000)
         val troop = Troop(id = 100, type = TroopType.Marine, hp = 50, x = 5f, y = 10.5f)
         val state = GameState(
@@ -154,8 +154,8 @@ class BattleUpdateUseCaseTest {
     @Test
     fun troopWalksOverTrapAndTriggersIt() {
         // Target beyond a spike trap
-        val target = PlacedBuilding(id = 1, type = BuildingType.CreditVault, level = 1, x = 10, y = 5, hp = 200)
-        val trap = PlacedBuilding(id = 2, type = BuildingType.MineTrap, level = 1, x = 7, y = 5, hp = 1)
+        val target = PlacedBuilding(id = 1, type = BuildingType.CrystalStorage, level = 1, x = 10, y = 5, hp = 200)
+        val trap = PlacedBuilding(id = 2, type = BuildingType.LandMine, level = 1, x = 7, y = 5, hp = 1)
         val troop = Troop(id = 100, type = TroopType.Marine, hp = 50, x = 5f, y = 5.5f)
         val state = GameState(
             playerId = 1, resources = Resources(),

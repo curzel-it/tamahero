@@ -25,14 +25,14 @@ interface PushNotificationService {
         attackerName: String,
         stars: Int,
         lootCredits: Long,
-        lootAlloy: Long,
+        lootMetal: Long,
         lootCrystal: Long,
     ) {
         val starText = "\u2B50".repeat(stars)
         sendIfOffline(
             defenderId,
             "Your base was attacked!",
-            "$attackerName attacked you $starText — lost ${lootCredits}cr ${lootAlloy}al ${lootCrystal}xy",
+            "$attackerName attacked you $starText — lost ${lootCredits}cr ${lootMetal}al ${lootCrystal}c",
             mapOf("type" to "defense_result"),
         )
     }

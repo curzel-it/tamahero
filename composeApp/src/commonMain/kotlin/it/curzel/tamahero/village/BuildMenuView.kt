@@ -48,7 +48,7 @@ fun BuildMenuView(
 
     val now = kotlinx.datetime.Clock.System.now().toEpochMilliseconds()
     val workerCount = buildings
-        .count { it.type == BuildingType.DroneStation && it.isComplete(now) }
+        .count { it.type == BuildingType.RoboticsFactory && it.isComplete(now) }
         .coerceAtLeast(1)
     val activeConstructions = buildings.count { it.isUnderConstruction(now) }
     val availableBuilders = workerCount - activeConstructions
@@ -155,8 +155,9 @@ private fun BuildMenuItem(
 ) {
     val costText = buildList {
         if (cost.credits > 0) add("${cost.credits}cr")
-        if (cost.alloy > 0) add("${cost.alloy}al")
-        if (cost.crystal > 0) add("${cost.crystal}xy")
+        if (cost.metal > 0) add("${cost.metal}m")
+        if (cost.crystal > 0) add("${cost.crystal}c")
+        if (cost.deuterium > 0) add("${cost.deuterium}dt")
     }.joinToString(" ")
 
     val borderColor = when (state) {
@@ -187,7 +188,7 @@ private fun BuildMenuItem(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center,
     ) {
-        Text(type.name, color = TamaColors.Text, fontSize = 14.sp)
+        Text(type.displayName, color = TamaColors.Text, fontSize = 14.sp)
 
         if (maxCount != null) {
             Text(
@@ -221,8 +222,8 @@ private fun BuildMenuItem(
 }
 
 private fun categoryFor(type: BuildingType): BuildCategory = when {
-    type.isProducer || type.isStorage || type == BuildingType.DroneStation -> BuildCategory.Resources
-    type == BuildingType.Academy || type == BuildingType.Hangar -> BuildCategory.Army
+    type.isProducer || type.isStorage || type == BuildingType.RoboticsFactory -> BuildCategory.Resources
+    type == BuildingType.Barracks || type == BuildingType.Hangar -> BuildCategory.Army
     type.isDefense -> BuildCategory.Defense
     type.isTrap || type == BuildingType.ShieldDome -> BuildCategory.Traps
     else -> BuildCategory.Resources

@@ -80,9 +80,9 @@ class PvpIntegrationTest {
         adminToken: String,
         defenderId: Long,
     ) {
-        adminPost(client, adminToken, "place-building", """{"userId":$defenderId,"type":"RailGun","x":10,"y":10}""")
-        adminPost(client, adminToken, "place-building", """{"userId":$defenderId,"type":"CreditMint","x":5,"y":5}""")
-        adminPost(client, adminToken, "grant-resources", """{"userId":$defenderId,"credits":50000,"alloy":50000}""")
+        adminPost(client, adminToken, "place-building", """{"userId":$defenderId,"type":"GaussCannon","x":10,"y":10}""")
+        adminPost(client, adminToken, "place-building", """{"userId":$defenderId,"type":"CrystalMine","x":5,"y":5}""")
+        adminPost(client, adminToken, "grant-resources", """{"userId":$defenderId,"credits":50000,"metal":50000}""")
     }
 
     private suspend fun setupAttackerWithArmy(
@@ -315,8 +315,8 @@ class PvpIntegrationTest {
         val (attackerToken, attackerId, _) = register(client, "attacker7")
         val (_, defenderId, _) = register(client, "defender7")
 
-        adminPost(client, adminToken, "place-building", """{"userId":$defenderId,"type":"RailGun","x":10,"y":10}""")
-        adminPost(client, adminToken, "grant-resources", """{"userId":$defenderId,"credits":100000,"alloy":100000,"crystal":50000}""")
+        adminPost(client, adminToken, "place-building", """{"userId":$defenderId,"type":"GaussCannon","x":10,"y":10}""")
+        adminPost(client, adminToken, "grant-resources", """{"userId":$defenderId,"credits":100000,"metal":100000,"crystal":50000}""")
         setupAttackerWithArmy(client, adminToken, attackerId, 5)
 
         val attackerBefore = getVillage(client, adminToken, attackerId)

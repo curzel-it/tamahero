@@ -7,22 +7,22 @@ class PvpBattleTest {
 
     @Test
     fun `loot available is 20 percent of resources and 10 percent of plasma`() {
-        val resources = Resources(credits = 10000, alloy = 5000, crystal = 2000, plasma = 1000)
+        val resources = Resources(credits = 10000, metal = 5000, crystal = 2000, deuterium = 1000)
         val available = PvpCalculations.calculateLootAvailable(resources)
         assertEquals(2000, available.credits)
-        assertEquals(1000, available.alloy)
+        assertEquals(1000, available.metal)
         assertEquals(400, available.crystal)
-        assertEquals(100, available.plasma)
+        assertEquals(100, available.deuterium)
     }
 
     @Test
     fun `loot stolen scales with destruction percent`() {
-        val available = Resources(credits = 2000, alloy = 1000, crystal = 400, plasma = 100)
+        val available = Resources(credits = 2000, metal = 1000, crystal = 400, deuterium = 100)
         val loot50 = PvpCalculations.calculateLootStolen(available, 50)
         assertEquals(1000, loot50.credits)
-        assertEquals(500, loot50.alloy)
+        assertEquals(500, loot50.metal)
         assertEquals(200, loot50.crystal)
-        assertEquals(50, loot50.plasma)
+        assertEquals(50, loot50.deuterium)
 
         val loot100 = PvpCalculations.calculateLootStolen(available, 100)
         assertEquals(2000, loot100.credits)
@@ -77,8 +77,8 @@ class PvpBattleTest {
     fun `star calculation based on destruction and command center`() {
         val base = listOf(
             PlacedBuilding(id = 1, type = BuildingType.CommandCenter, level = 1, x = 8, y = 8, hp = 1000),
-            PlacedBuilding(id = 2, type = BuildingType.RailGun, level = 1, x = 10, y = 10, hp = 500),
-            PlacedBuilding(id = 3, type = BuildingType.CreditMint, level = 1, x = 5, y = 5, hp = 500),
+            PlacedBuilding(id = 2, type = BuildingType.GaussCannon, level = 1, x = 10, y = 10, hp = 500),
+            PlacedBuilding(id = 3, type = BuildingType.CrystalMine, level = 1, x = 5, y = 5, hp = 500),
         )
 
         val battle = PvpBattle(

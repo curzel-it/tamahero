@@ -9,7 +9,7 @@ object TrainingUpdateUseCase {
         var army = state.army
         val queue = state.trainingQueue.entries.toMutableList()
         val barracksCount = state.village.buildings.count {
-            it.type == BuildingType.Academy && it.isComplete(now)
+            it.type == BuildingType.Barracks && it.isComplete(now)
         }
         if (barracksCount == 0) return state
 

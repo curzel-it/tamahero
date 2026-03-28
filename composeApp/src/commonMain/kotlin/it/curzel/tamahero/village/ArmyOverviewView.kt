@@ -27,7 +27,7 @@ fun ArmyOverviewView(
         .filter { it.type == BuildingType.Hangar && it.constructionStartedAt == null }
         .sumOf { BuildingConfig.configFor(it.type, it.level)?.troopCapacity ?: 0 }
     val academyLevel = buildings
-        .filter { it.type == BuildingType.Academy && it.constructionStartedAt == null }
+        .filter { it.type == BuildingType.Barracks && it.constructionStartedAt == null }
         .maxOfOrNull { it.level } ?: 0
     val hasBarracks = academyLevel > 0
     val maxTrainLevel = TroopConfig.maxLevelForAcademy(academyLevel)

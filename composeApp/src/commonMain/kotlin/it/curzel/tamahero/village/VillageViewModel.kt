@@ -98,7 +98,7 @@ class VillageViewModel : ViewModel() {
                         _resources.value = message.resources
                     }
                     is ServerMessage.BuildingComplete -> {
-                        _bannerMessage.value = "${message.buildingType.name} Lv${message.level} complete!"
+                        _bannerMessage.value = "${message.buildingType.displayName} Lv${message.level} complete!"
                         GameSocketClient.getVillage()
                     }
                     is ServerMessage.TrainingComplete -> {
@@ -154,9 +154,9 @@ class VillageViewModel : ViewModel() {
         for (b in before) {
             val current = after.find { it.id == b.id }
             if (current == null) {
-                damage.add(DamagedBuildingInfo("${b.type.name} Lv${b.level}", destroyed = true, hpBefore = b.hp, hpAfter = 0))
+                damage.add(DamagedBuildingInfo("${b.type.displayName} Lv${b.level}", destroyed = true, hpBefore = b.hp, hpAfter = 0))
             } else if (current.hp < b.hp) {
-                damage.add(DamagedBuildingInfo("${b.type.name} Lv${b.level}", destroyed = false, hpBefore = b.hp, hpAfter = current.hp))
+                damage.add(DamagedBuildingInfo("${b.type.displayName} Lv${b.level}", destroyed = false, hpBefore = b.hp, hpAfter = current.hp))
             }
         }
         return damage.ifEmpty { null }
@@ -168,9 +168,9 @@ class VillageViewModel : ViewModel() {
         if (prev == null) return
         val diffs = mutableListOf<FloatingText>()
         val dCredits = newResources.credits - prev.credits
-        val dAlloy = newResources.alloy - prev.alloy
+        val dAlloy = newResources.metal - prev.metal
         val dCrystal = newResources.crystal - prev.crystal
-        val dPlasma = newResources.plasma - prev.plasma
+        val dPlasma = newResources.deuterium - prev.deuterium
         if (dCredits != 0L) diffs.add(FloatingText("${if (dCredits > 0) "+" else ""}${dCredits} credits", androidx.compose.ui.graphics.Color(0xFFFFD700)))
         if (dAlloy != 0L) diffs.add(FloatingText("${if (dAlloy > 0) "+" else ""}${dAlloy} alloy", androidx.compose.ui.graphics.Color(0xFF4CAF50)))
         if (dCrystal != 0L) diffs.add(FloatingText("${if (dCrystal > 0) "+" else ""}${dCrystal} crystal", androidx.compose.ui.graphics.Color(0xFF9E9E9E)))
@@ -187,7 +187,7 @@ class VillageViewModel : ViewModel() {
         val minutes = gap / 60_000
         val summary = buildString {
             appendLine("While you were away (${minutes}m):")
-            if (state.resources.credits > 0 || state.resources.alloy > 0) {
+            if (state.resources.credits > 0 || state.resources.metal > 0) {
                 appendLine("Resources accumulated")
             }
             val completed = state.village.buildings.count { it.constructionStartedAt == null && it.hp > 0 }

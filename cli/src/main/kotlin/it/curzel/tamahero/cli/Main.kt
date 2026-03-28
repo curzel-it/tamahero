@@ -346,10 +346,10 @@ private fun showStorageCapacity(state: GameState?) {
         totalCapacity = totalCapacity + config.storageCapacity
     }
     println("Resources / Storage capacity:")
-    println("  Credits: ${state.resources.credits} / ${if (totalCapacity.credits > 0) totalCapacity.credits else "unlimited"}")
-    println("  Alloy:   ${state.resources.alloy} / ${if (totalCapacity.alloy > 0) totalCapacity.alloy else "unlimited"}")
-    println("  Crystal: ${state.resources.crystal} / ${if (totalCapacity.crystal > 0) totalCapacity.crystal else "unlimited"}")
-    println("  Plasma:  ${state.resources.plasma}")
+    println("  Metal:      ${state.resources.metal} / ${if (totalCapacity.metal > 0) totalCapacity.metal else "unlimited"}")
+    println("  Crystal:    ${state.resources.crystal} / ${if (totalCapacity.crystal > 0) totalCapacity.crystal else "unlimited"}")
+    println("  Deuterium:  ${state.resources.deuterium} / ${if (totalCapacity.deuterium > 0) totalCapacity.deuterium else "unlimited"}")
+    println("  Credits:    ${state.resources.credits} (unlimited)")
 }
 
 private fun showMap(state: GameState?) {
@@ -394,26 +394,26 @@ private fun showMap(state: GameState?) {
 
 private fun buildingLabel(type: BuildingType): Char = when (type) {
     BuildingType.CommandCenter -> 'C'
-    BuildingType.AlloyRefinery -> 'A'
-    BuildingType.CreditMint -> 'M'
-    BuildingType.Foundry -> 'F'
-    BuildingType.AlloySilo -> 'a'
-    BuildingType.CreditVault -> 'c'
-    BuildingType.CrystalSilo -> 'x'
-    BuildingType.Academy -> 'B'
+    BuildingType.MetalMine -> 'M'
+    BuildingType.CrystalMine -> 'K'
+    BuildingType.DeuteriumSynthesizer -> 'D'
+    BuildingType.MetalStorage -> 'm'
+    BuildingType.CrystalStorage -> 'k'
+    BuildingType.DeuteriumStorage -> 'd'
+    BuildingType.Barracks -> 'B'
     BuildingType.Hangar -> 'H'
-    BuildingType.RailGun -> 'R'
-    BuildingType.LaserTurret -> 'L'
-    BuildingType.Barrier -> 'W'
-    BuildingType.MissileBattery -> 'I'
-    BuildingType.MineTrap -> 's'
-    BuildingType.GravityTrap -> 'p'
+    BuildingType.RoboticsFactory -> 'R'
+    BuildingType.GaussCannon -> 'G'
+    BuildingType.LightLaser -> 'L'
+    BuildingType.HeavyLaser -> 'V'
+    BuildingType.MissileLauncher -> 'I'
+    BuildingType.IonCannon -> 'N'
+    BuildingType.PlasmaCannon -> 'P'
+    BuildingType.Wall -> 'W'
+    BuildingType.LandMine -> 'x'
+    BuildingType.GravityWell -> 'g'
     BuildingType.NovaBomb -> 'b'
-    BuildingType.TeslaTower -> 'Z'
     BuildingType.ShieldDome -> 'S'
-    BuildingType.PlasmaReactor -> 'r'
-    BuildingType.PlasmaBank -> 'n'
-    BuildingType.DroneStation -> 'D'
 }
 
 private fun showEvent(state: GameState?) {
@@ -497,8 +497,8 @@ private fun showDefenseLog(state: GameState?) {
 private fun formatResources(r: Resources): String {
     val parts = mutableListOf<String>()
     if (r.credits > 0) parts.add("${r.credits}cr")
-    if (r.alloy > 0) parts.add("${r.alloy}al")
-    if (r.crystal > 0) parts.add("${r.crystal}xy")
-    if (r.plasma > 0) parts.add("${r.plasma}pl")
+    if (r.metal > 0) parts.add("${r.metal}m")
+    if (r.crystal > 0) parts.add("${r.crystal}c")
+    if (r.deuterium > 0) parts.add("${r.deuterium}dt")
     return if (parts.isEmpty()) "free" else parts.joinToString(" ")
 }

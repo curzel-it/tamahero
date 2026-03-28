@@ -82,10 +82,10 @@ private fun DefenseLogEntryRow(entry: DefenseLogEntry) {
             Text("Trophies: $trophyText", color = trophyColor, fontSize = 13.sp)
         }
         val loot = entry.lootLost
-        if (loot.credits > 0 || loot.alloy > 0 || loot.crystal > 0) {
+        if (loot.credits > 0 || loot.metal > 0 || loot.crystal > 0) {
             val lostText = buildList {
                 if (loot.credits > 0) add("-${loot.credits} credits")
-                if (loot.alloy > 0) add("-${loot.alloy} alloy")
+                if (loot.metal > 0) add("-${loot.metal} alloy")
                 if (loot.crystal > 0) add("-${loot.crystal} crystal")
             }.joinToString(", ")
             Text(lostText, color = TamaColors.Error, fontSize = 12.sp)

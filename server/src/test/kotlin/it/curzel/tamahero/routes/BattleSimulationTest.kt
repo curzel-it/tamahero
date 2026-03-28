@@ -96,12 +96,12 @@ class BattleSimulationTest {
         val (adminToken, _) = registerAdmin(client)
         val (_, userId) = registerUser(client)
 
-        placeBuilding(client, adminToken, userId, "RailGun", x = 16, y = 18)
+        placeBuilding(client, adminToken, userId, "GaussCannon", x = 16, y = 18)
 
         val before = getVillage(client, adminToken, userId)
-        val railGun = before.village.buildings.find { it.type == BuildingType.RailGun }
-        assertNotNull(railGun, "RailGun should exist")
-        assertEquals(300, railGun.hp, "RailGun should have full HP")
+        val gaussCannon = before.village.buildings.find { it.type == BuildingType.GaussCannon }
+        assertNotNull(gaussCannon, "RailGun should exist")
+        assertEquals(300, gaussCannon.hp, "RailGun should have full HP")
 
         triggerEvent(client, adminToken, userId, "ScoutParty", listOf(
             TriggerEventTroop(type = "Marine", count = 1, level = 1),
@@ -117,9 +117,9 @@ class BattleSimulationTest {
         assertEquals(0, after.troops.size, "Marine should be dead")
         assertTrue(after.activeEvent?.completed == true, "Event should be completed")
 
-        val railGunAfter = after.village.buildings.find { it.type == BuildingType.RailGun }
-        assertNotNull(railGunAfter, "RailGun should survive")
-        assertTrue(railGunAfter.hp > 0, "RailGun should have HP remaining")
+        val gaussCannonAfter = after.village.buildings.find { it.type == BuildingType.GaussCannon }
+        assertNotNull(gaussCannonAfter, "RailGun should survive")
+        assertTrue(gaussCannonAfter.hp > 0, "RailGun should have HP remaining")
 
         val commandCenter = after.village.buildings.find { it.type == BuildingType.CommandCenter }
         assertNotNull(commandCenter, "CommandCenter should survive")
@@ -131,8 +131,8 @@ class BattleSimulationTest {
         val (adminToken, _) = registerAdmin(client)
         val (_, userId) = registerUser(client)
 
-        placeBuilding(client, adminToken, userId, "RailGun", x = 14, y = 14)
-        placeBuilding(client, adminToken, userId, "RailGun", x = 14, y = 4)
+        placeBuilding(client, adminToken, userId, "GaussCannon", x = 14, y = 14)
+        placeBuilding(client, adminToken, userId, "GaussCannon", x = 14, y = 4)
 
         triggerEvent(client, adminToken, userId, "ScoutParty", listOf(
             TriggerEventTroop(type = "Marine", count = 1, level = 1),
@@ -150,7 +150,7 @@ class BattleSimulationTest {
         val (adminToken, _) = registerAdmin(client)
         val (_, userId) = registerUser(client)
 
-        placeBuilding(client, adminToken, userId, "RailGun", x = 16, y = 18)
+        placeBuilding(client, adminToken, userId, "GaussCannon", x = 16, y = 18)
 
         triggerEvent(client, adminToken, userId, "ScoutParty", listOf(
             TriggerEventTroop(type = "Marine", count = 10, level = 1),

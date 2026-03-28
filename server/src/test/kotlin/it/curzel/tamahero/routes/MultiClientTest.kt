@@ -65,15 +65,15 @@ class MultiClientTest {
 
         wsClient1.webSocket("/ws?token=$token") {
             skipConnected()
-            send(Frame.Text(sendMessage(ClientMessage.Build(BuildingType.AlloyRefinery, 5, 5))))
+            send(Frame.Text(sendMessage(ClientMessage.Build(BuildingType.MetalMine, 5, 5))))
             val msg1 = receiveServerMessage()
             assertTrue(msg1 is ServerMessage.GameStateUpdated)
-            assertTrue(msg1.state.village.buildings.any { it.type == BuildingType.AlloyRefinery })
+            assertTrue(msg1.state.village.buildings.any { it.type == BuildingType.MetalMine })
         }
 
         val msg2 = withTimeout(5000) { client2Message.receive() }
         assertTrue(msg2 is ServerMessage.GameStateUpdated, "Client 2 should receive GameStateUpdated but got $msg2")
-        assertTrue(msg2.state.village.buildings.any { it.type == BuildingType.AlloyRefinery })
+        assertTrue(msg2.state.village.buildings.any { it.type == BuildingType.MetalMine })
 
         client2Job.cancel()
         scope.cancel()

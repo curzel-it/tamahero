@@ -27,7 +27,7 @@ fun BuildingTooltipView(
             .padding(horizontal = TamaSpacing.Small, vertical = TamaSpacing.XXSmall),
     ) {
         Text(
-            "${building.type.name} Lv${building.level}",
+            "${building.type.displayName} Lv${building.level}",
             color = TamaColors.Text,
             fontSize = 12.sp,
         )
@@ -38,12 +38,12 @@ fun BuildingTooltipView(
                 fontSize = 11.sp,
             )
             val prod = config.productionPerHour
-            if (prod.credits > 0 || prod.alloy > 0 || prod.crystal > 0 || prod.plasma > 0) {
+            if (prod.credits > 0 || prod.metal > 0 || prod.crystal > 0 || prod.deuterium > 0) {
                 val prodText = buildList {
                     if (prod.credits > 0) add("${prod.credits}cr")
-                    if (prod.alloy > 0) add("${prod.alloy}al")
-                    if (prod.crystal > 0) add("${prod.crystal}xy")
-                    if (prod.plasma > 0) add("${prod.plasma}pl")
+                    if (prod.metal > 0) add("${prod.metal}m")
+                    if (prod.crystal > 0) add("${prod.crystal}c")
+                    if (prod.deuterium > 0) add("${prod.deuterium}dt")
                 }.joinToString(" ")
                 Text(prodText + "/hr", color = TamaColors.TextMuted, fontSize = 11.sp)
             }

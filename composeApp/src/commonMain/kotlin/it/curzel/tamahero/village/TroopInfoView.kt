@@ -69,7 +69,7 @@ fun TroopInfoView(
                     Text("${formatOneDecimal(config.range)}", color = textColor, fontSize = 13.sp, modifier = Modifier.width(36.dp))
                     val costText = buildList {
                         if (config.trainingCost.credits > 0) add("${config.trainingCost.credits}cr")
-                        if (config.trainingCost.crystal > 0) add("${config.trainingCost.crystal}xy")
+                        if (config.trainingCost.crystal > 0) add("${config.trainingCost.crystal}c")
                     }.joinToString(" ")
                     Text(costText, color = textColor, fontSize = 13.sp, modifier = Modifier.weight(1f))
                 }

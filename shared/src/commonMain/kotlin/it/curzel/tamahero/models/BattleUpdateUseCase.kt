@@ -60,7 +60,7 @@ object BattleUpdateUseCase {
 
             if (dist <= config.range) {
                 var damage = (config.dps * deltaSeconds).toInt().coerceAtLeast(1)
-                if (target.type == BuildingType.Barrier && config.wallDamageMultiplier > 1f) {
+                if (target.type == BuildingType.Wall && config.wallDamageMultiplier > 1f) {
                     damage = (damage * config.wallDamageMultiplier).toInt()
                 }
                 if (config.splashRadius > 0f) {
@@ -162,7 +162,7 @@ object BattleUpdateUseCase {
                 available.filter { it.type.isDefense }.minByOrNull { distanceTo(troop, it) }
                     ?: available.minByOrNull { distanceTo(troop, it) }
             TargetPreference.Walls ->
-                available.filter { it.type == BuildingType.Barrier }.minByOrNull { distanceTo(troop, it) }
+                available.filter { it.type == BuildingType.Wall }.minByOrNull { distanceTo(troop, it) }
                     ?: available.filter { it.type.isDefense }.minByOrNull { distanceTo(troop, it) }
                     ?: available.minByOrNull { distanceTo(troop, it) }
             TargetPreference.Resources ->
@@ -184,7 +184,7 @@ object BattleUpdateUseCase {
             if (troopsOnTrap.isEmpty()) continue
 
             when (trap.type) {
-                BuildingType.MineTrap, BuildingType.NovaBomb -> {
+                BuildingType.LandMine, BuildingType.NovaBomb -> {
                     val affected = result.filter { distanceTo(it, trap) <= config.triggerRadius }
                     for (troop in affected) {
                         val idx = result.indexOfFirst { it.id == troop.id }
@@ -196,7 +196,7 @@ object BattleUpdateUseCase {
                     }
                     buildings[i] = trap.copy(triggered = true)
                 }
-                BuildingType.GravityTrap -> {
+                BuildingType.GravityWell -> {
                     val victim = troopsOnTrap.firstOrNull {
                         it.type == TroopType.Marine || it.type == TroopType.Sniper || it.type == TroopType.Drone
                     }

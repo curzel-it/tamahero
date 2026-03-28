@@ -53,9 +53,9 @@ class VillageWebSocketTest {
             val state = msg.state
             assertEquals(2, state.village.buildings.size)
             assertTrue(state.village.buildings.any { it.type == BuildingType.CommandCenter })
-            assertTrue(state.village.buildings.any { it.type == BuildingType.DroneStation })
-            assertEquals(1000, state.resources.credits)
-            assertEquals(1000, state.resources.alloy)
+            assertTrue(state.village.buildings.any { it.type == BuildingType.RoboticsFactory })
+            assertEquals(500, state.resources.credits)
+            assertEquals(500, state.resources.metal)
         }
     }
 
@@ -74,12 +74,12 @@ class VillageWebSocketTest {
         val wsClient = client.config { install(WebSockets) }
         wsClient.webSocket("/ws?token=$token") {
             skipConnected()
-            send(Frame.Text(sendMessage(ClientMessage.Build(BuildingType.AlloyRefinery, 5, 5))))
+            send(Frame.Text(sendMessage(ClientMessage.Build(BuildingType.MetalMine, 5, 5))))
             val msg = receiveServerMessage()
             assertTrue(msg is ServerMessage.GameStateUpdated)
             val state = msg.state
-            assertTrue(state.village.buildings.any { it.type == BuildingType.AlloyRefinery })
-            assertEquals(950, state.resources.credits)
+            assertTrue(state.village.buildings.any { it.type == BuildingType.MetalMine })
+            assertEquals(450, state.resources.credits)
         }
     }
 
@@ -90,20 +90,20 @@ class VillageWebSocketTest {
         wsClient.webSocket("/ws?token=$token") {
             skipConnected()
             val buildings = listOf(
-                ClientMessage.Build(BuildingType.AlloyRefinery, 0, 0),
-                ClientMessage.Build(BuildingType.CreditMint, 0, 5),
-                ClientMessage.Build(BuildingType.Foundry, 0, 10),
-                ClientMessage.Build(BuildingType.AlloySilo, 0, 15),
-                ClientMessage.Build(BuildingType.CreditVault, 0, 20),
-                ClientMessage.Build(BuildingType.RailGun, 0, 25),
-                ClientMessage.Build(BuildingType.LaserTurret, 0, 30),
+                ClientMessage.Build(BuildingType.MetalMine, 0, 0),
+                ClientMessage.Build(BuildingType.MetalMine, 0, 5),
+                ClientMessage.Build(BuildingType.MetalStorage, 0, 10),
+                ClientMessage.Build(BuildingType.GaussCannon, 0, 15),
+                ClientMessage.Build(BuildingType.LightLaser, 5, 0),
+                ClientMessage.Build(BuildingType.LightLaser, 5, 5),
+                ClientMessage.Build(BuildingType.GaussCannon, 5, 10),
             )
             for (b in buildings) {
                 send(Frame.Text(sendMessage(b)))
                 val resp = receiveServerMessage()
                 if (resp is ServerMessage.Error) break
             }
-            send(Frame.Text(sendMessage(ClientMessage.Build(BuildingType.MissileBattery, 5, 0))))
+            send(Frame.Text(sendMessage(ClientMessage.Build(BuildingType.MissileLauncher, 5, 0))))
             val msg = receiveServerMessage()
             assertTrue(msg is ServerMessage.Error, "Expected error but got: $msg")
         }
@@ -115,7 +115,7 @@ class VillageWebSocketTest {
         val wsClient = client.config { install(WebSockets) }
         wsClient.webSocket("/ws?token=$token") {
             skipConnected()
-            send(Frame.Text(sendMessage(ClientMessage.Build(BuildingType.AlloyRefinery, 39, 39))))
+            send(Frame.Text(sendMessage(ClientMessage.Build(BuildingType.MetalMine, 39, 39))))
             val msg = receiveServerMessage()
             assertTrue(msg is ServerMessage.Error)
             assertTrue(msg.reason.contains("bounds"))
@@ -128,9 +128,9 @@ class VillageWebSocketTest {
         val wsClient = client.config { install(WebSockets) }
         wsClient.webSocket("/ws?token=$token") {
             skipConnected()
-            send(Frame.Text(sendMessage(ClientMessage.Build(BuildingType.AlloyRefinery, 5, 5))))
+            send(Frame.Text(sendMessage(ClientMessage.Build(BuildingType.MetalMine, 5, 5))))
             receiveServerMessage()
-            send(Frame.Text(sendMessage(ClientMessage.Build(BuildingType.CreditMint, 5, 5))))
+            send(Frame.Text(sendMessage(ClientMessage.Build(BuildingType.MetalStorage, 5, 5))))
             val msg = receiveServerMessage()
             assertTrue(msg is ServerMessage.Error)
             assertTrue(msg.reason.contains("overlap", ignoreCase = true))
@@ -162,9 +162,9 @@ class VillageWebSocketTest {
         val wsClient = client.config { install(WebSockets) }
         wsClient.webSocket("/ws?token=$token") {
             skipConnected()
-            send(Frame.Text(sendMessage(ClientMessage.Build(BuildingType.AlloyRefinery, 5, 5))))
+            send(Frame.Text(sendMessage(ClientMessage.Build(BuildingType.MetalMine, 5, 5))))
             val buildMsg = receiveServerMessage() as ServerMessage.GameStateUpdated
-            val refinery = buildMsg.state.village.buildings.first { it.type == BuildingType.AlloyRefinery }
+            val refinery = buildMsg.state.village.buildings.first { it.type == BuildingType.MetalMine }
 
             send(Frame.Text(sendMessage(ClientMessage.Collect(refinery.id))))
             val msg = receiveServerMessage()

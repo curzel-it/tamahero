@@ -72,12 +72,12 @@ fun PvpScoutView(
                 horizontalArrangement = Arrangement.SpaceEvenly,
             ) {
                 LootItem("Credits", match.lootAvailable.credits, TamaColors.Credits)
-                LootItem("Alloy", match.lootAvailable.alloy, TamaColors.Alloy)
+                LootItem("Alloy", match.lootAvailable.metal, TamaColors.Alloy)
                 LootItem("Crystal", match.lootAvailable.crystal, TamaColors.Crystal)
             }
-            if (match.lootAvailable.plasma > 0) {
+            if (match.lootAvailable.deuterium > 0) {
                 Spacer(Modifier.height(TamaSpacing.XXSmall))
-                Text("Plasma: ${match.lootAvailable.plasma}", color = TamaColors.Plasma, fontSize = 14.sp)
+                Text("Plasma: ${match.lootAvailable.deuterium}", color = TamaColors.Plasma, fontSize = 14.sp)
             }
 
             if (army.troops.isNotEmpty()) {

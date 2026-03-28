@@ -60,11 +60,11 @@ fun PvpBattleHudView(
         }
 
         val loot = battle.loot
-        if (loot.credits > 0 || loot.alloy > 0 || loot.crystal > 0) {
+        if (loot.credits > 0 || loot.metal > 0 || loot.crystal > 0) {
             Row(horizontalArrangement = Arrangement.spacedBy(TamaSpacing.Small)) {
                 if (loot.credits > 0) Text("+${loot.credits}cr", color = TamaColors.Credits, fontSize = 12.sp)
-                if (loot.alloy > 0) Text("+${loot.alloy}al", color = TamaColors.Alloy, fontSize = 12.sp)
-                if (loot.crystal > 0) Text("+${loot.crystal}xy", color = TamaColors.Crystal, fontSize = 12.sp)
+                if (loot.metal > 0) Text("+${loot.metal}m", color = TamaColors.Alloy, fontSize = 12.sp)
+                if (loot.crystal > 0) Text("+${loot.crystal}c", color = TamaColors.Crystal, fontSize = 12.sp)
             }
         }
 
@@ -142,7 +142,7 @@ fun PvpResultView(
 
             Spacer(Modifier.height(TamaSpacing.Medium))
 
-            if (result.loot.credits > 0 || result.loot.alloy > 0 || result.loot.crystal > 0) {
+            if (result.loot.credits > 0 || result.loot.metal > 0 || result.loot.crystal > 0) {
                 Text("Loot", color = TamaColors.Text, fontSize = 16.sp)
                 Spacer(Modifier.height(TamaSpacing.XSmall))
                 Row(
@@ -150,7 +150,7 @@ fun PvpResultView(
                     horizontalArrangement = Arrangement.SpaceEvenly,
                 ) {
                     if (result.loot.credits > 0) LootColumn("Credits", result.loot.credits, TamaColors.Credits)
-                    if (result.loot.alloy > 0) LootColumn("Alloy", result.loot.alloy, TamaColors.Alloy)
+                    if (result.loot.metal > 0) LootColumn("Alloy", result.loot.metal, TamaColors.Alloy)
                     if (result.loot.crystal > 0) LootColumn("Crystal", result.loot.crystal, TamaColors.Crystal)
                 }
             }

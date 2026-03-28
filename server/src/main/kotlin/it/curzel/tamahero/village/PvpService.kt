@@ -252,7 +252,7 @@ object PvpService {
         logger.info(
             "PvP battle ended: {} vs {} — {} stars, {}% destruction, loot={}cr/{}al/{}cr",
             result.attackerId, result.defenderId, result.stars, result.destructionPercent,
-            result.loot.credits, result.loot.alloy, result.loot.crystal,
+            result.loot.credits, result.loot.metal, result.loot.crystal,
         )
 
         return finalBattle
@@ -308,9 +308,9 @@ object PvpService {
         val updatedDefender = defenderState.copy(
             resources = Resources(
                 credits = (defenderState.resources.credits - result.loot.credits).coerceAtLeast(0),
-                alloy = (defenderState.resources.alloy - result.loot.alloy).coerceAtLeast(0),
+                metal = (defenderState.resources.metal - result.loot.metal).coerceAtLeast(0),
                 crystal = (defenderState.resources.crystal - result.loot.crystal).coerceAtLeast(0),
-                plasma = (defenderState.resources.plasma - result.loot.plasma).coerceAtLeast(0),
+                deuterium = (defenderState.resources.deuterium - result.loot.deuterium).coerceAtLeast(0),
             ),
             trophies = (defenderState.trophies + result.defenderTrophyDelta).coerceAtLeast(0),
             village = defenderState.village.copy(buildings = damagedBuildings),
@@ -329,7 +329,7 @@ object PvpService {
             attackerName = attackerUser?.username ?: "Unknown",
             stars = result.stars,
             lootCredits = result.loot.credits,
-            lootAlloy = result.loot.alloy,
+            lootMetal = result.loot.metal,
             lootCrystal = result.loot.crystal,
         )
     }

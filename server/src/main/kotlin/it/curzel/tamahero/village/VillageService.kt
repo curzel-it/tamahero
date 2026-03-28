@@ -95,9 +95,9 @@ object VillageService {
         loadAndUpdate(userId) { state ->
             val now = state.lastUpdatedAt
             val academyLevel = state.village.buildings
-                .filter { it.type == BuildingType.Academy && it.isComplete(now) }
+                .filter { it.type == BuildingType.Barracks && it.isComplete(now) }
                 .maxOfOrNull { it.level } ?: 0
-            if (academyLevel == 0) throw VillageException("No completed Academy")
+            if (academyLevel == 0) throw VillageException("No completed Barracks")
 
             val maxLevel = TroopConfig.maxLevelForAcademy(academyLevel)
             if (level < 1 || level > maxLevel) {
@@ -228,14 +228,14 @@ object VillageService {
             val completionTime = (building.constructionStartedAt ?: 0) + config.buildTimeSeconds * 1000
             val remainingMs = (completionTime - now).coerceAtLeast(0)
             val manaCost = ((remainingMs / 10_000) + 1).toLong()
-            requireResources(state, Resources(plasma = manaCost))
+            requireResources(state, Resources(deuterium = manaCost))
 
             val updatedBuildings = state.village.buildings.map {
                 if (it.id == buildingId) it.copy(constructionStartedAt = null, hp = config.hp)
                 else it
             }
             state.copy(
-                resources = state.resources - Resources(plasma = manaCost),
+                resources = state.resources - Resources(deuterium = manaCost),
                 village = state.village.copy(buildings = updatedBuildings),
             )
         }
@@ -283,7 +283,7 @@ object VillageService {
 
     private fun requireWorkerAvailable(state: GameState, now: Long) {
         val workerCount = state.village.buildings
-            .count { it.type == BuildingType.DroneStation && it.isComplete(now) }
+            .count { it.type == BuildingType.RoboticsFactory && it.isComplete(now) }
             .coerceAtLeast(1)
         val activeConstructions = state.village.buildings.count { it.isUnderConstruction(now) }
         if (activeConstructions >= workerCount) {
@@ -351,12 +351,12 @@ object VillageService {
     private fun createDefaultVillage(userId: Long, now: Long): GameState {
         val state = GameState(
             playerId = userId,
-            resources = Resources(credits = 1000, alloy = 1000, crystal = 500),
+            resources = Resources(credits = 500, metal = 500, crystal = 500, deuterium = 250),
             village = Village(
                 playerId = userId,
                 buildings = listOf(
                     PlacedBuilding(id = 1, type = BuildingType.CommandCenter, level = 1, x = 8, y = 8, hp = 1000, lastCollectedAt = now),
-                    PlacedBuilding(id = 2, type = BuildingType.DroneStation, level = 1, x = 6, y = 8, hp = 150, lastCollectedAt = now),
+                    PlacedBuilding(id = 2, type = BuildingType.RoboticsFactory, level = 1, x = 6, y = 8, hp = 150, lastCollectedAt = now),
                 ),
             ),
             lastUpdatedAt = now,

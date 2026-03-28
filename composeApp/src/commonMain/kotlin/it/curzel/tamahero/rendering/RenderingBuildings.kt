@@ -87,9 +87,9 @@ fun DrawScope.drawBuildings(
                 val dotRadius = 3f * renderingScale
                 val dotColor = when {
                     config.productionPerHour.credits > 0 -> Color(0xFFFFD700)
-                    config.productionPerHour.alloy > 0 -> Color(0xFF4CAF50)
+                    config.productionPerHour.metal > 0 -> Color(0xFF4CAF50)
                     config.productionPerHour.crystal > 0 -> Color(0xFF9E9E9E)
-                    config.productionPerHour.plasma > 0 -> Color(0xFF7B1FA2)
+                    config.productionPerHour.deuterium > 0 -> Color(0xFF7B1FA2)
                     else -> Color.White
                 }
                 drawCircle(dotColor, dotRadius, Offset(screenX + w * 0.5f, screenY - dotRadius - 2f))

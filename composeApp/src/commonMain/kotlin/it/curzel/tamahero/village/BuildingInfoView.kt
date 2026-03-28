@@ -32,7 +32,7 @@ fun BuildingInfoView(
     val maxLevel = BuildingConfig.maxLevel(building.type)
     val isUnderConstruction = building.constructionStartedAt != null
     val isProducer = config?.productionPerHour?.let {
-        it.credits > 0 || it.alloy > 0 || it.crystal > 0
+        it.credits > 0 || it.metal > 0 || it.crystal > 0
     } ?: false
 
     Column(
@@ -48,7 +48,7 @@ fun BuildingInfoView(
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Text(
-                "${building.type.name} (Lv ${building.level})",
+                "${building.type.displayName} (Lv ${building.level})",
                 color = TamaColors.Text,
                 fontSize = 18.sp,
             )
@@ -63,16 +63,16 @@ fun BuildingInfoView(
                 val prod = config.productionPerHour
                 val prodText = buildList {
                     if (prod.credits > 0) add("${prod.credits} credits")
-                    if (prod.alloy > 0) add("${prod.alloy} alloy")
+                    if (prod.metal > 0) add("${prod.metal} alloy")
                     if (prod.crystal > 0) add("${prod.crystal} crystal")
                 }.joinToString(", ")
                 Text("Production: $prodText/hr", color = TamaColors.TextMuted, fontSize = 14.sp)
             }
             val storage = config.storageCapacity
-            if (storage.credits > 0 || storage.alloy > 0 || storage.crystal > 0) {
+            if (storage.credits > 0 || storage.metal > 0 || storage.crystal > 0) {
                 val storageText = buildList {
                     if (storage.credits > 0) add("${storage.credits} credits")
-                    if (storage.alloy > 0) add("${storage.alloy} alloy")
+                    if (storage.metal > 0) add("${storage.metal} alloy")
                     if (storage.crystal > 0) add("${storage.crystal} crystal")
                 }.joinToString(", ")
                 Text("Storage: $storageText", color = TamaColors.TextMuted, fontSize = 14.sp)
@@ -176,14 +176,14 @@ fun BuildingInfoView(
             UpgradeStatDiff("HP", config.hp.toLong(), nextConfig.hp.toLong())
             if (config.productionPerHour.credits > 0 || nextConfig.productionPerHour.credits > 0)
                 UpgradeStatDiff("Credits/hr", config.productionPerHour.credits, nextConfig.productionPerHour.credits)
-            if (config.productionPerHour.alloy > 0 || nextConfig.productionPerHour.alloy > 0)
-                UpgradeStatDiff("Alloy/hr", config.productionPerHour.alloy, nextConfig.productionPerHour.alloy)
+            if (config.productionPerHour.metal > 0 || nextConfig.productionPerHour.metal > 0)
+                UpgradeStatDiff("Alloy/hr", config.productionPerHour.metal, nextConfig.productionPerHour.metal)
             if (config.productionPerHour.crystal > 0 || nextConfig.productionPerHour.crystal > 0)
                 UpgradeStatDiff("Crystal/hr", config.productionPerHour.crystal, nextConfig.productionPerHour.crystal)
             if (config.storageCapacity.credits > 0 || nextConfig.storageCapacity.credits > 0)
                 UpgradeStatDiff("Credit storage", config.storageCapacity.credits, nextConfig.storageCapacity.credits)
-            if (config.storageCapacity.alloy > 0 || nextConfig.storageCapacity.alloy > 0)
-                UpgradeStatDiff("Alloy storage", config.storageCapacity.alloy, nextConfig.storageCapacity.alloy)
+            if (config.storageCapacity.metal > 0 || nextConfig.storageCapacity.metal > 0)
+                UpgradeStatDiff("Alloy storage", config.storageCapacity.metal, nextConfig.storageCapacity.metal)
             if (config.storageCapacity.crystal > 0 || nextConfig.storageCapacity.crystal > 0)
                 UpgradeStatDiff("Crystal storage", config.storageCapacity.crystal, nextConfig.storageCapacity.crystal)
             if (config.damage > 0 || nextConfig.damage > 0)
@@ -233,8 +233,8 @@ private fun ConstructionProgress(building: PlacedBuilding, buildTimeSeconds: Lon
 private fun formatCost(cost: Resources): String {
     return buildList {
         if (cost.credits > 0) add("${cost.credits}cr")
-        if (cost.alloy > 0) add("${cost.alloy}al")
-        if (cost.crystal > 0) add("${cost.crystal}xy")
+        if (cost.metal > 0) add("${cost.metal}m")
+        if (cost.crystal > 0) add("${cost.crystal}c")
     }.joinToString(" ")
 }
 

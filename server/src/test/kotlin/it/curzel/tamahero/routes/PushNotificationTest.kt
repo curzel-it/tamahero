@@ -52,7 +52,7 @@ class PushNotificationTest {
             attackerName = "attacker123",
             stars = 2,
             lootCredits = 500,
-            lootAlloy = 300,
+            lootMetal = 300,
             lootCrystal = 100,
         )
 
@@ -115,12 +115,12 @@ class PushNotificationTest {
 
         val (_, userId) = registerUser(client)
 
-        mock.notifyBuildingComplete(userId, "RailGun", 1)
+        mock.notifyBuildingComplete(userId, "GaussCannon", 1)
 
         val notifs = mock.sentWithType("building_complete")
         assertEquals(1, notifs.size)
         assertTrue(notifs[0].title.contains("Construction Complete"))
-        assertTrue(notifs[0].body.contains("RailGun"))
+        assertTrue(notifs[0].body.contains("GaussCannon"))
     }
 
     @Test
@@ -151,7 +151,7 @@ class PushNotificationTest {
         mock.notifyDefenseResult(userId, "attacker", 2, 500, 300, 100)
         mock.notifyEventStarted(userId, "Battle")
         mock.notifyEventEnded(userId, "IonStorm", true)
-        mock.notifyBuildingComplete(userId, "RailGun", 1)
+        mock.notifyBuildingComplete(userId, "GaussCannon", 1)
         mock.notifyTrainingComplete(userId, "Gunship", 3)
 
         assertEquals(0, mock.sentCount, "No push notifications should be sent to connected users")

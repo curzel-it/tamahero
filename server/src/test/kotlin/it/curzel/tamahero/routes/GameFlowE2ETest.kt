@@ -78,14 +78,14 @@ class GameFlowE2ETest {
         adminToken: String,
         userId: Long,
         credits: Long = 0,
-        alloy: Long = 0,
+        metal: Long = 0,
         crystal: Long = 0,
-        plasma: Long = 0,
+        deuterium: Long = 0,
     ) {
         val response = client.post("/api/admin/grant-resources") {
             header("Authorization", "Bearer $adminToken")
             contentType(ContentType.Application.Json)
-            setBody("""{"userId":$userId,"credits":$credits,"alloy":$alloy,"crystal":$crystal,"plasma":$plasma}""")
+            setBody("""{"userId":$userId,"credits":$credits,"metal":$metal,"crystal":$crystal,"deuterium":$deuterium}""")
         }
         assertEquals(HttpStatusCode.OK, response.status, "grant-resources failed: ${response.bodyAsText()}")
     }
@@ -109,15 +109,15 @@ class GameFlowE2ETest {
             assertEquals(8, cc.x)
             assertEquals(8, cc.y)
 
-            val drone = state.village.buildings.find { it.type == BuildingType.DroneStation }
-            assertNotNull(drone, "New user must have a DroneStation")
+            val drone = state.village.buildings.find { it.type == BuildingType.RoboticsFactory }
+            assertNotNull(drone, "New user must have a RoboticsFactory")
             assertEquals(1, drone.level)
 
             // Verify resources
-            assertEquals(1000, state.resources.credits, "Starting credits should be 1000")
-            assertEquals(1000, state.resources.alloy, "Starting alloy should be 1000")
+            assertEquals(500, state.resources.credits, "Starting credits should be 500")
+            assertEquals(500, state.resources.metal, "Starting metal should be 500")
             assertEquals(500, state.resources.crystal, "Starting crystal should be 500")
-            assertEquals(0, state.resources.plasma, "Starting plasma should be 0")
+            assertEquals(250, state.resources.deuterium, "Starting deuterium should be 250")
         }
     }
 
@@ -129,15 +129,15 @@ class GameFlowE2ETest {
         val wsClient = client.config { install(WebSockets) }
         wsClient.webSocket("/ws?token=$token") {
             skipConnected()
-            sendCmd(ClientMessage.Build(BuildingType.AlloyRefinery, 0, 0))
+            sendCmd(ClientMessage.Build(BuildingType.MetalMine, 0, 0))
             val state = receiveState().state
 
-            val refinery = state.village.buildings.find { it.type == BuildingType.AlloyRefinery }
+            val refinery = state.village.buildings.find { it.type == BuildingType.MetalMine }
             assertNotNull(refinery, "AlloyRefinery should be placed")
             assertEquals(0, refinery.x)
             assertEquals(0, refinery.y)
             assertEquals(1, refinery.level)
-            assertEquals(950, state.resources.credits, "Should deduct 50 credits for AlloyRefinery")
+            assertEquals(450, state.resources.credits, "Should deduct 50 credits for MetalMine")
         }
     }
 
@@ -149,9 +149,9 @@ class GameFlowE2ETest {
         val wsClient = client.config { install(WebSockets) }
         wsClient.webSocket("/ws?token=$adminToken") {
             skipConnected()
-            sendCmd(ClientMessage.Build(BuildingType.AlloyRefinery, 0, 0))
+            sendCmd(ClientMessage.Build(BuildingType.MetalMine, 0, 0))
             val buildState = receiveState().state
-            val refinery = buildState.village.buildings.first { it.type == BuildingType.AlloyRefinery }
+            val refinery = buildState.village.buildings.first { it.type == BuildingType.MetalMine }
             assertTrue(refinery.isUnderConstruction(buildState.lastUpdatedAt), "Should be under construction")
 
             // Advance time past build time (10 seconds)
@@ -159,7 +159,7 @@ class GameFlowE2ETest {
 
             sendCmd(ClientMessage.GetVillage)
             val afterState = receiveState().state
-            val completedRefinery = afterState.village.buildings.first { it.type == BuildingType.AlloyRefinery }
+            val completedRefinery = afterState.village.buildings.first { it.type == BuildingType.MetalMine }
             assertFalse(completedRefinery.isUnderConstruction(afterState.lastUpdatedAt), "Should be complete")
             assertTrue(completedRefinery.hp > 0, "Completed building should have HP")
         }
@@ -168,19 +168,19 @@ class GameFlowE2ETest {
     // --- Test: Resource production ---
 
     @Test
-    fun alloyRefineryProducesResources() = testApp { client ->
+    fun metalMineProducesResources() = testApp { client ->
         val (adminToken, userId) = registerAdmin(client)
         val wsClient = client.config { install(WebSockets) }
         wsClient.webSocket("/ws?token=$adminToken") {
             skipConnected()
 
             // Build refinery and complete it
-            sendCmd(ClientMessage.Build(BuildingType.AlloyRefinery, 0, 0))
+            sendCmd(ClientMessage.Build(BuildingType.MetalMine, 0, 0))
             receiveState()
             advanceTime(client, adminToken, userId, 15_000)
 
-            // Build alloy silo for storage capacity
-            sendCmd(ClientMessage.Build(BuildingType.AlloySilo, 3, 0))
+            // Build metal silo for extra storage capacity
+            sendCmd(ClientMessage.Build(BuildingType.MetalStorage, 3, 0))
             receiveState()
             advanceTime(client, adminToken, userId, 15_000)
 
@@ -189,9 +189,9 @@ class GameFlowE2ETest {
 
             sendCmd(ClientMessage.GetVillage)
             val state = receiveState().state
-            // Started with 1000 alloy, spent 50 on silo, refinery produces 100/hr
-            // 1000 - 50 (silo cost) + 100 (1hr production) = 1050
-            assertTrue(state.resources.alloy > 950, "Alloy should have increased from production, got ${state.resources.alloy}")
+            // Started with 500 metal, CC cap=500, silo adds 1000 → cap=1500
+            // MetalMine produces 100/hr → 500 + 100 = 600
+            assertTrue(state.resources.metal > 500, "Metal should have increased from production, got ${state.resources.metal}")
         }
     }
 
@@ -205,19 +205,19 @@ class GameFlowE2ETest {
             skipConnected()
 
             // Build and complete refinery
-            sendCmd(ClientMessage.Build(BuildingType.AlloyRefinery, 0, 0))
+            sendCmd(ClientMessage.Build(BuildingType.MetalMine, 0, 0))
             receiveState()
             advanceTime(client, adminToken, userId, 15_000)
 
             sendCmd(ClientMessage.GetVillage)
             val beforeState = receiveState().state
-            val refinery = beforeState.village.buildings.first { it.type == BuildingType.AlloyRefinery }
+            val refinery = beforeState.village.buildings.first { it.type == BuildingType.MetalMine }
             assertEquals(1, refinery.level)
 
             // Upgrade
             sendCmd(ClientMessage.Upgrade(refinery.id))
             val afterState = receiveState().state
-            val upgraded = afterState.village.buildings.first { it.type == BuildingType.AlloyRefinery }
+            val upgraded = afterState.village.buildings.first { it.type == BuildingType.MetalMine }
             assertEquals(2, upgraded.level, "Refinery should be level 2")
             assertTrue(afterState.resources.credits < beforeState.resources.credits, "Upgrade should cost resources")
         }
@@ -233,19 +233,19 @@ class GameFlowE2ETest {
             skipConnected()
 
             // Build refinery (costs 50 credits)
-            sendCmd(ClientMessage.Build(BuildingType.AlloyRefinery, 0, 0))
+            sendCmd(ClientMessage.Build(BuildingType.MetalMine, 0, 0))
             val buildState = receiveState().state
-            assertEquals(950, buildState.resources.credits)
+            assertEquals(450, buildState.resources.credits)
             advanceTime(client, adminToken, userId, 15_000)
 
             sendCmd(ClientMessage.GetVillage)
             val beforeDemo = receiveState().state
-            val refinery = beforeDemo.village.buildings.first { it.type == BuildingType.AlloyRefinery }
+            val refinery = beforeDemo.village.buildings.first { it.type == BuildingType.MetalMine }
 
             // Demolish (50% refund = 25 credits)
             sendCmd(ClientMessage.Demolish(refinery.id))
             val afterDemo = receiveState().state
-            assertFalse(afterDemo.village.buildings.any { it.type == BuildingType.AlloyRefinery }, "Refinery should be gone")
+            assertFalse(afterDemo.village.buildings.any { it.type == BuildingType.MetalMine }, "Refinery should be gone")
             assertEquals(beforeDemo.resources.credits + 25, afterDemo.resources.credits, "Should get 50% refund")
         }
     }
@@ -297,7 +297,7 @@ class GameFlowE2ETest {
         wsClient.webSocket("/ws?token=$token") {
             skipConnected()
             // AlloyRefinery is 2x2, so (19,19) means 19+2=21 > 20
-            sendCmd(ClientMessage.Build(BuildingType.AlloyRefinery, 19, 19))
+            sendCmd(ClientMessage.Build(BuildingType.MetalMine, 19, 19))
             val error = receiveError()
             assertTrue(error.reason.contains("bounds", ignoreCase = true))
         }
@@ -312,11 +312,11 @@ class GameFlowE2ETest {
         wsClient.webSocket("/ws?token=$token") {
             skipConnected()
             // First build uses the one worker
-            sendCmd(ClientMessage.Build(BuildingType.AlloyRefinery, 0, 0))
+            sendCmd(ClientMessage.Build(BuildingType.MetalMine, 0, 0))
             receiveState()
 
             // Second build should fail — no workers available
-            sendCmd(ClientMessage.Build(BuildingType.CreditMint, 3, 0))
+            sendCmd(ClientMessage.Build(BuildingType.MetalStorage, 3, 0))
             val error = receiveError()
             assertTrue(error.reason.contains("worker", ignoreCase = true))
         }
@@ -330,14 +330,14 @@ class GameFlowE2ETest {
         val wsClient = client.config { install(WebSockets) }
         wsClient.webSocket("/ws?token=$adminToken") {
             skipConnected()
-            sendCmd(ClientMessage.Build(BuildingType.AlloyRefinery, 0, 0))
+            sendCmd(ClientMessage.Build(BuildingType.MetalMine, 0, 0))
             receiveState()
 
             // Complete construction so worker is free
             advanceTime(client, adminToken, userId, 15_000)
 
             // Try to build overlapping
-            sendCmd(ClientMessage.Build(BuildingType.CreditMint, 0, 0))
+            sendCmd(ClientMessage.Build(BuildingType.MetalStorage, 0, 0))
             val msg = receiveAny()
             assertTrue(msg is ServerMessage.Error, "Should fail with overlap: $msg")
         }
@@ -352,8 +352,8 @@ class GameFlowE2ETest {
         wsClient.webSocket("/ws?token=$adminToken") {
             skipConnected()
 
-            // Build and complete academy (requires TH1, costs 100 credits + 100 alloy)
-            sendCmd(ClientMessage.Build(BuildingType.Academy, 0, 0))
+            // Build and complete academy (requires TH1, costs 100 credits + 100 metal)
+            sendCmd(ClientMessage.Build(BuildingType.Barracks, 0, 0))
             val academyBuild = receiveAny()
             assertTrue(academyBuild is ServerMessage.GameStateUpdated, "Academy build should succeed: $academyBuild")
             advanceTime(client, adminToken, userId, 60_000)
@@ -366,7 +366,7 @@ class GameFlowE2ETest {
 
             sendCmd(ClientMessage.GetVillage)
             val withBuildings = receiveState().state
-            val academy = withBuildings.village.buildings.find { it.type == BuildingType.Academy }
+            val academy = withBuildings.village.buildings.find { it.type == BuildingType.Barracks }
             assertNotNull(academy, "Academy should exist")
             assertFalse(academy.isUnderConstruction(withBuildings.lastUpdatedAt), "Academy should be complete")
             val hangar = withBuildings.village.buildings.find { it.type == BuildingType.Hangar }
@@ -403,7 +403,7 @@ class GameFlowE2ETest {
             skipConnected()
 
             // Build and complete academy + hangar
-            sendCmd(ClientMessage.Build(BuildingType.Academy, 0, 0))
+            sendCmd(ClientMessage.Build(BuildingType.Barracks, 0, 0))
             receiveState()
             advanceTime(client, adminToken, userId, 60_000)
             sendCmd(ClientMessage.Build(BuildingType.Hangar, 0, 3))
@@ -440,15 +440,15 @@ class GameFlowE2ETest {
             sendCmd(ClientMessage.GetVillage)
             val before = receiveState().state
 
-            sendCmd(ClientMessage.Build(BuildingType.AlloyRefinery, 0, 0))
+            sendCmd(ClientMessage.Build(BuildingType.MetalMine, 0, 0))
             val afterBuild = receiveState().state
-            val refinery = afterBuild.village.buildings.first { it.type == BuildingType.AlloyRefinery }
-            assertEquals(950, afterBuild.resources.credits)
+            val refinery = afterBuild.village.buildings.first { it.type == BuildingType.MetalMine }
+            assertEquals(450, afterBuild.resources.credits, "500 - 50 = 450")
 
             sendCmd(ClientMessage.CancelConstruction(refinery.id))
             val afterCancel = receiveState().state
-            assertFalse(afterCancel.village.buildings.any { it.type == BuildingType.AlloyRefinery })
-            assertEquals(1000, afterCancel.resources.credits, "Full refund on cancel")
+            assertFalse(afterCancel.village.buildings.any { it.type == BuildingType.MetalMine })
+            assertEquals(500, afterCancel.resources.credits, "Full refund on cancel")
         }
     }
 
@@ -459,22 +459,22 @@ class GameFlowE2ETest {
         val (adminToken, userId) = registerAdmin(client)
 
         // Grant plasma before connecting WS (to avoid message interference)
-        grantResources(client, adminToken, userId, plasma = 100)
+        grantResources(client, adminToken, userId, deuterium = 100)
 
         val wsClient = client.config { install(WebSockets) }
         wsClient.webSocket("/ws?token=$adminToken") {
             skipConnected()
 
-            sendCmd(ClientMessage.Build(BuildingType.AlloyRefinery, 0, 0))
+            sendCmd(ClientMessage.Build(BuildingType.MetalMine, 0, 0))
             val buildState = receiveState().state
-            val refinery = buildState.village.buildings.first { it.type == BuildingType.AlloyRefinery }
+            val refinery = buildState.village.buildings.first { it.type == BuildingType.MetalMine }
             assertTrue(refinery.isUnderConstruction(buildState.lastUpdatedAt))
 
             sendCmd(ClientMessage.SpeedUp(refinery.id))
             val afterSpeed = receiveState().state
-            val speedRefinery = afterSpeed.village.buildings.first { it.type == BuildingType.AlloyRefinery }
+            val speedRefinery = afterSpeed.village.buildings.first { it.type == BuildingType.MetalMine }
             assertFalse(speedRefinery.isUnderConstruction(afterSpeed.lastUpdatedAt), "Should be instant complete")
-            assertTrue(afterSpeed.resources.plasma < 100, "Should cost plasma")
+            assertTrue(afterSpeed.resources.deuterium < buildState.resources.deuterium, "Should cost deuterium")
         }
     }
 
@@ -488,10 +488,10 @@ class GameFlowE2ETest {
             skipConnected()
 
             // Build and complete refinery + silo
-            sendCmd(ClientMessage.Build(BuildingType.AlloyRefinery, 0, 0))
+            sendCmd(ClientMessage.Build(BuildingType.MetalMine, 0, 0))
             receiveState()
             advanceTime(client, adminToken, userId, 15_000)
-            sendCmd(ClientMessage.Build(BuildingType.AlloySilo, 3, 0))
+            sendCmd(ClientMessage.Build(BuildingType.MetalStorage, 3, 0))
             receiveState()
             advanceTime(client, adminToken, userId, 15_000)
 
@@ -500,7 +500,7 @@ class GameFlowE2ETest {
 
             sendCmd(ClientMessage.CollectAll)
             val state = receiveState().state
-            assertTrue(state.resources.alloy > 900, "Should have collected produced alloy")
+            assertTrue(state.resources.metal > 500, "Should have collected produced metal")
         }
     }
 
@@ -509,34 +509,30 @@ class GameFlowE2ETest {
     @Test
     fun fullGameFlow() = testApp { client ->
         val (adminToken, userId) = registerAdmin(client)
+        grantResources(client, adminToken, userId, credits = 1000)
         val wsClient = client.config { install(WebSockets) }
         wsClient.webSocket("/ws?token=$adminToken") {
             skipConnected()
 
-            // Step 1: Verify initial state
+            // Step 1: Verify initial state (500+1000 granted = 1500 credits)
             sendCmd(ClientMessage.GetVillage)
             val initial = receiveState().state
             assertEquals(2, initial.village.buildings.size)
-            assertEquals(1000, initial.resources.credits)
-            assertEquals(1000, initial.resources.alloy)
+            assertEquals(500, initial.resources.metal)
 
-            // Step 2: Build economy (AlloyRefinery + CreditMint)
-            sendCmd(ClientMessage.Build(BuildingType.AlloyRefinery, 0, 0))
+            // Step 2: Build economy (MetalMine + MetalStorage)
+            sendCmd(ClientMessage.Build(BuildingType.MetalMine, 0, 0))
             val afterRefinery = receiveState().state
             assertEquals(3, afterRefinery.village.buildings.size)
             advanceTime(client, adminToken, userId, 15_000)
 
-            sendCmd(ClientMessage.Build(BuildingType.CreditMint, 3, 0))
-            val afterMint = receiveState().state
-            assertEquals(4, afterMint.village.buildings.size)
+            sendCmd(ClientMessage.Build(BuildingType.MetalMine, 3, 0))
+            val afterMine2 = receiveState().state
+            assertEquals(4, afterMine2.village.buildings.size)
             advanceTime(client, adminToken, userId, 15_000)
 
             // Step 3: Build storage
-            sendCmd(ClientMessage.Build(BuildingType.AlloySilo, 0, 3))
-            receiveState()
-            advanceTime(client, adminToken, userId, 15_000)
-
-            sendCmd(ClientMessage.Build(BuildingType.CreditVault, 3, 3))
+            sendCmd(ClientMessage.Build(BuildingType.MetalStorage, 0, 3))
             receiveState()
             advanceTime(client, adminToken, userId, 15_000)
 
@@ -545,11 +541,10 @@ class GameFlowE2ETest {
 
             sendCmd(ClientMessage.GetVillage)
             val afterProd = receiveState().state
-            assertTrue(afterProd.resources.credits > 500, "Credits should have grown: ${afterProd.resources.credits}")
-            assertTrue(afterProd.resources.alloy > 500, "Alloy should have grown: ${afterProd.resources.alloy}")
+            assertTrue(afterProd.resources.metal > 500, "Metal should have grown: ${afterProd.resources.metal}")
 
             // Step 5: Build and complete academy + hangar
-            sendCmd(ClientMessage.Build(BuildingType.Academy, 0, 6))
+            sendCmd(ClientMessage.Build(BuildingType.Barracks, 0, 6))
             receiveState()
             advanceTime(client, adminToken, userId, 60_000)
             sendCmd(ClientMessage.Build(BuildingType.Hangar, 0, 9))
@@ -559,7 +554,7 @@ class GameFlowE2ETest {
             // Step 6: Train troops
             sendCmd(ClientMessage.GetVillage)
             val preTrainState = receiveState().state
-            val academy = preTrainState.village.buildings.find { it.type == BuildingType.Academy }
+            val academy = preTrainState.village.buildings.find { it.type == BuildingType.Barracks }
             assertNotNull(academy, "Academy should exist")
 
             sendCmd(ClientMessage.Train(TroopType.Marine, 2, 1))
@@ -577,10 +572,10 @@ class GameFlowE2ETest {
             assertEquals(0, finalState.trainingQueue.entries.size, "Queue should be empty")
 
             // Step 7: Upgrade refinery
-            val refinery = finalState.village.buildings.first { it.type == BuildingType.AlloyRefinery }
+            val refinery = finalState.village.buildings.first { it.type == BuildingType.MetalMine }
             sendCmd(ClientMessage.Upgrade(refinery.id))
             val upgradeState = receiveState().state
-            val upgradedRefinery = upgradeState.village.buildings.first { it.type == BuildingType.AlloyRefinery }
+            val upgradedRefinery = upgradeState.village.buildings.first { it.type == BuildingType.MetalMine }
             assertEquals(2, upgradedRefinery.level)
         }
     }
@@ -595,7 +590,7 @@ class GameFlowE2ETest {
         val placeResponse = client.post("/api/admin/place-building") {
             header("Authorization", "Bearer $adminToken")
             contentType(ContentType.Application.Json)
-            setBody("""{"userId":$userId,"type":"MineTrap","x":14,"y":14}""")
+            setBody("""{"userId":$userId,"type":"LandMine","x":14,"y":14}""")
         }
         assertEquals(HttpStatusCode.OK, placeResponse.status)
 
@@ -613,7 +608,7 @@ class GameFlowE2ETest {
             skipConnected()
             sendCmd(ClientMessage.GetVillage)
             val state = receiveState().state
-            val trap = state.village.buildings.find { it.type == BuildingType.MineTrap }
+            val trap = state.village.buildings.find { it.type == BuildingType.LandMine }
             if (trap != null && trap.triggered) {
                 sendCmd(ClientMessage.RearmTrap(trap.id))
                 val afterRearm = receiveState().state
@@ -634,7 +629,7 @@ class GameFlowE2ETest {
 
         wsClient.webSocket("/ws?token=$token1") {
             skipConnected()
-            sendCmd(ClientMessage.Build(BuildingType.AlloyRefinery, 0, 0))
+            sendCmd(ClientMessage.Build(BuildingType.MetalMine, 0, 0))
             val state = receiveState().state
             assertEquals(3, state.village.buildings.size)
         }
@@ -644,7 +639,7 @@ class GameFlowE2ETest {
             sendCmd(ClientMessage.GetVillage)
             val state = receiveState().state
             assertEquals(2, state.village.buildings.size, "User 2 should have untouched village")
-            assertEquals(1000, state.resources.credits)
+            assertEquals(500, state.resources.credits)
         }
     }
 
@@ -700,18 +695,18 @@ class GameFlowE2ETest {
             skipConnected()
 
             // Build refinery and complete it
-            sendCmd(ClientMessage.Build(BuildingType.AlloyRefinery, 0, 0))
+            sendCmd(ClientMessage.Build(BuildingType.MetalMine, 0, 0))
             receiveState()
             advanceTime(client, adminToken, userId, 15_000)
 
             sendCmd(ClientMessage.GetVillage)
             val before = receiveState().state
-            val refinery = before.village.buildings.first { it.type == BuildingType.AlloyRefinery }
+            val refinery = before.village.buildings.first { it.type == BuildingType.MetalMine }
 
             // Upgrade to L2 (costs 150 credits)
             sendCmd(ClientMessage.Upgrade(refinery.id))
             val after = receiveState().state
-            val upgraded = after.village.buildings.first { it.type == BuildingType.AlloyRefinery }
+            val upgraded = after.village.buildings.first { it.type == BuildingType.MetalMine }
             assertEquals(2, upgraded.level)
             assertTrue(after.resources.credits < before.resources.credits, "Upgrade should deduct resources")
         }
@@ -725,9 +720,9 @@ class GameFlowE2ETest {
         val wsClient = client.config { install(WebSockets) }
         wsClient.webSocket("/ws?token=$adminToken") {
             skipConnected()
-            sendCmd(ClientMessage.Build(BuildingType.AlloyRefinery, 0, 0))
+            sendCmd(ClientMessage.Build(BuildingType.MetalMine, 0, 0))
             val state = receiveState().state
-            val refinery = state.village.buildings.first { it.type == BuildingType.AlloyRefinery }
+            val refinery = state.village.buildings.first { it.type == BuildingType.MetalMine }
 
             sendCmd(ClientMessage.Upgrade(refinery.id))
             val error = receiveError()
@@ -743,9 +738,9 @@ class GameFlowE2ETest {
         val wsClient = client.config { install(WebSockets) }
         wsClient.webSocket("/ws?token=$adminToken") {
             skipConnected()
-            sendCmd(ClientMessage.Build(BuildingType.AlloyRefinery, 0, 0))
+            sendCmd(ClientMessage.Build(BuildingType.MetalMine, 0, 0))
             val state = receiveState().state
-            val refinery = state.village.buildings.first { it.type == BuildingType.AlloyRefinery }
+            val refinery = state.village.buildings.first { it.type == BuildingType.MetalMine }
 
             sendCmd(ClientMessage.Move(refinery.id, 5, 5))
             val error = receiveError()
@@ -763,16 +758,16 @@ class GameFlowE2ETest {
             skipConnected()
 
             // At TH1, max AlloyRefinery = 2
-            sendCmd(ClientMessage.Build(BuildingType.AlloyRefinery, 0, 0))
+            sendCmd(ClientMessage.Build(BuildingType.MetalMine, 0, 0))
             assertTrue(receiveAny() is ServerMessage.GameStateUpdated)
             advanceTime(client, adminToken, userId, 15_000)
 
-            sendCmd(ClientMessage.Build(BuildingType.AlloyRefinery, 3, 0))
+            sendCmd(ClientMessage.Build(BuildingType.MetalMine, 3, 0))
             assertTrue(receiveAny() is ServerMessage.GameStateUpdated)
             advanceTime(client, adminToken, userId, 15_000)
 
             // Third should fail
-            sendCmd(ClientMessage.Build(BuildingType.AlloyRefinery, 0, 3))
+            sendCmd(ClientMessage.Build(BuildingType.MetalMine, 0, 3))
             val resp = receiveAny()
             assertTrue(resp is ServerMessage.Error, "Should hit building limit: $resp")
             assertTrue((resp as ServerMessage.Error).reason.contains("Maximum", ignoreCase = true))
@@ -788,10 +783,10 @@ class GameFlowE2ETest {
         wsClient.webSocket("/ws?token=$adminToken") {
             skipConnected()
 
-            // Foundry requires TH2 — should fail at TH1
-            sendCmd(ClientMessage.Build(BuildingType.Foundry, 0, 0))
+            // CrystalMine requires TH2 — should fail at TH1
+            sendCmd(ClientMessage.Build(BuildingType.CrystalMine, 0, 0))
             val resp = receiveAny()
-            assertTrue(resp is ServerMessage.Error, "Foundry should need TH2: $resp")
+            assertTrue(resp is ServerMessage.Error, "CrystalMine should need TH2: $resp")
             assertTrue((resp as ServerMessage.Error).reason.contains("Command Center", ignoreCase = true))
         }
     }
@@ -806,7 +801,7 @@ class GameFlowE2ETest {
         client.post("/api/admin/place-building") {
             header("Authorization", "Bearer $adminToken")
             contentType(ContentType.Application.Json)
-            setBody("""{"userId":$userId,"type":"RailGun","x":14,"y":14}""")
+            setBody("""{"userId":$userId,"type":"GaussCannon","x":14,"y":14}""")
         }
 
         // Trigger scout party event
@@ -875,20 +870,20 @@ class GameFlowE2ETest {
             skipConnected()
 
             // Build refinery (produces alloy) and silo (stores alloy, cap=1000)
-            sendCmd(ClientMessage.Build(BuildingType.AlloyRefinery, 0, 0))
+            sendCmd(ClientMessage.Build(BuildingType.MetalMine, 0, 0))
             receiveState()
             advanceTime(client, adminToken, userId, 15_000)
-            sendCmd(ClientMessage.Build(BuildingType.AlloySilo, 3, 0))
+            sendCmd(ClientMessage.Build(BuildingType.MetalStorage, 3, 0))
             receiveState()
             advanceTime(client, adminToken, userId, 15_000)
 
-            // Advance a LOT of time — alloy should cap at silo capacity
+            // Advance a LOT of time — metal should cap at storage capacity
             advanceTime(client, adminToken, userId, 100 * 3_600_000L) // 100 hours
 
             sendCmd(ClientMessage.GetVillage)
             val state = receiveState().state
-            // AlloySilo L1 stores 1000 alloy. Started with 1000. Should cap at 1000.
-            assertTrue(state.resources.alloy <= 1000, "Alloy should be capped at storage: ${state.resources.alloy}")
+            // CC(500) + MetalStorage L1(1000) = 1500 metal cap
+            assertTrue(state.resources.metal <= 1500, "Metal should be capped at storage: ${state.resources.metal}")
         }
     }
 
@@ -940,7 +935,7 @@ class GameFlowE2ETest {
         // Build something first
         wsClient.webSocket("/ws?token=$adminToken") {
             skipConnected()
-            sendCmd(ClientMessage.Build(BuildingType.AlloyRefinery, 0, 0))
+            sendCmd(ClientMessage.Build(BuildingType.MetalMine, 0, 0))
             val state = receiveState().state
             assertEquals(3, state.village.buildings.size)
         }
@@ -959,7 +954,7 @@ class GameFlowE2ETest {
             sendCmd(ClientMessage.GetVillage)
             val state = receiveState().state
             assertEquals(2, state.village.buildings.size, "Should be back to default")
-            assertEquals(1000, state.resources.credits)
+            assertEquals(500, state.resources.credits)
         }
     }
 
@@ -973,9 +968,9 @@ class GameFlowE2ETest {
             skipConnected()
             sendCmd(ClientMessage.GetVillage)
             val state = receiveState().state
-            val drone = state.village.buildings.first { it.type == BuildingType.DroneStation }
+            val drone = state.village.buildings.first { it.type == BuildingType.RoboticsFactory }
 
-            // DroneStation is 2x2, so (19,19) would be 19+2=21 > 20
+            // RoboticsFactory is 2x2, so (19,19) would be 19+2=21 > 20
             sendCmd(ClientMessage.Move(drone.id, 19, 19))
             val error = receiveError()
             assertTrue(error.reason.contains("bounds", ignoreCase = true))
@@ -1018,7 +1013,7 @@ class GameFlowE2ETest {
             skipConnected()
             sendCmd(ClientMessage.Train(TroopType.Marine, 1, 1))
             val error = receiveError()
-            assertTrue(error.reason.contains("Academy", ignoreCase = true))
+            assertTrue(error.reason.contains("Barracks", ignoreCase = true))
         }
     }
 
@@ -1050,7 +1045,7 @@ class GameFlowE2ETest {
             val state2 = receiveState().state
             assertEquals(state1.village.buildings.size, state2.village.buildings.size)
             assertEquals(state1.resources.credits, state2.resources.credits)
-            assertEquals(state1.resources.alloy, state2.resources.alloy)
+            assertEquals(state1.resources.metal, state2.resources.metal)
         }
     }
 
@@ -1063,12 +1058,11 @@ class GameFlowE2ETest {
         wsClient.webSocket("/ws?token=$adminToken") {
             skipConnected()
 
-            // Build one of each resource building
+            // Build TH1 resource buildings: 2 MetalMines + 1 MetalStorage
             val builds = listOf(
-                ClientMessage.Build(BuildingType.AlloyRefinery, 0, 0),
-                ClientMessage.Build(BuildingType.CreditMint, 3, 0),
-                ClientMessage.Build(BuildingType.AlloySilo, 0, 3),
-                ClientMessage.Build(BuildingType.CreditVault, 3, 3),
+                ClientMessage.Build(BuildingType.MetalMine, 0, 0),
+                ClientMessage.Build(BuildingType.MetalMine, 3, 0),
+                ClientMessage.Build(BuildingType.MetalStorage, 0, 3),
             )
 
             for (build in builds) {
@@ -1080,12 +1074,10 @@ class GameFlowE2ETest {
 
             sendCmd(ClientMessage.GetVillage)
             val state = receiveState().state
-            // 2 default + 4 new = 6
-            assertEquals(6, state.village.buildings.size, "Should have 6 buildings")
-            assertTrue(state.village.buildings.any { it.type == BuildingType.AlloyRefinery })
-            assertTrue(state.village.buildings.any { it.type == BuildingType.CreditMint })
-            assertTrue(state.village.buildings.any { it.type == BuildingType.AlloySilo })
-            assertTrue(state.village.buildings.any { it.type == BuildingType.CreditVault })
+            // 2 default + 3 new = 5
+            assertEquals(5, state.village.buildings.size, "Should have 5 buildings")
+            assertTrue(state.village.buildings.any { it.type == BuildingType.MetalMine })
+            assertTrue(state.village.buildings.any { it.type == BuildingType.MetalStorage })
         }
     }
 
@@ -1102,25 +1094,25 @@ class GameFlowE2ETest {
         wsClient.webSocket("/ws?token=$adminToken") {
             skipConnected()
 
-            // Build AlloyRefinery (produces 100 alloy/hr) + AlloySilo (stores 1000)
-            sendCmd(ClientMessage.Build(BuildingType.AlloyRefinery, 0, 0))
+            // Build MetalMine (produces 100 metal/hr) + MetalStorage (stores 1000)
+            sendCmd(ClientMessage.Build(BuildingType.MetalMine, 0, 0))
             receiveState()
             advanceTime(client, adminToken, userId, 15_000)
-            sendCmd(ClientMessage.Build(BuildingType.AlloySilo, 3, 0))
+            sendCmd(ClientMessage.Build(BuildingType.MetalStorage, 3, 0))
             receiveState()
             advanceTime(client, adminToken, userId, 15_000)
 
-            // Advance 2 hours — should produce ~200 alloy (capped at silo's 1000)
-            // Started with 1000 alloy, spent 50 on silo = 950. Plus ~200 production = ~1000 (capped)
+            // Advance 2 hours — should produce ~200 metal
+            // Started with 500 metal. Cap = CC(500) + silo(1000) = 1500. Plus ~200 production = ~700
             advanceTime(client, adminToken, userId, 2 * 3_600_000L)
 
             sendCmd(ClientMessage.GetVillage)
             val state = receiveState().state
 
-            // Should have close to 1000 alloy (started 950 + 200 produced, capped at 1000)
+            // Should have ~700 metal (500 + 200 produced)
             assertTrue(
-                state.resources.alloy >= 950,
-                "After 2hr production starting from 950, alloy should be near cap. Got ${state.resources.alloy}"
+                state.resources.metal >= 650,
+                "After 2hr production starting from 500, metal should be ~700. Got ${state.resources.metal}"
             )
         }
     }
@@ -1135,12 +1127,12 @@ class GameFlowE2ETest {
             skipConnected()
 
             // Build AlloyRefinery but do NOT complete it
-            sendCmd(ClientMessage.Build(BuildingType.AlloyRefinery, 0, 0))
+            sendCmd(ClientMessage.Build(BuildingType.MetalMine, 0, 0))
             receiveState()
 
             sendCmd(ClientMessage.GetVillage)
             val before = receiveState().state
-            val alloyBefore = before.resources.alloy
+            val metalBefore = before.resources.metal
 
             // Advance 1 hour (but refinery still under construction — 10s build time not passed? Actually 15s > 10s so it WOULD complete)
             // Use only 5 seconds to keep it under construction
@@ -1148,9 +1140,9 @@ class GameFlowE2ETest {
 
             sendCmd(ClientMessage.GetVillage)
             val during = receiveState().state
-            val refinery = during.village.buildings.first { it.type == BuildingType.AlloyRefinery }
+            val refinery = during.village.buildings.first { it.type == BuildingType.MetalMine }
             assertTrue(refinery.isUnderConstruction(during.lastUpdatedAt), "Should still be under construction")
-            assertEquals(alloyBefore, during.resources.alloy, "No alloy should be produced while under construction")
+            assertEquals(metalBefore, during.resources.metal, "No alloy should be produced while under construction")
         }
     }
 
@@ -1164,21 +1156,21 @@ class GameFlowE2ETest {
             skipConnected()
 
             // AlloyRefinery build time = 10 seconds
-            sendCmd(ClientMessage.Build(BuildingType.AlloyRefinery, 0, 0))
+            sendCmd(ClientMessage.Build(BuildingType.MetalMine, 0, 0))
             receiveState()
 
             // Advance exactly 9 seconds — should still be under construction
             advanceTime(client, adminToken, userId, 9_000)
             sendCmd(ClientMessage.GetVillage)
             val at9s = receiveState().state
-            val refAt9 = at9s.village.buildings.first { it.type == BuildingType.AlloyRefinery }
+            val refAt9 = at9s.village.buildings.first { it.type == BuildingType.MetalMine }
             assertTrue(refAt9.isUnderConstruction(at9s.lastUpdatedAt), "Should still be building at 9s")
 
             // Advance 2 more seconds (total 11s) — should be complete
             advanceTime(client, adminToken, userId, 2_000)
             sendCmd(ClientMessage.GetVillage)
             val at11s = receiveState().state
-            val refAt11 = at11s.village.buildings.first { it.type == BuildingType.AlloyRefinery }
+            val refAt11 = at11s.village.buildings.first { it.type == BuildingType.MetalMine }
             assertFalse(refAt11.isUnderConstruction(at11s.lastUpdatedAt), "Should be complete at 11s")
             assertTrue(refAt11.hp > 0, "Completed building should have HP")
         }
@@ -1194,7 +1186,7 @@ class GameFlowE2ETest {
         client.post("/api/admin/place-building") {
             header("Authorization", "Bearer $adminToken")
             contentType(ContentType.Application.Json)
-            setBody("""{"userId":$userId,"type":"RailGun","x":10,"y":10}""")
+            setBody("""{"userId":$userId,"type":"GaussCannon","x":10,"y":10}""")
         }
 
         // Trigger event with several troops
@@ -1236,20 +1228,20 @@ class GameFlowE2ETest {
 
             // At TH1, max AlloyRefinery = 2
             // Build first (under construction, worker busy)
-            sendCmd(ClientMessage.Build(BuildingType.AlloyRefinery, 0, 0))
+            sendCmd(ClientMessage.Build(BuildingType.MetalMine, 0, 0))
             val resp1 = receiveAny()
             assertTrue(resp1 is ServerMessage.GameStateUpdated, "First build should succeed")
 
             // Complete and build second
             advanceTime(client, adminToken, userId, 15_000)
-            sendCmd(ClientMessage.Build(BuildingType.AlloyRefinery, 3, 0))
+            sendCmd(ClientMessage.Build(BuildingType.MetalMine, 3, 0))
             val resp2 = receiveAny()
             assertTrue(resp2 is ServerMessage.GameStateUpdated, "Second build should succeed")
 
             // Don't complete second — it's under construction
             // Try to build third — should fail (count = 2 even though one is under construction)
             advanceTime(client, adminToken, userId, 15_000)
-            sendCmd(ClientMessage.Build(BuildingType.AlloyRefinery, 0, 3))
+            sendCmd(ClientMessage.Build(BuildingType.MetalMine, 0, 3))
             val resp3 = receiveAny()
             assertTrue(resp3 is ServerMessage.Error, "Third AlloyRefinery should hit limit: $resp3")
         }
@@ -1265,14 +1257,14 @@ class GameFlowE2ETest {
             skipConnected()
 
             // AlloyRefinery costs 50 credits
-            sendCmd(ClientMessage.Build(BuildingType.AlloyRefinery, 0, 0))
+            sendCmd(ClientMessage.Build(BuildingType.MetalMine, 0, 0))
             receiveState()
             advanceTime(client, adminToken, userId, 15_000)
 
             sendCmd(ClientMessage.GetVillage)
             val before = receiveState().state
             val creditsBefore = before.resources.credits
-            val refinery = before.village.buildings.first { it.type == BuildingType.AlloyRefinery }
+            val refinery = before.village.buildings.first { it.type == BuildingType.MetalMine }
 
             sendCmd(ClientMessage.Demolish(refinery.id))
             val after = receiveState().state
@@ -1287,23 +1279,22 @@ class GameFlowE2ETest {
     @Test
     fun speedUpCostsCorrectPlasma() = testApp { client ->
         val (adminToken, userId) = registerAdmin(client)
-        grantResources(client, adminToken, userId, plasma = 1000)
+        grantResources(client, adminToken, userId, deuterium = 1000)
 
         val wsClient = client.config { install(WebSockets) }
         wsClient.webSocket("/ws?token=$adminToken") {
             skipConnected()
 
-            sendCmd(ClientMessage.Build(BuildingType.AlloyRefinery, 0, 0))
+            sendCmd(ClientMessage.Build(BuildingType.MetalMine, 0, 0))
             val buildState = receiveState().state
-            val plasmaBefore = buildState.resources.plasma
+            val deuteriumBefore = buildState.resources.deuterium
 
-            sendCmd(ClientMessage.SpeedUp(buildState.village.buildings.first { it.type == BuildingType.AlloyRefinery }.id))
+            sendCmd(ClientMessage.SpeedUp(buildState.village.buildings.first { it.type == BuildingType.MetalMine }.id))
             val afterSpeed = receiveState().state
-            val plasmaCost = plasmaBefore - afterSpeed.resources.plasma
+            val deuteriumCost = deuteriumBefore - afterSpeed.resources.deuterium
 
-            assertTrue(plasmaCost > 0, "Speed up should cost some plasma, cost was $plasmaCost")
-            // AlloyRefinery build time = 10s = 10000ms, cost = (remainingMs / 10_000) + 1
-            assertTrue(plasmaCost <= 2, "Speed up should cost at most 2 plasma for 10s build, cost was $plasmaCost")
+            assertTrue(deuteriumCost > 0, "Speed up should cost some deuterium, cost was $deuteriumCost")
+            assertTrue(deuteriumCost <= 2, "Speed up should cost at most 2 deuterium for 10s build, cost was $deuteriumCost")
         }
     }
 
@@ -1317,7 +1308,7 @@ class GameFlowE2ETest {
             skipConnected()
 
             // Build Academy L1 + Hangar
-            sendCmd(ClientMessage.Build(BuildingType.Academy, 0, 0))
+            sendCmd(ClientMessage.Build(BuildingType.Barracks, 0, 0))
             receiveState()
             advanceTime(client, adminToken, userId, 60_000)
             sendCmd(ClientMessage.Build(BuildingType.Hangar, 0, 3))
@@ -1341,27 +1332,28 @@ class GameFlowE2ETest {
             skipConnected()
 
             // Build 2 refineries (200 alloy/hr total) + silo (cap 1000)
-            sendCmd(ClientMessage.Build(BuildingType.AlloyRefinery, 0, 0))
+            sendCmd(ClientMessage.Build(BuildingType.MetalMine, 0, 0))
             receiveState()
             advanceTime(client, adminToken, userId, 15_000)
-            sendCmd(ClientMessage.Build(BuildingType.AlloyRefinery, 3, 0))
+            sendCmd(ClientMessage.Build(BuildingType.MetalMine, 3, 0))
             receiveState()
             advanceTime(client, adminToken, userId, 15_000)
-            sendCmd(ClientMessage.Build(BuildingType.AlloySilo, 0, 3))
+            sendCmd(ClientMessage.Build(BuildingType.MetalStorage, 0, 3))
             receiveState()
             advanceTime(client, adminToken, userId, 15_000)
 
-            // Advance 2 hours — 2 refineries * 100/hr * 2hr = 400 alloy
-            // Started with ~950 alloy (1000 - 50 silo cost), capped at 1000
+            // Advance 2 hours — 2 refineries * 100/hr * 2hr = 400 metal
+            // Started with 500 metal, cap = CC(500) + silo(1000) = 1500
+            // 500 + 400 = 900
             advanceTime(client, adminToken, userId, 2 * 3_600_000L)
 
             sendCmd(ClientMessage.GetVillage)
             val state = receiveState().state
 
-            // Should be at or near cap (1000)
+            // Should have ~900 metal
             assertTrue(
-                state.resources.alloy >= 950,
-                "2 refineries should produce alloy. Got ${state.resources.alloy}"
+                state.resources.metal >= 800,
+                "2 refineries should produce metal. Got ${state.resources.metal}"
             )
         }
     }
@@ -1376,14 +1368,14 @@ class GameFlowE2ETest {
             skipConnected()
 
             // Build refinery
-            sendCmd(ClientMessage.Build(BuildingType.AlloyRefinery, 0, 0))
+            sendCmd(ClientMessage.Build(BuildingType.MetalMine, 0, 0))
             receiveState()
             advanceTime(client, adminToken, userId, 15_000)
 
-            // Try to move DroneStation to overlap with refinery
+            // Try to move RoboticsFactory to overlap with refinery
             sendCmd(ClientMessage.GetVillage)
             val state = receiveState().state
-            val drone = state.village.buildings.first { it.type == BuildingType.DroneStation }
+            val drone = state.village.buildings.first { it.type == BuildingType.RoboticsFactory }
 
             sendCmd(ClientMessage.Move(drone.id, 0, 0))
             val resp = receiveAny()
@@ -1395,44 +1387,32 @@ class GameFlowE2ETest {
     // --- CreditMint produces credits, not alloy ---
 
     @Test
-    fun creditMintProducesCredits() = testApp { client ->
+    fun metalMineProducesMetal() = testApp { client ->
         val (adminToken, userId) = registerAdmin(client)
         val wsClient = client.config { install(WebSockets) }
         wsClient.webSocket("/ws?token=$adminToken") {
             skipConnected()
 
-            // Build CreditMint (costs 50 alloy) + CreditVault (costs 50 alloy, stores 1000 credits)
-            // Also build AlloyRefinery (costs 50 credits) to spend some credits
-            sendCmd(ClientMessage.Build(BuildingType.AlloyRefinery, 0, 0))  // costs 50 credits
+            // Build MetalMine (costs 50 credits) + MetalStorage (costs 50 credits)
+            sendCmd(ClientMessage.Build(BuildingType.MetalMine, 0, 0))  // costs 50 credits
             receiveState()
             advanceTime(client, adminToken, userId, 15_000)
-            sendCmd(ClientMessage.Build(BuildingType.CreditMint, 3, 0))   // costs 50 alloy
-            receiveState()
-            advanceTime(client, adminToken, userId, 15_000)
-            sendCmd(ClientMessage.Build(BuildingType.CreditVault, 0, 3))  // costs 50 alloy
+            sendCmd(ClientMessage.Build(BuildingType.MetalStorage, 3, 0))  // costs 50 credits
             receiveState()
             advanceTime(client, adminToken, userId, 15_000)
 
-            // After builds: credits = 1000 - 50 (refinery) = 950, vault cap = 1000
-            // Now demolish the refinery to verify credits get refunded
-            sendCmd(ClientMessage.GetVillage)
-            val preDemolish = receiveState().state
-            val refinery = preDemolish.village.buildings.first { it.type == BuildingType.AlloyRefinery }
-            sendCmd(ClientMessage.Demolish(refinery.id))
-            val afterDemolish = receiveState().state
-            // 950 + 25 (refund) = 975
+            // After builds: credits = 500 - 100 = 400, metal = 500, cap = CC(500) + silo(1000) = 1500
 
-            // Advance 1 hour — CreditMint produces 100 credits/hr
+            // Advance 1 hour — MetalMine produces 100 metal/hr
             advanceTime(client, adminToken, userId, 3_600_000)
 
             sendCmd(ClientMessage.GetVillage)
             val state = receiveState().state
 
-            // 975 + 100 = 1075 (but capped at vault 1000). So credits = 1000
-            // Actually that's still at cap. Let me just verify credits >= 975 (production happened)
+            // 500 + 100 = 600 metal
             assertTrue(
-                state.resources.credits >= 975,
-                "CreditMint should maintain or increase credits. Got ${state.resources.credits}"
+                state.resources.metal > 500,
+                "MetalMine should increase metal. Got ${state.resources.metal}"
             )
         }
     }
@@ -1447,40 +1427,41 @@ class GameFlowE2ETest {
             skipConnected()
 
             // Build + complete refinery
-            sendCmd(ClientMessage.Build(BuildingType.AlloyRefinery, 0, 0))
+            sendCmd(ClientMessage.Build(BuildingType.MetalMine, 0, 0))
             receiveState()
             advanceTime(client, adminToken, userId, 15_000)
 
             // Upgrade refinery to L2
             sendCmd(ClientMessage.GetVillage)
             val state = receiveState().state
-            val refinery = state.village.buildings.first { it.type == BuildingType.AlloyRefinery }
+            val refinery = state.village.buildings.first { it.type == BuildingType.MetalMine }
             sendCmd(ClientMessage.Upgrade(refinery.id))
             receiveState()
             advanceTime(client, adminToken, userId, 60_000)
 
             // Build silo for storage
-            sendCmd(ClientMessage.Build(BuildingType.AlloySilo, 3, 0))
+            sendCmd(ClientMessage.Build(BuildingType.MetalStorage, 3, 0))
             receiveState()
             advanceTime(client, adminToken, userId, 15_000)
 
             // Verify level
             sendCmd(ClientMessage.GetVillage)
             val verified = receiveState().state
-            val upgraded = verified.village.buildings.first { it.type == BuildingType.AlloyRefinery }
+            val upgraded = verified.village.buildings.first { it.type == BuildingType.MetalMine }
             assertEquals(2, upgraded.level, "Refinery should be level 2")
 
-            // Advance 3 hours — L2 produces 200 alloy/hr = 600 alloy
-            // Started with ~850 alloy (1000 - 50 silo - ~100 upgrade), cap 1000
+            // Advance 3 hours — L2 produces 200 metal/hr = 600 metal
+            // Started with 500 metal, cap = CC(500) + silo(1000) = 1500
+            // 500 + 600 = 1100
             advanceTime(client, adminToken, userId, 3 * 3_600_000L)
 
             sendCmd(ClientMessage.GetVillage)
             val after = receiveState().state
 
-            // Should be at cap (1000) with L2 production
+            // Should have ~1100 metal
             assertTrue(
-                after.resources.alloy >= 950,
-                "L2 refinery should produce at higher rate. Got ${after.resources.alloy}"
+                after.resources.metal >= 1000,
+                "L2 refinery should produce at higher rate. Got ${after.resources.metal}"
             )
         }
     }
@@ -1496,20 +1477,20 @@ class GameFlowE2ETest {
 
             sendCmd(ClientMessage.GetVillage)
             val initial = receiveState().state
-            assertEquals(1000, initial.resources.credits)
-            assertEquals(1000, initial.resources.alloy)
+            assertEquals(500, initial.resources.credits)
+            assertEquals(500, initial.resources.metal)
 
-            // AlloyRefinery costs 50 credits
-            sendCmd(ClientMessage.Build(BuildingType.AlloyRefinery, 0, 0))
+            // MetalMine costs 50 credits
+            sendCmd(ClientMessage.Build(BuildingType.MetalMine, 0, 0))
             val after1 = receiveState().state
-            assertEquals(950, after1.resources.credits, "First build: 1000 - 50 = 950")
+            assertEquals(450, after1.resources.credits, "First build: 500 - 50 = 450")
 
             advanceTime(client, adminToken, userId, 15_000)
 
-            // CreditMint costs 50 alloy
-            sendCmd(ClientMessage.Build(BuildingType.CreditMint, 3, 0))
+            // MetalStorage costs 50 credits
+            sendCmd(ClientMessage.Build(BuildingType.MetalStorage, 3, 0))
             val after2 = receiveState().state
-            assertEquals(950, after2.resources.alloy, "Second build: 1000 - 50 = 950")
+            assertEquals(400, after2.resources.credits, "Second build: 450 - 50 = 400")
         }
     }
 
@@ -1523,12 +1504,12 @@ class GameFlowE2ETest {
         client.post("/api/admin/place-building") {
             header("Authorization", "Bearer $adminToken")
             contentType(ContentType.Application.Json)
-            setBody("""{"userId":$userId,"type":"RailGun","x":10,"y":10}""")
+            setBody("""{"userId":$userId,"type":"GaussCannon","x":10,"y":10}""")
         }
         client.post("/api/admin/place-building") {
             header("Authorization", "Bearer $adminToken")
             contentType(ContentType.Application.Json)
-            setBody("""{"userId":$userId,"type":"RailGun","x":14,"y":10}""")
+            setBody("""{"userId":$userId,"type":"GaussCannon","x":14,"y":10}""")
         }
 
         // Trigger weak scout party
@@ -1561,7 +1542,7 @@ class GameFlowE2ETest {
 
             // Should have gained some resources
             val totalGained = (collected.resources.credits - rewardsBefore.credits) +
-                (collected.resources.alloy - rewardsBefore.alloy)
+                (collected.resources.metal - rewardsBefore.metal)
             assertTrue(totalGained >= 0, "Should gain resources from event rewards")
         }
     }
@@ -1576,7 +1557,7 @@ class GameFlowE2ETest {
         client.post("/api/admin/place-building") {
             header("Authorization", "Bearer $adminToken")
             contentType(ContentType.Application.Json)
-            setBody("""{"userId":$userId,"type":"RailGun","x":10,"y":10}""")
+            setBody("""{"userId":$userId,"type":"GaussCannon","x":10,"y":10}""")
         }
 
         // Trigger quake
@@ -1618,28 +1599,28 @@ class GameFlowE2ETest {
             skipConnected()
 
             // Build 2 refineries (200 alloy/hr total) + 1 silo (1000 cap)
-            sendCmd(ClientMessage.Build(BuildingType.AlloyRefinery, 0, 0))
+            sendCmd(ClientMessage.Build(BuildingType.MetalMine, 0, 0))
             receiveState()
             advanceTime(client, adminToken, userId, 15_000)
-            sendCmd(ClientMessage.Build(BuildingType.AlloyRefinery, 3, 0))
+            sendCmd(ClientMessage.Build(BuildingType.MetalMine, 3, 0))
             receiveState()
             advanceTime(client, adminToken, userId, 15_000)
-            sendCmd(ClientMessage.Build(BuildingType.AlloySilo, 0, 3))
+            sendCmd(ClientMessage.Build(BuildingType.MetalStorage, 0, 3))
             receiveState()
             advanceTime(client, adminToken, userId, 15_000)
 
-            // Advance 24 hours (would produce 200*24 = 4800 alloy, but cap is 1000)
+            // Advance 24 hours (would produce 200*24 = 4800 metal, but cap is CC(500)+silo(1000)=1500)
             advanceTime(client, adminToken, userId, 24 * 3_600_000L)
 
             sendCmd(ClientMessage.GetVillage)
             val state = receiveState().state
             assertTrue(
-                state.resources.alloy <= 1000,
-                "Alloy should be capped at silo capacity (1000), got ${state.resources.alloy}"
+                state.resources.metal <= 1500,
+                "Metal should be capped at storage capacity (1500), got ${state.resources.metal}"
             )
             assertTrue(
-                state.resources.alloy >= 900,
-                "Alloy should be near cap, got ${state.resources.alloy}"
+                state.resources.metal >= 1400,
+                "Metal should be near cap, got ${state.resources.metal}"
             )
         }
     }
@@ -1658,7 +1639,7 @@ class GameFlowE2ETest {
             skipConnected()
 
             // Build Academy + Hangar (capacity 20)
-            sendCmd(ClientMessage.Build(BuildingType.Academy, 0, 0))
+            sendCmd(ClientMessage.Build(BuildingType.Barracks, 0, 0))
             receiveState()
             advanceTime(client, adminToken, userId, 60_000)
             sendCmd(ClientMessage.Build(BuildingType.Hangar, 0, 3))
@@ -1697,11 +1678,11 @@ class GameFlowE2ETest {
     fun twoWorkersCanBuildSimultaneously() = testApp { client ->
         val (adminToken, userId) = registerAdmin(client)
 
-        // Place a second DroneStation via admin (gives 2 workers)
+        // Place a second RoboticsFactory via admin (gives 2 workers)
         client.post("/api/admin/place-building") {
             header("Authorization", "Bearer $adminToken")
             contentType(ContentType.Application.Json)
-            setBody("""{"userId":$userId,"type":"DroneStation","x":14,"y":14}""")
+            setBody("""{"userId":$userId,"type":"RoboticsFactory","x":14,"y":14}""")
         }
 
         val wsClient = client.config { install(WebSockets) }
@@ -1709,16 +1690,16 @@ class GameFlowE2ETest {
             skipConnected()
 
             // Build two buildings simultaneously (should work with 2 workers)
-            sendCmd(ClientMessage.Build(BuildingType.AlloyRefinery, 0, 0))
+            sendCmd(ClientMessage.Build(BuildingType.MetalMine, 0, 0))
             val resp1 = receiveAny()
             assertTrue(resp1 is ServerMessage.GameStateUpdated, "First build should succeed: $resp1")
 
-            sendCmd(ClientMessage.Build(BuildingType.CreditMint, 3, 0))
+            sendCmd(ClientMessage.Build(BuildingType.MetalStorage, 3, 0))
             val resp2 = receiveAny()
             assertTrue(resp2 is ServerMessage.GameStateUpdated, "Second build should succeed with 2 workers: $resp2")
 
             // Third should fail (only 2 workers)
-            sendCmd(ClientMessage.Build(BuildingType.AlloySilo, 0, 3))
+            sendCmd(ClientMessage.Build(BuildingType.GaussCannon, 0, 3))
             val resp3 = receiveAny()
             assertTrue(resp3 is ServerMessage.Error, "Third build should fail with 2 workers busy: $resp3")
         }
@@ -1895,7 +1876,7 @@ class GameFlowE2ETest {
         client.post("/api/admin/place-building") {
             header("Authorization", "Bearer $adminToken1")
             contentType(ContentType.Application.Json)
-            setBody("""{"userId":$userId1,"type":"Academy","x":0,"y":0}""")
+            setBody("""{"userId":$userId1,"type":"Barracks","x":0,"y":0}""")
         }
         client.post("/api/admin/place-building") {
             header("Authorization", "Bearer $adminToken1")
@@ -1914,7 +1895,7 @@ class GameFlowE2ETest {
         client.post("/api/admin/place-building") {
             header("Authorization", "Bearer $adminToken2")
             contentType(ContentType.Application.Json)
-            setBody("""{"userId":$userId2,"type":"RailGun","x":14,"y":14}""")
+            setBody("""{"userId":$userId2,"type":"GaussCannon","x":14,"y":14}""")
         }
 
         // Player 1 starts PvP
@@ -1971,7 +1952,7 @@ class GameFlowE2ETest {
         client.post("/api/admin/place-building") {
             header("Authorization", "Bearer $adminToken2")
             contentType(ContentType.Application.Json)
-            setBody("""{"userId":$userId2,"type":"RailGun","x":14,"y":14}""")
+            setBody("""{"userId":$userId2,"type":"GaussCannon","x":14,"y":14}""")
         }
 
         val wsClient = client.config { install(WebSockets) }
@@ -2010,13 +1991,13 @@ class GameFlowE2ETest {
             skipConnected()
 
             // Build a refinery
-            sendCmd(ClientMessage.Build(BuildingType.AlloyRefinery, 0, 0))
+            sendCmd(ClientMessage.Build(BuildingType.MetalMine, 0, 0))
             receiveState()
             advanceTime(client, adminToken, userId, 15_000)
 
             sendCmd(ClientMessage.GetVillage)
             val state = receiveState().state
-            val refinery = state.village.buildings.first { it.type == BuildingType.AlloyRefinery }
+            val refinery = state.village.buildings.first { it.type == BuildingType.MetalMine }
 
             // Collect from specific building — should return state (even if no-op)
             sendCmd(ClientMessage.Collect(refinery.id))
@@ -2054,16 +2035,16 @@ class GameFlowE2ETest {
         wsClient.webSocket("/ws?token=$adminToken") {
             skipConnected()
 
-            sendCmd(ClientMessage.Build(BuildingType.AlloyRefinery, 0, 0))
+            sendCmd(ClientMessage.Build(BuildingType.MetalMine, 0, 0))
             val buildState = receiveState().state
-            val refinery = buildState.village.buildings.first { it.type == BuildingType.AlloyRefinery }
+            val refinery = buildState.village.buildings.first { it.type == BuildingType.MetalMine }
             assertEquals(0, refinery.hp, "HP should be 0 during construction")
 
             advanceTime(client, adminToken, userId, 15_000)
 
             sendCmd(ClientMessage.GetVillage)
             val complete = receiveState().state
-            val completed = complete.village.buildings.first { it.type == BuildingType.AlloyRefinery }
+            val completed = complete.village.buildings.first { it.type == BuildingType.MetalMine }
             assertEquals(200, completed.hp, "HP should be 200 (AlloyRefinery L1 config) after construction")
         }
     }
@@ -2077,18 +2058,18 @@ class GameFlowE2ETest {
         wsClient.webSocket("/ws?token=$adminToken") {
             skipConnected()
 
-            sendCmd(ClientMessage.Build(BuildingType.AlloyRefinery, 0, 0))
+            sendCmd(ClientMessage.Build(BuildingType.MetalMine, 0, 0))
             receiveState()
             advanceTime(client, adminToken, userId, 15_000)
 
             sendCmd(ClientMessage.GetVillage)
             val before = receiveState().state
-            val refinery = before.village.buildings.first { it.type == BuildingType.AlloyRefinery }
+            val refinery = before.village.buildings.first { it.type == BuildingType.MetalMine }
             assertEquals(200, refinery.hp)
 
             sendCmd(ClientMessage.Upgrade(refinery.id))
             val upgrading = receiveState().state
-            val upgradingRef = upgrading.village.buildings.first { it.type == BuildingType.AlloyRefinery }
+            val upgradingRef = upgrading.village.buildings.first { it.type == BuildingType.MetalMine }
             assertEquals(0, upgradingRef.hp, "HP should reset to 0 during upgrade")
             assertEquals(2, upgradingRef.level, "Level should be 2")
 
@@ -2096,7 +2077,7 @@ class GameFlowE2ETest {
 
             sendCmd(ClientMessage.GetVillage)
             val after = receiveState().state
-            val upgraded = after.village.buildings.first { it.type == BuildingType.AlloyRefinery }
+            val upgraded = after.village.buildings.first { it.type == BuildingType.MetalMine }
             assertEquals(300, upgraded.hp, "HP should be L2 value (300) after upgrade completes")
         }
     }
@@ -2125,43 +2106,43 @@ class GameFlowE2ETest {
             skipConnected()
 
             // Build lots of things to drain resources
-            sendCmd(ClientMessage.Build(BuildingType.AlloyRefinery, 0, 0))
+            sendCmd(ClientMessage.Build(BuildingType.MetalMine, 0, 0))
             receiveState()
             advanceTime(client, adminToken, userId, 15_000)
-            sendCmd(ClientMessage.Build(BuildingType.AlloyRefinery, 3, 0))
+            sendCmd(ClientMessage.Build(BuildingType.MetalMine, 3, 0))
             receiveState()
             advanceTime(client, adminToken, userId, 15_000)
-            sendCmd(ClientMessage.Build(BuildingType.CreditMint, 0, 3))
+            sendCmd(ClientMessage.Build(BuildingType.MetalStorage, 0, 3))
             receiveState()
             advanceTime(client, adminToken, userId, 15_000)
-            sendCmd(ClientMessage.Build(BuildingType.CreditMint, 3, 3))
+            sendCmd(ClientMessage.Build(BuildingType.GaussCannon, 3, 3))
             receiveState()
             advanceTime(client, adminToken, userId, 15_000)
 
             sendCmd(ClientMessage.GetVillage)
             val state = receiveState().state
             assertTrue(state.resources.credits >= 0, "Credits should never be negative: ${state.resources.credits}")
-            assertTrue(state.resources.alloy >= 0, "Alloy should never be negative: ${state.resources.alloy}")
+            assertTrue(state.resources.metal >= 0, "Alloy should never be negative: ${state.resources.metal}")
             assertTrue(state.resources.crystal >= 0, "Crystal should never be negative: ${state.resources.crystal}")
-            assertTrue(state.resources.plasma >= 0, "Plasma should never be negative: ${state.resources.plasma}")
+            assertTrue(state.resources.deuterium >= 0, "Plasma should never be negative: ${state.resources.deuterium}")
         }
     }
 
     // --- Upgrade CommandCenter unlocks new building types ---
 
     @Test
-    fun upgradedCommandCenterUnlocksFoundry() = testApp { client ->
+    fun upgradedCommandCenterUnlocksCrystalMine() = testApp { client ->
         val (adminToken, userId) = registerAdmin(client)
-        grantResources(client, adminToken, userId, credits = 50000, alloy = 50000, crystal = 10000)
+        grantResources(client, adminToken, userId, credits = 50000, metal = 50000, crystal = 10000)
 
         val wsClient = client.config { install(WebSockets) }
         wsClient.webSocket("/ws?token=$adminToken") {
             skipConnected()
 
-            // Foundry requires TH2 — should fail at TH1
-            sendCmd(ClientMessage.Build(BuildingType.Foundry, 0, 0))
+            // CrystalMine requires TH2 — should fail at TH1
+            sendCmd(ClientMessage.Build(BuildingType.CrystalMine, 0, 0))
             val fail = receiveAny()
-            assertTrue(fail is ServerMessage.Error, "Foundry should need TH2: $fail")
+            assertTrue(fail is ServerMessage.Error, "CrystalMine should need TH2: $fail")
 
             // Upgrade CC to L2
             sendCmd(ClientMessage.GetVillage)
@@ -2170,11 +2151,16 @@ class GameFlowE2ETest {
             sendCmd(ClientMessage.Upgrade(cc.id))
             receiveState()
             advanceTime(client, adminToken, userId, 120_000)
+        }
+        // Grant resources again after CC upgrade (storage increased)
+        grantResources(client, adminToken, userId, credits = 50000, metal = 5000, crystal = 5000)
 
-            // Now Foundry should work
-            sendCmd(ClientMessage.Build(BuildingType.Foundry, 0, 0))
+        wsClient.webSocket("/ws?token=$adminToken") {
+            skipConnected()
+            // Now CrystalMine should work
+            sendCmd(ClientMessage.Build(BuildingType.CrystalMine, 0, 0))
             val success = receiveAny()
-            assertTrue(success is ServerMessage.GameStateUpdated, "Foundry should work at TH2: $success")
+            assertTrue(success is ServerMessage.GameStateUpdated, "CrystalMine should work at TH2: $success")
         }
     }
 
@@ -2212,11 +2198,11 @@ class GameFlowE2ETest {
         val wsClient = client.config { install(WebSockets) }
         wsClient.webSocket("/ws?token=$token") {
             skipConnected()
-            sendCmd(ClientMessage.Build(BuildingType.AlloyRefinery, 0, 0))
+            sendCmd(ClientMessage.Build(BuildingType.MetalMine, 0, 0))
             val resp = receiveAny()
             assertTrue(resp is ServerMessage.GameStateUpdated, "Build at (0,0) should work: $resp")
             val state = (resp as ServerMessage.GameStateUpdated).state
-            val ref = state.village.buildings.first { it.type == BuildingType.AlloyRefinery }
+            val ref = state.village.buildings.first { it.type == BuildingType.MetalMine }
             assertEquals(0, ref.x)
             assertEquals(0, ref.y)
         }
@@ -2231,7 +2217,7 @@ class GameFlowE2ETest {
         wsClient.webSocket("/ws?token=$token") {
             skipConnected()
             // AlloyRefinery is 2x2, so max position is (18,18) on 20x20 grid
-            sendCmd(ClientMessage.Build(BuildingType.AlloyRefinery, 18, 18))
+            sendCmd(ClientMessage.Build(BuildingType.MetalMine, 18, 18))
             val resp = receiveAny()
             assertTrue(resp is ServerMessage.GameStateUpdated, "Build at (18,18) should work: $resp")
         }
@@ -2246,7 +2232,7 @@ class GameFlowE2ETest {
         wsClient.webSocket("/ws?token=$token") {
             skipConnected()
             // 2x2 at x=19 → 19+2=21 > 20 → out of bounds
-            sendCmd(ClientMessage.Build(BuildingType.AlloyRefinery, 19, 18))
+            sendCmd(ClientMessage.Build(BuildingType.MetalMine, 19, 18))
             val resp = receiveAny()
             assertTrue(resp is ServerMessage.Error, "Build at (19,18) should fail for 2x2: $resp")
         }
@@ -2269,7 +2255,7 @@ class GameFlowE2ETest {
         client.post("/api/admin/place-building") {
             header("Authorization", "Bearer $adminToken2")
             contentType(ContentType.Application.Json)
-            setBody("""{"userId":$userId2,"type":"RailGun","x":10,"y":10}""")
+            setBody("""{"userId":$userId2,"type":"GaussCannon","x":10,"y":10}""")
         }
 
         val wsClient = client.config { install(WebSockets) }
@@ -2472,7 +2458,7 @@ class GameFlowE2ETest {
         val response = client.post("/api/admin/place-building") {
             header("Authorization", "Bearer $adminToken")
             contentType(ContentType.Application.Json)
-            setBody("""{"userId":$userId,"type":"RailGun","x":50,"y":50}""")
+            setBody("""{"userId":$userId,"type":"GaussCannon","x":50,"y":50}""")
         }
         // Admin place-building bypasses bounds — this tests whether it crashes
         // It should either succeed (admin bypass) or return an error
@@ -2549,7 +2535,7 @@ class GameFlowE2ETest {
         client.post("/api/admin/place-building") {
             header("Authorization", "Bearer $adminToken2")
             contentType(ContentType.Application.Json)
-            setBody("""{"userId":$userId2,"type":"RailGun","x":14,"y":14}""")
+            setBody("""{"userId":$userId2,"type":"GaussCannon","x":14,"y":14}""")
         }
 
         val wsClient = client.config { install(WebSockets) }
@@ -2564,7 +2550,7 @@ class GameFlowE2ETest {
             )
             val match = (msg as ServerMessage.OpponentFound).match
             assertEquals(userId2, match.targetId)
-            assertTrue(match.lootAvailable.credits > 0 || match.lootAvailable.alloy > 0, "Should have loot available")
+            assertTrue(match.lootAvailable.credits > 0 || match.lootAvailable.metal > 0, "Should have loot available")
         }
     }
 
@@ -2585,7 +2571,7 @@ class GameFlowE2ETest {
         client.post("/api/admin/place-building") {
             header("Authorization", "Bearer $adminToken2")
             contentType(ContentType.Application.Json)
-            setBody("""{"userId":$userId2,"type":"RailGun","x":14,"y":14}""")
+            setBody("""{"userId":$userId2,"type":"GaussCannon","x":14,"y":14}""")
         }
         // Set a shield on player 2 by saving state with shieldExpiresAt in the future
         val p2State = it.curzel.tamahero.db.VillageRepository.getVillage(userId2)
@@ -2624,7 +2610,7 @@ class GameFlowE2ETest {
         client.post("/api/admin/place-building") {
             header("Authorization", "Bearer $adminToken2")
             contentType(ContentType.Application.Json)
-            setBody("""{"userId":$userId2,"type":"RailGun","x":14,"y":14}""")
+            setBody("""{"userId":$userId2,"type":"GaussCannon","x":14,"y":14}""")
         }
 
         val wsClient = client.config { install(WebSockets) }
@@ -2655,7 +2641,7 @@ class GameFlowE2ETest {
         wsClient.webSocket("/ws?token=$adminToken") {
             skipConnected()
             // MineTrap is 1x1, so (19,19) is valid
-            sendCmd(ClientMessage.Build(BuildingType.MineTrap, 19, 19))
+            sendCmd(ClientMessage.Build(BuildingType.LandMine, 19, 19))
             val resp = receiveAny()
             assertTrue(resp is ServerMessage.GameStateUpdated, "1x1 building at (19,19) should work: $resp")
         }
@@ -2693,7 +2679,7 @@ class GameFlowE2ETest {
         wsClient.webSocket("/ws?token=$adminToken") {
             skipConnected()
             // Build academy
-            sendCmd(ClientMessage.Build(BuildingType.Academy, 0, 0))
+            sendCmd(ClientMessage.Build(BuildingType.Barracks, 0, 0))
             receiveState()
             advanceTime(client, adminToken, userId, 60_000)
 
@@ -2751,22 +2737,22 @@ class GameFlowE2ETest {
     @Test
     fun upgradeCCIncreasesMaxBuildingCount() = testApp { client ->
         val (adminToken, userId) = registerAdmin(client)
-        grantResources(client, adminToken, userId, credits = 50000, alloy = 50000, crystal = 10000)
+        grantResources(client, adminToken, userId, credits = 50000, metal = 50000, crystal = 10000)
 
         val wsClient = client.config { install(WebSockets) }
         wsClient.webSocket("/ws?token=$adminToken") {
             skipConnected()
 
             // At TH1, max AlloyRefinery = 2. Build 2.
-            sendCmd(ClientMessage.Build(BuildingType.AlloyRefinery, 0, 0))
+            sendCmd(ClientMessage.Build(BuildingType.MetalMine, 0, 0))
             receiveState()
             advanceTime(client, adminToken, userId, 15_000)
-            sendCmd(ClientMessage.Build(BuildingType.AlloyRefinery, 3, 0))
+            sendCmd(ClientMessage.Build(BuildingType.MetalMine, 3, 0))
             receiveState()
             advanceTime(client, adminToken, userId, 15_000)
 
             // Third should fail at TH1
-            sendCmd(ClientMessage.Build(BuildingType.AlloyRefinery, 0, 3))
+            sendCmd(ClientMessage.Build(BuildingType.MetalMine, 0, 3))
             val fail = receiveAny()
             assertTrue(fail is ServerMessage.Error, "Should hit TH1 limit")
 
@@ -2779,7 +2765,7 @@ class GameFlowE2ETest {
             advanceTime(client, adminToken, userId, 120_000)
 
             // Now third refinery should work
-            sendCmd(ClientMessage.Build(BuildingType.AlloyRefinery, 0, 3))
+            sendCmd(ClientMessage.Build(BuildingType.MetalMine, 0, 3))
             val success = receiveAny()
             assertTrue(success is ServerMessage.GameStateUpdated, "TH2 should allow 3rd refinery: $success")
         }

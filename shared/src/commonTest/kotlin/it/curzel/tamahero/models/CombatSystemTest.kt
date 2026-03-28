@@ -28,8 +28,8 @@ class CombatSystemTest {
 
     @Test
     fun droneTargetsResourceBuildings() {
-        val storage = building(1, BuildingType.CreditVault, x = 15, y = 5)
-        val railGun = building(2, BuildingType.RailGun, x = 5, y = 5)
+        val storage = building(1, BuildingType.CrystalStorage, x = 15, y = 5)
+        val railGun = building(2, BuildingType.GaussCannon, x = 5, y = 5)
         val drone = troop(100, TroopType.Drone, x = 10f, y = 5.5f)
         val result = battle(listOf(storage, railGun), listOf(drone), 100)
         val moved = result.troops.first()
@@ -38,8 +38,8 @@ class CombatSystemTest {
 
     @Test
     fun juggernautTargetsDefenses() {
-        val storage = building(1, BuildingType.CreditVault, x = 5, y = 5)
-        val railGun = building(2, BuildingType.RailGun, x = 15, y = 5)
+        val storage = building(1, BuildingType.CrystalStorage, x = 5, y = 5)
+        val railGun = building(2, BuildingType.GaussCannon, x = 15, y = 5)
         val juggernaut = troop(100, TroopType.Juggernaut, x = 10f, y = 5.5f)
         val result = battle(listOf(storage, railGun), listOf(juggernaut), 100)
         val moved = result.troops.first()
@@ -48,8 +48,8 @@ class CombatSystemTest {
 
     @Test
     fun engineerTargetsBarriersFirst() {
-        val storage = building(1, BuildingType.CreditVault, x = 5, y = 5)
-        val barrier = building(2, BuildingType.Barrier, x = 15, y = 5)
+        val storage = building(1, BuildingType.CrystalStorage, x = 5, y = 5)
+        val barrier = building(2, BuildingType.Wall, x = 15, y = 5)
         val engineer = troop(100, TroopType.Engineer, x = 10f, y = 5.5f)
         val result = battle(listOf(storage, barrier), listOf(engineer), 100)
         val moved = result.troops.first()
@@ -58,8 +58,8 @@ class CombatSystemTest {
 
     @Test
     fun engineerTargetsDefenseWhenNoBarriers() {
-        val storage = building(1, BuildingType.CreditVault, x = 5, y = 5)
-        val railGun = building(2, BuildingType.RailGun, x = 15, y = 5)
+        val storage = building(1, BuildingType.CrystalStorage, x = 5, y = 5)
+        val railGun = building(2, BuildingType.GaussCannon, x = 15, y = 5)
         val engineer = troop(100, TroopType.Engineer, x = 10f, y = 5.5f)
         val result = battle(listOf(storage, railGun), listOf(engineer), 100)
         val moved = result.troops.first()
@@ -68,8 +68,8 @@ class CombatSystemTest {
 
     @Test
     fun droneFallsBackToNearestWhenNoResources() {
-        val railGun = building(1, BuildingType.RailGun, x = 5, y = 5)
-        val barrier = building(2, BuildingType.Barrier, x = 15, y = 5)
+        val railGun = building(1, BuildingType.GaussCannon, x = 5, y = 5)
+        val barrier = building(2, BuildingType.Wall, x = 15, y = 5)
         val drone = troop(100, TroopType.Drone, x = 10f, y = 5.5f)
         val result = battle(listOf(railGun, barrier), listOf(drone), 100)
         val moved = result.troops.first()
@@ -80,8 +80,8 @@ class CombatSystemTest {
 
     @Test
     fun engineerDealsExtraDamageToBarriers() {
-        val barrier = building(1, BuildingType.Barrier, x = 5, y = 5, hp = 500)
-        val storage = building(2, BuildingType.CreditVault, x = 15, y = 15, hp = 200)
+        val barrier = building(1, BuildingType.Wall, x = 5, y = 5, hp = 500)
+        val storage = building(2, BuildingType.CrystalStorage, x = 15, y = 15, hp = 200)
         val engineer = troop(100, TroopType.Engineer, x = 5.5f, y = 5.5f, hp = 1000)
 
         val result = battle(listOf(barrier, storage), listOf(engineer), 10_000)
@@ -91,7 +91,7 @@ class CombatSystemTest {
 
     @Test
     fun engineerNormalDamageToNonBarriers() {
-        val storage = building(1, BuildingType.CreditVault, x = 5, y = 5, hp = 200)
+        val storage = building(1, BuildingType.CrystalStorage, x = 5, y = 5, hp = 200)
         val engineer = troop(100, TroopType.Engineer, x = 5.5f, y = 4.5f, hp = 1000)
         val result = battle(listOf(storage), listOf(engineer), 5_000)
         val damaged = result.village.buildings.find { it.id == 1L }
@@ -129,7 +129,7 @@ class CombatSystemTest {
 
     @Test
     fun teslaTowerHasSplash() {
-        val config = BuildingConfig.configFor(BuildingType.TeslaTower, 1)!!
+        val config = BuildingConfig.configFor(BuildingType.IonCannon, 1)!!
         assertTrue(config.splashRadius > 0f, "TeslaTower should have splash damage")
         assertTrue(config.damage > 0, "TeslaTower should deal damage")
         assertTrue(config.range > 2f, "TeslaTower should have decent range")
@@ -137,7 +137,7 @@ class CombatSystemTest {
 
     @Test
     fun teslaTowerDamagesMultipleTroops() {
-        val tower = building(1, BuildingType.TeslaTower, x = 10, y = 5)
+        val tower = building(1, BuildingType.IonCannon, x = 10, y = 5)
         val t1 = troop(100, TroopType.Marine, x = 8f, y = 5.5f)
         val t2 = troop(101, TroopType.Marine, x = 8.5f, y = 5.5f)
         val result = battle(listOf(tower), listOf(t1, t2), 2_000)
@@ -151,7 +151,7 @@ class CombatSystemTest {
     @Test
     fun novaBombDealsMassiveDamage() {
         val trap = building(1, BuildingType.NovaBomb, x = 5, y = 5, hp = 1)
-        val target = building(2, BuildingType.CreditVault, x = 10, y = 5)
+        val target = building(2, BuildingType.CrystalStorage, x = 10, y = 5)
         val t1 = troop(100, TroopType.Marine, x = 5f, y = 5f)
         val t2 = troop(101, TroopType.Marine, x = 5.5f, y = 5.5f)
         val result = battle(listOf(trap, target), listOf(t1, t2), 100)
@@ -163,7 +163,7 @@ class CombatSystemTest {
     @Test
     fun novaBombLargerRadiusThanMineTrap() {
         val novaBombConfig = BuildingConfig.configFor(BuildingType.NovaBomb, 1)!!
-        val mineTrapConfig = BuildingConfig.configFor(BuildingType.MineTrap, 1)!!
+        val mineTrapConfig = BuildingConfig.configFor(BuildingType.LandMine, 1)!!
         assertTrue(novaBombConfig.triggerRadius > mineTrapConfig.triggerRadius)
         assertTrue(novaBombConfig.burstDamage > mineTrapConfig.burstDamage)
     }
@@ -172,8 +172,8 @@ class CombatSystemTest {
 
     @Test
     fun gravityTrapKillsDrone() {
-        val trap = building(1, BuildingType.GravityTrap, x = 5, y = 5, hp = 1)
-        val target = building(2, BuildingType.CreditVault, x = 10, y = 5)
+        val trap = building(1, BuildingType.GravityWell, x = 5, y = 5, hp = 1)
+        val target = building(2, BuildingType.CrystalStorage, x = 10, y = 5)
         val drone = troop(100, TroopType.Drone, x = 5f, y = 5f)
         val result = battle(listOf(trap, target), listOf(drone), 100)
         assertTrue(result.troops.isEmpty(), "GravityTrap should remove Drone")
@@ -181,8 +181,8 @@ class CombatSystemTest {
 
     @Test
     fun gravityTrapDoesNotKillGunship() {
-        val trap = building(1, BuildingType.GravityTrap, x = 5, y = 5, hp = 1)
-        val target = building(2, BuildingType.CreditVault, x = 10, y = 5)
+        val trap = building(1, BuildingType.GravityWell, x = 5, y = 5, hp = 1)
+        val target = building(2, BuildingType.CrystalStorage, x = 10, y = 5)
         val gunship = troop(100, TroopType.Gunship, x = 5f, y = 5f)
         val result = battle(listOf(trap, target), listOf(gunship), 100)
         assertTrue(result.troops.isNotEmpty(), "GravityTrap should not kill heavy Gunship")
@@ -192,7 +192,7 @@ class CombatSystemTest {
 
     @Test
     fun battleEndsWhenAllBuildingsDestroyed() {
-        val storage = building(1, BuildingType.CreditVault, x = 5, y = 5, hp = 10)
+        val storage = building(1, BuildingType.CrystalStorage, x = 5, y = 5, hp = 10)
         val marine = troop(100, TroopType.Marine, x = 5.5f, y = 4.5f, hp = 1000)
         val result = battle(listOf(storage), listOf(marine), 5_000)
         assertTrue(result.troops.isEmpty(), "Troops should be cleared when all buildings destroyed")
@@ -200,7 +200,7 @@ class CombatSystemTest {
 
     @Test
     fun battleEndsWhenAllTroopsDie() {
-        val railGun = building(1, BuildingType.RailGun, x = 5, y = 5)
+        val railGun = building(1, BuildingType.GaussCannon, x = 5, y = 5)
         val marine = troop(100, TroopType.Marine, x = 5.5f, y = 4.5f, hp = 5)
         val result = battle(listOf(railGun), listOf(marine), 5_000)
         assertTrue(result.troops.isEmpty(), "Troops should all be dead")
@@ -210,9 +210,9 @@ class CombatSystemTest {
 
     @Test
     fun mixedArmyWithTargeting() {
-        val storage = building(1, BuildingType.CreditVault, x = 10, y = 10, hp = 200)
-        val railGun = building(2, BuildingType.RailGun, x = 15, y = 10)
-        val barrier = building(3, BuildingType.Barrier, x = 15, y = 10)
+        val storage = building(1, BuildingType.CrystalStorage, x = 10, y = 10, hp = 200)
+        val railGun = building(2, BuildingType.GaussCannon, x = 15, y = 10)
+        val barrier = building(3, BuildingType.Wall, x = 15, y = 10)
 
         val marine = troop(100, TroopType.Marine, x = 5f, y = 10.5f)
         val juggernaut = troop(101, TroopType.Juggernaut, x = 5f, y = 11.5f)
@@ -245,7 +245,7 @@ class CombatSystemTest {
 
     @Test
     fun allDefenseTypesHaveDamage() {
-        for (type in listOf(BuildingType.RailGun, BuildingType.LaserTurret, BuildingType.MissileBattery, BuildingType.TeslaTower)) {
+        for (type in listOf(BuildingType.GaussCannon, BuildingType.LightLaser, BuildingType.MissileLauncher, BuildingType.IonCannon)) {
             val config = BuildingConfig.configFor(type, 1)
             assertNotNull(config, "$type should have a level 1 config")
             assertTrue(config.damage > 0, "$type should deal damage")
@@ -255,13 +255,13 @@ class CombatSystemTest {
 
     @Test
     fun allTrapTypesHaveEffect() {
-        for (type in listOf(BuildingType.MineTrap, BuildingType.NovaBomb)) {
+        for (type in listOf(BuildingType.LandMine, BuildingType.NovaBomb)) {
             val config = BuildingConfig.configFor(type, 1)
             assertNotNull(config, "$type should have a config")
             assertTrue(config.burstDamage > 0, "$type should have burst damage")
             assertTrue(config.triggerRadius > 0, "$type should have trigger radius")
         }
-        val gravityConfig = BuildingConfig.configFor(BuildingType.GravityTrap, 1)
+        val gravityConfig = BuildingConfig.configFor(BuildingType.GravityWell, 1)
         assertNotNull(gravityConfig, "GravityTrap should have a config")
     }
 }

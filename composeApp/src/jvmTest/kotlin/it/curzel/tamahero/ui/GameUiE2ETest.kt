@@ -139,9 +139,9 @@ class GameUiE2ETest {
     fun hudShowsResourceValues() = runComposeUiTest {
         registerAndWaitForGame()
         onNodeWithText("Credits:", substring = true).assertIsDisplayed()
-        onNodeWithText("Alloy:", substring = true).assertIsDisplayed()
+        onNodeWithText("Metal:", substring = true).assertIsDisplayed()
         onNodeWithText("Crystal:", substring = true).assertIsDisplayed()
-        onNodeWithText("Plasma:", substring = true).assertIsDisplayed()
+        onNodeWithText("Deuterium:", substring = true).assertIsDisplayed()
     }
 
     // --- Build Menu ---
@@ -166,8 +166,8 @@ class GameUiE2ETest {
         waitForIdle()
 
         // Resources tab is default — should show AlloyRefinery, CreditMint, etc.
-        onNodeWithTag("building_AlloyRefinery").assertIsDisplayed()
-        onNodeWithTag("building_CreditMint").assertIsDisplayed()
+        onNodeWithTag("building_MetalMine").assertIsDisplayed()
+        onNodeWithTag("building_CrystalMine").assertIsDisplayed()
     }
 
     @Test
@@ -179,7 +179,7 @@ class GameUiE2ETest {
         // Switch to Defense tab
         onNodeWithTag("tab_defense").performClick()
         waitForIdle()
-        onNodeWithTag("building_RailGun").assertIsDisplayed()
+        onNodeWithTag("building_GaussCannon").assertIsDisplayed()
     }
 
     @Test
@@ -205,10 +205,10 @@ class GameUiE2ETest {
         waitForIdle()
 
         // Verify building items are rendered with correct testTags
-        onNodeWithTag("building_AlloyRefinery").assertExists()
-        onNodeWithTag("building_CreditMint").assertExists()
-        onNodeWithTag("building_AlloySilo").assertExists()
-        onNodeWithTag("building_CreditVault").assertExists()
+        onNodeWithTag("building_MetalMine").assertExists()
+        onNodeWithTag("building_CrystalMine").assertExists()
+        onNodeWithTag("building_MetalStorage").assertExists()
+        onNodeWithTag("building_CrystalStorage").assertExists()
     }
 
     // --- Account View ---
@@ -294,27 +294,27 @@ class GameUiE2ETest {
 
         // Resources tab (default)
         onNodeWithTag("tab_resources").assertIsDisplayed()
-        onNodeWithTag("building_AlloyRefinery").assertExists()
+        onNodeWithTag("building_MetalMine").assertExists()
 
         // Army tab
         onNodeWithTag("tab_army").performClick()
         waitForIdle()
-        onNodeWithTag("building_Academy").assertExists()
+        onNodeWithTag("building_Barracks").assertExists()
 
         // Defense tab
         onNodeWithTag("tab_defense").performClick()
         waitForIdle()
-        onNodeWithTag("building_RailGun").assertExists()
+        onNodeWithTag("building_GaussCannon").assertExists()
 
         // Traps tab
         onNodeWithTag("tab_traps").performClick()
         waitForIdle()
-        onNodeWithTag("building_MineTrap").assertExists()
+        onNodeWithTag("building_LandMine").assertExists()
 
         // Back to resources
         onNodeWithTag("tab_resources").performClick()
         waitForIdle()
-        onNodeWithTag("building_AlloyRefinery").assertExists()
+        onNodeWithTag("building_MetalMine").assertExists()
     }
 
     // --- Account shows Log out button ---
@@ -371,7 +371,7 @@ class GameUiE2ETest {
         // Open build menu and select a building
         onNodeWithTag("build").performClick()
         waitForIdle()
-        onNodeWithTag("building_AlloyRefinery").performClick()
+        onNodeWithTag("building_MetalMine").performClick()
         waitForIdle()
 
         // We're now in placement mode or the menu dismissed — either way
@@ -395,12 +395,12 @@ class GameUiE2ETest {
     fun newUserSeesCorrectStartingResources() = runComposeUiTest {
         registerAndWaitForGame()
 
-        // New user: 1000 credits, 1000 alloy, 500 crystal, 0 plasma
-        // No storage buildings → format is "Label: value"
-        onNodeWithText("Credits: 1000").assertIsDisplayed()
-        onNodeWithText("Alloy: 1000").assertIsDisplayed()
-        onNodeWithText("Crystal: 500").assertIsDisplayed()
-        onNodeWithText("Plasma: 0").assertIsDisplayed()
+        // New user: 500 credits, 500 metal, 500 crystal, 250 deuterium
+        // CC L1 provides storage: 500m/500c/250dt, credits unlimited
+        onNodeWithText("Metal: 500/500").assertIsDisplayed()
+        onNodeWithText("Crystal: 500/500").assertIsDisplayed()
+        onNodeWithText("Deuterium: 250/250").assertIsDisplayed()
+        onNodeWithText("Credits: 500").assertIsDisplayed()
     }
 
     @Test
@@ -419,7 +419,7 @@ class GameUiE2ETest {
         waitForIdle()
 
         // AlloyRefinery costs 50 credits — should be visible and affordable
-        onNodeWithTag("building_AlloyRefinery").assertIsDisplayed()
+        onNodeWithTag("building_MetalMine").assertIsDisplayed()
         // Multiple buildings cost 50cr — just verify at least one exists
         onAllNodesWithText("50cr", substring = true).fetchSemanticsNodes().let {
             assertTrue(it.isNotEmpty(), "Should see at least one building costing 50cr")

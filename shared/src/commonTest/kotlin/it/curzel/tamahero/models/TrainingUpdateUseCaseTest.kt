@@ -14,7 +14,7 @@ class TrainingUpdateUseCaseTest {
             PlacedBuilding(id = 1, type = BuildingType.CommandCenter, level = 1, x = 0, y = 0, hp = 1000),
         )
         if (hasBarracks) {
-            buildings.add(PlacedBuilding(id = 2, type = BuildingType.Academy, level = 1, x = 5, y = 0, hp = 300))
+            buildings.add(PlacedBuilding(id = 2, type = BuildingType.Barracks, level = 1, x = 5, y = 0, hp = 300))
         }
         if (hasArmyCamp) {
             buildings.add(PlacedBuilding(id = 3, type = BuildingType.Hangar, level = 1, x = 10, y = 0, hp = 200))
@@ -115,8 +115,8 @@ class TrainingUpdateUseCaseTest {
     fun multipleBarracksTrainInParallel() {
         val buildings = listOf(
             PlacedBuilding(id = 1, type = BuildingType.CommandCenter, level = 1, x = 0, y = 0, hp = 1000),
-            PlacedBuilding(id = 2, type = BuildingType.Academy, level = 1, x = 5, y = 0, hp = 300),
-            PlacedBuilding(id = 3, type = BuildingType.Academy, level = 1, x = 8, y = 0, hp = 300),
+            PlacedBuilding(id = 2, type = BuildingType.Barracks, level = 1, x = 5, y = 0, hp = 300),
+            PlacedBuilding(id = 3, type = BuildingType.Barracks, level = 1, x = 8, y = 0, hp = 300),
             PlacedBuilding(id = 4, type = BuildingType.Hangar, level = 1, x = 12, y = 0, hp = 200),
         )
         val queue = TrainingQueue(listOf(
