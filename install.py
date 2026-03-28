@@ -45,11 +45,11 @@ DEPLOY_REPO = Path("/root/tamahero-deploy")
 SERVER_DIST = DEPLOY_REPO / "server-dist"
 WEB_DIST = DEPLOY_REPO / "web-dist"
 INSTALL_DIR = Path(f"/opt/{SERVICE_NAME}")
-WEB_DIR = Path(f"/var/www/{DOMAIN}/play")
 SYSTEMD_SERVICE_PATH = Path(f"/etc/systemd/system/{SERVICE_NAME}.service")
 LOG_DIR = Path(f"/var/log/{SERVICE_NAME}")
 ENV_FILE = Path(f"/etc/{SERVICE_NAME}/env")
 DOMAIN = "tama.curzel.it"
+WEB_DIR = Path(f"/var/www/{DOMAIN}/play")
 SERVER_PORT = 8081
 CERT_DIR = Path("/etc/letsencrypt")
 
