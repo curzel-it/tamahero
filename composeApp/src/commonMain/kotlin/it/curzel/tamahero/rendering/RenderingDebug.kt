@@ -12,42 +12,54 @@ import it.curzel.tamahero.game.TILE_SIZE
 import it.curzel.tamahero.utils.Vector2d
 import kotlin.math.roundToInt
 
+private const val GRID_SIZE = 20
 private val GridColor = Color(0xFFE8E8F0).copy(alpha = 0.08f)
+private val BorderColor = Color(0xFFE8E8F0).copy(alpha = 0.25f)
 private val FpsTextColor = Color(0xFFE8E8F0)
+
+fun DrawScope.drawVillageBorder(
+    camera: Vector2d,
+    renderingScale: Float
+) {
+    val tileSize = TILE_SIZE * renderingScale
+    val originX = -camera.x * tileSize
+    val originY = -camera.y * tileSize
+    val gridWidth = GRID_SIZE * tileSize
+    val gridHeight = GRID_SIZE * tileSize
+
+    drawRect(
+        color = BorderColor,
+        topLeft = Offset(originX, originY),
+        size = Size(gridWidth, gridHeight),
+        style = androidx.compose.ui.graphics.drawscope.Stroke(width = 2f * renderingScale)
+    )
+}
 
 fun DrawScope.drawGrid(
     camera: Vector2d,
     renderingScale: Float
 ) {
     val tileSize = TILE_SIZE * renderingScale
-    val strokeWidth = 1f
+    val originX = -camera.x * tileSize
+    val originY = -camera.y * tileSize
+    val gridWidth = GRID_SIZE * tileSize
+    val gridHeight = GRID_SIZE * tileSize
 
-    val cameraOffsetX = -camera.x * TILE_SIZE * renderingScale
-    val cameraOffsetY = -camera.y * TILE_SIZE * renderingScale
-
-    val startX = ((cameraOffsetX % tileSize) - tileSize)
-    val startY = ((cameraOffsetY % tileSize) - tileSize)
-
-    var x = startX
-    while (x <= size.width) {
+    for (i in 1 until GRID_SIZE) {
+        val x = originX + i * tileSize
         drawLine(
             color = GridColor,
-            start = Offset(x, 0f),
-            end = Offset(x, size.height),
-            strokeWidth = strokeWidth
+            start = Offset(x, originY),
+            end = Offset(x, originY + gridHeight),
+            strokeWidth = 1f
         )
-        x += tileSize
-    }
-
-    var y = startY
-    while (y <= size.height) {
+        val y = originY + i * tileSize
         drawLine(
             color = GridColor,
-            start = Offset(0f, y),
-            end = Offset(size.width, y),
-            strokeWidth = strokeWidth
+            start = Offset(originX, y),
+            end = Offset(originX + gridWidth, y),
+            strokeWidth = 1f
         )
-        y += tileSize
     }
 }
 

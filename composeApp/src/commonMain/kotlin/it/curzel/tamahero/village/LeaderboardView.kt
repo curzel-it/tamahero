@@ -32,7 +32,7 @@ fun LeaderboardView(
                 .fillMaxWidth()
                 .clip(RoundedCornerShape(topStart = TamaRadius.Large, topEnd = TamaRadius.Large))
                 .background(TamaColors.Surface)
-                .clickable(enabled = false, onClick = {})
+                .clickable { }
                 .padding(TamaSpacing.Medium),
         ) {
             Row(

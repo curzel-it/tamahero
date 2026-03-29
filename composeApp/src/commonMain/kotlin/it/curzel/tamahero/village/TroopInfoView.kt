@@ -35,7 +35,7 @@ fun TroopInfoView(
                 .width(360.dp)
                 .clip(RoundedCornerShape(TamaRadius.Large))
                 .background(TamaColors.Surface)
-                .clickable(enabled = false, onClick = {})
+                .clickable { }
                 .padding(TamaSpacing.Large),
         ) {
             Text(troopType.name, color = TamaColors.Text, fontSize = 20.sp)

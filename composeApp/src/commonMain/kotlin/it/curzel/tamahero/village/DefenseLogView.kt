@@ -32,7 +32,7 @@ fun DefenseLogView(
                 .width(400.dp)
                 .clip(RoundedCornerShape(TamaRadius.Large))
                 .background(TamaColors.Surface)
-                .clickable(enabled = false, onClick = {})
+                .clickable { }
                 .padding(TamaSpacing.Large),
         ) {
             Text("Defense Log", color = TamaColors.Text, fontSize = 18.sp)

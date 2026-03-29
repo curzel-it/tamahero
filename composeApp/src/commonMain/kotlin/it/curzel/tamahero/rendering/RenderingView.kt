@@ -47,6 +47,8 @@ fun RenderingView(
     ) {
         drawRect(Color(0xFF0F0F0F), size = size)
 
+        drawVillageBorder(camera = camera, renderingScale = renderingScale)
+
         if (showGrid) {
             drawGrid(camera = camera, renderingScale = renderingScale)
         }

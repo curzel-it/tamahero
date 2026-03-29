@@ -46,7 +46,7 @@ fun ArmyOverviewView(
                 .fillMaxWidth()
                 .clip(RoundedCornerShape(topStart = TamaRadius.Large, topEnd = TamaRadius.Large))
                 .background(TamaColors.Surface)
-                .clickable(enabled = false, onClick = {})
+                .clickable { }
                 .padding(TamaSpacing.Medium),
         ) {
             Text("Army (${army.totalCount}/$capacity)", color = TamaColors.Text, fontSize = 18.sp)

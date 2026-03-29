@@ -36,7 +36,7 @@ fun PveEventResultView(
                 .width(340.dp)
                 .clip(RoundedCornerShape(TamaRadius.Large))
                 .background(TamaColors.Surface)
-                .clickable(enabled = false, onClick = {})
+                .clickable { }
                 .padding(TamaSpacing.Large),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {

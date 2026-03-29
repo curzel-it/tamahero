@@ -34,7 +34,7 @@ fun SettingsView(
                 .widthIn(max = TamaSizes.ModalMaxWidth)
                 .clip(RoundedCornerShape(TamaRadius.Large))
                 .background(TamaColors.Surface)
-                .clickable(enabled = false, onClick = {})
+                .clickable { }
                 .padding(TamaSpacing.Medium),
         ) {
             Text("Settings", color = TamaColors.Text, fontSize = 18.sp)
